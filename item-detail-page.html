@@ -1,0 +1,758 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>
+	Item Detail
+</title><link href="styles.css" type="text/css" rel="stylesheet"><link href="font-awesome/css/font-awesome.min.css" type="text/css" rel="stylesheet">
+
+<style type="text/css">
+.fa-stack-1x {
+    color:white;
+}
+
+.fa-nostack {
+    color:#00aced;
+}
+
+
+.icon-cloud {
+   color:#00aced;
+   font-size:15px;
+}
+.icon-cloud:hover
+{
+   color:gray;
+}
+
+.icon-comment {
+   color:#3b5998;
+   text-decoration-color:red;
+}
+
+
+.icon-twitter {
+    color:#00aced;
+}
+
+.icon-gplus{
+    color:#dd4b39;
+}
+
+/*body {
+    background-color: black;
+}*/
+
+
+</style>
+
+
+
+    <style type="text/css">
+        .thumb80 img
+        {
+            width: 192px;
+            height: 210px;
+            text-align: center;
+        }
+    </style>
+    <script type="text/javascript">
+
+        function MM_openBrWindow(theURL, winName, features) {
+            var MM_Win = window.open(theURL, winName, features);
+            MM_Win.focus(); 
+        }
+
+        function SFItemLink(ItemSFId) {
+            var strPath = document.forms["form1"].hidSFURL.value + ItemSFId
+            window.open(strPath, '', 'toolbar=no,location=no,status=yes,menubar=no,scrollbars=yes,resizable=yes,width=1000,height=800,alwaysRaised,screenX=0,screenY=0');
+        }
+
+
+        function IsNumeric(obj) {
+            if (obj.value.length > 0)
+                obj.value = obj.value.replace(/[^\d]+/g, '');
+        }
+
+        function checkProgramPrice() {
+            strChar = String.fromCharCode(window.event.keyCode);
+            // Don't allow the user to type in anything other than a number.
+            if (strChar == ".") {
+                return true;
+            }
+            else {
+                if (strChar < "0" || strChar > "9") {
+                    return false;
+                }
+                else {
+                    return true;
+                }
+            }
+        }
+
+        function checkQty() {
+            strChar = String.fromCharCode(window.event.keyCode);
+            // Don't allow the user to type in anything other than a number.
+            if (strChar < "0" || strChar > "9") {
+                return false;
+            }
+            else {
+                return true;
+            }
+        }
+
+        function CalcWeight() {
+            if ((document.forms['form1'].txt_SampleQty.value.replace(/\s/g, "") > 0) && (document.forms['form1'].txt_SampleWeight.value.replace(/\s/g, "") > 0)) {
+                document.forms['form1'].txt_PerPieceWeight.value = Math.round((document.forms['form1'].txt_SampleWeight.value / document.forms['form1'].txt_SampleQty.value) * Math.pow(10, 6)) / Math.pow(10, 6);
+            }
+            else {
+                document.forms['form1'].txt_PerPieceWeight.value = ''
+            }
+        }
+
+        function replaceImage(ref, imgNF) {
+            var path = ref.src.substring(0, ref.src.lastIndexOf("/"))
+            var filename = ref.src.substring(ref.src.lastIndexOf('/') + 1);
+            var fullsize = path + '/' + filename.substring(3)
+            ref.onerror = new Function("this.onerror=null;this.src='" + imgNF + "'");
+            ref.src = fullsize;
+        }
+
+        function setColor(el, bg) {
+            if (el.style) el.style.backgroundColor = bg;
+        }
+
+        var bgBad = "#FF5F00";
+        var bgGood = "white";
+
+        function ValidateForm() {
+
+            var valid = true;
+
+            if (document.forms['form1'].ddl_Brands.value == "0") {
+                valid = false;
+                setColor(document.forms['form1'].ddl_Brands, bgBad);
+            }
+            else {
+                setColor(document.forms['form1'].ddl_Brands, bgGood);
+            }
+
+            if (valid == true) {
+                if (document.getElementById('chk_PricingAutoApp').checked && document.forms['form1'].hidProgPrice.value == 'False') {
+                    document.getElementById('chk_PricingAutoApp').checked = false;
+                    alert("Item can not be set to auto approve pricing until Program Price is set.");
+                    return false;
+                }
+                else {
+                    return true;
+                }
+            }
+            else {
+                alert("The fields indicated by orange are required fields");
+                return false;
+            }
+        }
+
+        function checkProgPric(progPrice, progPriceLink) {
+            if (progPrice > 0) {
+                MM_openBrWindow(progPriceLink, '', 'toolbar=no,location=no,scrollbars=yes,status=yes,menubar=no,resizable=yes,width=800,height=600,left=20,top=20,alwaysRaised,screenX=0,screenY=0')
+            }
+            else {
+                alert("Item can not be copied until Program Price is set.");
+            }
+        }
+
+        function LimitItemDescLength(tmpEvent, tmpElem) {
+            if (tmpEvent.which != 8) {
+                if (tmpElem.value.length > 100) {
+                    tmpEvent.preventDefault();
+                }
+            }
+        }
+                     
+    </script>
+</head>
+<body style="margin-top: 0; margin-left: 0" onload="javascript:{if(parent.frames[0]&amp;&amp;parent.frames['navig'].Go)parent.frames['navig'].Go();}">
+    <form name="form1" method="post" action="./ItemDetail.aspx?request_id=8197643&amp;item_suffix_id=9314247" id="form1">
+<div>
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="/wEPDwUKMTAzODg3MTU1Nw8WDh4MZ19SZXF1ZXN0X0lkBQc4MTk3NjQzHhBnX0l0ZW1fU3VmZml4X0lkBQc5MzE0MjQ3HgpnX2lzVmVuZG9yZx4RZ19ibG5FeHRlcm5hbExpbmtoHhBnX2JsbkhpZGVQcmljaW5naB4MZ19Vc2VySXRlbUlkBQ4xNjAyNXBhdGMxMG9ueB4PZ19Db21Vc2VySXRlbUlkBQsxNjAyNXBhdGMxMBYCAgMPZBYCAgMPZBYoAgUPFgIeB1Zpc2libGVnFgICAQ8PFgIeC05hdmlnYXRlVXJsBVguLi9iaWRuZXQzL0NvbW1lbnRzVGFiLmFzcHg/Q29tbWVudFR5cGU9YmkmTm9Db209JlJlcXVlc3RJZD04MTk3NjQzJkl0ZW1TdWZmaXhJZD05MzE0MjQ3ZGQCDw8WAh8HZxYCAgEPDxYCHwgFQy4uL2JpZG5ldDIvSXRlbVByaWNpbmcyLmFzcHg/UmVxdWVzdElkPTgxOTc2NDMmSXRlbVN1ZmZpeElkPTkzMTQyNDdkZAIZDw8WAh4EVGV4dAUOMTYwMjVwYXRjMTBvbnhkZAIhDw8WAh8JBQ1TZWFzb24gNCAyMDI2ZGQCKQ8PFgQfCQU2W1E0IDI2IENMT1RISU5HXSBTaWxpY29uZSBQYXRjaCB3aXRoIFNpbGljb25lIExvb3AgVGFnHgdFbmFibGVkaGRkAjUPEA8WBh4NRGF0YVRleHRGaWVsZAUKYnJhbmRfbmFtZR4ORGF0YVZhbHVlRmllbGQFCGJyYW5kX2lkHgtfIURhdGFCb3VuZGdkEBUCDVBsZWFzZSBTZWxlY3QFU2tpbXMVAgEwBDI2MTcUKwMCZ2cWAQIBZAI5Dw8WAh8JBQRPbnl4ZGQCQQ8QZGQWAGQCRQ8PFgIfCQUBTmRkAkkPDxYCHwllZGQCTQ8PFgIfCWVkZAJRDxAPFgYfCwUIaHRzX2Rlc2MfDAUGaHRzX2lkHw1nZBAVjgENUGxlYXNlIFNlbGVjdBMxMDAlIENvdHRvbiBCYW5kYW5hFzEwMCUgTnlsb24gV2ViYmluZyBCZWx0EzEwMCUgUG9seWVzdGVyIEJlbHQbMTAwJSBQb2x5ZXN0ZXIgV292ZW4gbGFiZWxzHDEwMCUgUG9seWVzdGVyIFdvdmVuIFBhdGNoZXMbMTAwJSBQb2x5ZXN0ZXIgV292ZW4gUmliYm9uGTEwMCUgUG9seWVzdGVyIFdvdmVuIFRhcGUJNDgxOS4xMDAwEEJhY2twYWNrIC0gTnlsb24UQmFsbCBDaGFpbnMgLSBOaWNrZWwPQmFyY29kZSBTdGlja2VyCkJlYW5pZSBIYXQVQmVsdCAtIDEwMCUgUG9seWVzdGVyCkJlbHQgLSBQVkMaQmVsdHMgLSBDb3R0b24gLSBDb21wbGV0ZWQPQmVsdHMgLSBMZWF0aGVyG0JlbHRzIC0gTGVhdGhlciAtIENvbXBsZXRlZBlCZWx0cyAtIE55bG9uIC0gQ29tcGxldGVkDUJvdHRsZSBPcGVuZXIOQnVja2xlIC0gU3RlZWwPQnVja2xlcyAtIEFsbG95D0J1Y2tsZXMgLSBzdGVlbAZCdW5nZWUVQnV0dG9uIC0gUmVhbCBDb2NvbnV0FEJ1dHRvbiAtIHJlYWwgY29yb3pvFkJ1dHRvbiAtIFdvb2RlbiAgIDIuOSURQnV0dG9ucyAtIFBsYXN0aWMLQ2hhaW4gQmVsdHMKQ290dG9uIEJhZxhDb3cgSGlkZSBMZWF0aGVyIFBhdGNoZXMHRGllIFNldAlEcmF3Y29yZHMPRWxhc3RpYyB3ZWJiaW5nEkVtYnJvaWVyZWQgUGF0Y2hlcxBFeWVsZXQg4oCTIE1ldGFsDkZlbHQgV3Jpc3RiYW5kB0ZyZWlnaHQMSGFuZGtlcmNoaWVmCUhhcmQgY2FzZQ1IZWF0IFRyYW5zZmVyEEtleWNoYWluIC0gTWV0YWwITGFueWFyZHMMTGVhdGhlciBCYWdzD0xlYXRoZXIgUGF0Y2hlcw5MZWF0aGVyIFNjcmFwcx1Mb2NrcyBvZiBCYXNlIE1ldGFsIG9mIE90aGVycxZNZXNoIFByaW50ZWQgTnlsb24gQmFnC01FVEFMIEJBREdFE01ldGFsIGJvdHRsZSBvcGVuZXIQTWV0YWwgQ2hhaW4gQmVsdBhNZXRhbCBKZWFuIEJ1dHRvbnMtQnJhc3MYTWV0YWwgSmVhbiBCdXR0b25zLVN0ZWVsDk1ldGFsIEtleWNoYWluCU1ldGFsIFBpbgtNZXRhbCBSaW5ncxFNZXRhbCBTbmFwIEJ1dHRvbg5NaXJyb3IgLSBHbGFzcxBNaXJyb3IgLSBQbGFzdGljD01vdWxkIG9mIEJ1dHRvbgNOL0EJTm90ZWJvb2tzDU51Z2dldCBEcml2ZXIJTnlsb24gQmFnEVBhcGVyIEFjY2Vzc29yaWVzCVBhcGVyIEJhZw9QYXBlciBIYW5nIFRhZ3MTUGFwZXIgTGVhdGhlciBQYXRjaA5QYXBlciBTdGlja2VycwtQYXBlcndlaWdodAtQbGFzdGljIEJveBBwbGFzdGljIGJyYWNlbGV0DlBsYXN0aWMgYnVja2xlDlBsYXN0aWMgQnV0dG9uElBsYXN0aWMgQ29yZCBTdG9wcw9QbGFzdGljIEhhbmdlcnMMUGxhc3RpYyBob29rDVBsYXN0aWMgT3RoZXIMUGxhc3RpYyByaW5nElBsYXN0aWMgU2VhdCBDb3ZlcgxQbGFzdGljIFRpcHMIUG9seSBCYWcOUG9seWVzdGVyIFRhcGURUG9seWVzdGVyIFdlYmJpbmcHUFUgQmVsdAlQVSBQaXBpbmcSUFUgV2Fpc3QgcG91Y2ggYmFnCVBVIFdhbGxldBBQdW5jaGluZyBNYWNoaW5lB1BWQyBiYWcIUFZDIGJlbHQKUFZDIENhcnBldA1QVkMgSGFuZyBUYWdzIFBWQyBrZXkgY2hhaW4gdy9zdGVlbCBiYWxsIGNoYWluC1BWQyBQYXRjaGVzClBWQyBXYWxsZXQOUFZDIFdyaXN0YmFuZHMGUkNUZXN0DlJpdmV0cyAtIFN0ZWVsDVJpdmV0cy0gQnJhc3MPUnViYmVyIEFydGljbGVzC1J1YmJlciBCYW5kEVJ1YmJlciBmZWx0IHBhdGNoDlJ1YmJlciBIYW5ndGFnDlJ1YmJlciBQYXRjaGVzE1NlbGYgQWRoZXNpdmUgUGFwZXIPU2lsaWNvbiBQYXRjaGVzDlNsaWRlIEZhc3RlbmVyF1NsaWRlIGZhc3RlbmVycyAtIE1ldGFsB1NNIFRFU1QOU29ja3MgLSBDb3R0b24YU29ja3MgLSBOeWxvbiBvciBBY3J5bGljE1N0ZWVsIEJvdHRsZSBvcGVuZXIYU3RlZWwgc3RpY2sgcGluIHcvZW5hbWVsCVN0cmF3IGJhZwlTdHJhdyBIYXQQU3VyZmJvYXJkIGNvdmVycxNTdXNwZW5kZXJzIC0gQ290dG9uElN1c3BlbmRlcnMgLSBOeWxvbgRUZXN0B1RoZXJtb3MJVGluIEJveGVzD1RpbiBMdW5jaCBCb3hlcw9XYWxsZXQgLSBDb3R0b24QV2FsbGV0IC0gTGVhdGhlcg5XYWxsZXQgLSBOeWxvbhBXYWxsZXRzIC0gQ290dG9uD1dhbGxldHMgLSBOeWxvbhJXYXggQ29tYiAtIFBsYXN0aWMZV2F4Y29tYiAtIFBsYXN0aWMgU2NyYXBlchBXZWJiaW5nIC0gQ290dG9uHFdlYmJpbmcgQmVsdCDigJMgMTAwJSBDb3R0b24bV2ViYmluZyBCZWx0IOKAkyAxMDAlIE55bG9uDVdlYmJpbmcgTnlsb24bV292ZW4gQm90dG9tcyAtIDEwMCUgQ290dG9uGldvdmVuIFNoaXJ0cyAtIDEwMCUgQ290dG9uFFdyaXN0YmFuZHMgLSBMZWF0aGVyG1dyaXN0YmFuZHMgLSBQcmludGVkIENvdHRvbhpXcmlzdGJhbmRzIC0gUHJpbnRlZCBOeWxvbhBXcmlzdGJhbmRzIC0gUFZDGFppcHBlciBQdWxsIC0gMTAwJSBNZXRhbBVaaXBwZXIgUHVsbCAtIFBsYXN0aWMVjgEBMAExATIDMTMyATMBNAE1ATYCNTUBNwE4AzEzOQE5AzEzNQIxMAIxMQIxMgIxMwIxNAIxNQIxNgIxNwIxOAMxMzMDMTM0AzEyNgIxOQIyMAIyMQIyMgIyMwIyNAIyNQIyNgIyNwIyOAIyOQIzMAIzMQMxMjUDMTI3AjMyAjMzAjM0AjM1AjM2AjM3AjM4AjM5AzEzOAI0MAI0MQI0MgI0MwI0NAI0NQI0NgI0NwI0OAI0OQI1MAMxMzcCNTECNTICNTMCNTQCNTYDMTMxAzE0MQI1NwMxMjgDMTI5AjU4AjU5AjYwAjYxAjYyAjYzAjY0AjY1AzE0MAMxMTQCNjYCNjcCNjgCNjkCNzACNzECNzICNzMCNzQDMTA2Ajc1Ajc2Ajc3Ajc4Ajc5AzEyMgI4MAI4MQI4MgI4MwI4NAI4NQI4NgMxMzYDMTMwAjg3AzEyNAMxNDMCODgCODkCOTACOTECOTICOTMCOTQCOTUCOTYCOTcCOTgCOTkDMTAwAzEwMQMxMDIDMTAzAzEwNAMxMDUDMTA3AzEwOAMxMDkDMTEwAzExMQMxMTIDMTEzAzExNQMxMTYDMTE3AzExOAMxMTkDMTIwAzEyMRQrA44BZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZ2dnZxYBAjxkAlUPDxYCHwkFA1llc2RkAnEPEGRkFgFmZAKDAQ9kFggCAQ9kFgJmD2QWAgIBDw9kFgIeB29uY2xpY2sF+gFNTV9vcGVuQnJXaW5kb3coJy4uL0JpZG5ldDIvSW1hZ2VEaXNwbGF5LmFzcHg/SXRlbVN1ZmZpeD05MzE0MjQ3JkZpbGVUeXBlPUFydHdvcmsmZXh0ZXJuYWxsaW5rPUZhbHNlJywnJywndG9vbGJhcj1ubyxsb2NhdGlvbj1ubyxzY3JvbGxiYXJzPXllcyxzdGF0dXM9eWVzLG1lbnViYXI9bm8scmVzaXphYmxlPXllcyx3aWR0aD00OTAsaGVpZ2h0PTQwMCxsZWZ0PTIwLHRvcD0yMCxhbHdheXNSYWlzZWQsc2NyZWVuWD0wLHNjcmVlblk9MCcpFgJmDxYCHgNzcmMFR2h0dHBzOi8vYXBwNC5icmFuZGlkLmNvbS9RQU9TSW1hZ2VzLzE2MDI1L0EvQ0lfMTYwMjVQQVRDMTA5MzE0MjQ3XzEucG5nZAICD2QWAmYPZBYCAgEPDxYCHwdnFgIfDgXfAU1NX29wZW5CcldpbmRvdygnaHR0cHM6Ly9hcHA0LmJyYW5kaWQuY29tL0FydHdvcmsvMTYwMjVQQVRDMTBfOTMxNDI0Ny5wZGYnLCcnLCd0b29sYmFyPW5vLGxvY2F0aW9uPW5vLHNjcm9sbGJhcnM9eWVzLHN0YXR1cz15ZXMsbWVudWJhcj1ubyxyZXNpemFibGU9eWVzLHdpZHRoPTQ5MCxoZWlnaHQ9NDAwLGxlZnQ9MjAsdG9wPTIwLGFsd2F5c1JhaXNlZCxzY3JlZW5YPTAsc2NyZWVuWT0wJylkAgMPZBYCAgEPZBYCAgEPDxYCHwkFClNFUk8gQWdlbnRkZAIED2QWBAIBD2QWAgIBDw8WAh8JBQoxMC8yMi8yMDI1ZGQCAg9kFgICAQ8PZBYCHw4FiQJNTV9vcGVuQnJXaW5kb3coJy4uL2JpZG5ldDIvQXJ0d29ya0hpc3RvcnkuYXNweD9JdGVtU3VmZml4SWQ9OTMxNDI0NyZVcGxvYWRUeXBlPUFydHdvcmsnLCdBcnR3b3JrSGlzdG9yeUFydHdvcms5MzE0MjQ3JywndG9vbGJhcj1ubyxsb2NhdGlvbj1ubyxzY3JvbGxiYXJzPXllcyxzdGF0dXM9eWVzLG1lbnViYXI9bm8scmVzaXphYmxlPXllcyx3aWR0aD04NzUsaGVpZ2h0PTcwMCxsZWZ0PTIwLHRvcD0yMCxhbHdheXNSYWlzZWQsc2NyZWVuWD0wLHNjcmVlblk9MCcpZAKFAQ8WAh4Fc3R5bGUFTHdpZHRoOiAzMyU7IGJhY2tncm91bmQtY29sb3I6ICNmZjAwMDA7IHZlcnRpY2FsLWFsaWduOiB0b3A7IHRleHQtYWxpZ246IGxlZnQWAgIBD2QWCmYPZBYCZg9kFgICAQ8PFgIfCQUGU0FNUExFZGQCAQ9kFgJmD2QWAgIBDw9kFgIfDgX9AU1NX29wZW5CcldpbmRvdygnLi4vQmlkbmV0Mi9JbWFnZURpc3BsYXkuYXNweD9JdGVtU3VmZml4PTkzMTQyNDcmRmlsZVR5cGU9QklEIFNhbXBsZSZleHRlcm5hbGxpbms9RmFsc2UnLCcnLCd0b29sYmFyPW5vLGxvY2F0aW9uPW5vLHNjcm9sbGJhcnM9eWVzLHN0YXR1cz15ZXMsbWVudWJhcj1ubyxyZXNpemFibGU9eWVzLHdpZHRoPTQ5MCxoZWlnaHQ9NDAwLGxlZnQ9MjAsdG9wPTIwLGFsd2F5c1JhaXNlZCxzY3JlZW5YPTAsc2NyZWVuWT0wJykWAmYPFgIfDwVFaHR0cHM6Ly9hcHA0LmJyYW5kaWQuY29tL1FBT1NJbWFnZXMvMTYwMjUvQ0lfMTYwMjVQQVRDMTA5MzE0MjQ3XzIuanBnZAICD2QWBGYPZBYCAgEPDxYCHwkFBUFwcHI6ZGQCAQ9kFgICAQ8PFgIfCQUCTm9kZAIDD2QWAgIBD2QWAgIBDw8WAh8JBQhKb2UgQ2hhbmRkAgQPZBYEAgEPZBYCAgEPDxYCHwkFCDEvNi8yMDI2ZGQCAg9kFgICAQ8PZBYCHw4FjQJNTV9vcGVuQnJXaW5kb3coJy4uL2JpZG5ldDIvQXJ0d29ya0hpc3RvcnkuYXNweD9JdGVtU3VmZml4SWQ9OTMxNDI0NyZVcGxvYWRUeXBlPUJpZFNhbXBsZScsJ0FydHdvcmtIaXN0b3J5QmlkU2FtcGxlOTMxNDI0NycsJ3Rvb2xiYXI9bm8sbG9jYXRpb249bm8sc2Nyb2xsYmFycz15ZXMsc3RhdHVzPXllcyxtZW51YmFyPW5vLHJlc2l6YWJsZT15ZXMsd2lkdGg9ODc1LGhlaWdodD03MDAsbGVmdD0yMCx0b3A9MjAsYWx3YXlzUmFpc2VkLHNjcmVlblg9MCxzY3JlZW5ZPTAnKWQChwEPZBYGAgEPZBYCZg9kFgICAQ9kFgJmDxYCHw8FASNkAgMPZBYCAgEPZBYCAgEPDxYCHwllZGQCBA9kFgQCAQ9kFgICAQ8PFgIfCWVkZAICD2QWAgIBDw9kFgIfDgWXAk1NX29wZW5CcldpbmRvdygnLi4vYmlkbmV0Mi9BcnR3b3JrSGlzdG9yeS5hc3B4P0l0ZW1TdWZmaXhJZD05MzE0MjQ3JlVwbG9hZFR5cGU9U2FtcGxlUHJvdmlkZWQnLCdBcnR3b3JrSGlzdG9yeVNhbXBsZVByb3ZpZGVkOTMxNDI0NycsJ3Rvb2xiYXI9bm8sbG9jYXRpb249bm8sc2Nyb2xsYmFycz15ZXMsc3RhdHVzPXllcyxtZW51YmFyPW5vLHJlc2l6YWJsZT15ZXMsd2lkdGg9ODc1LGhlaWdodD03MDAsbGVmdD0yMCx0b3A9MjAsYWx3YXlzUmFpc2VkLHNjcmVlblg9MCxzY3JlZW5ZPTAnKWQCiQEPFgIfB2hkAosBDxYCHwdoZAKZAQ8PFgIfCQUQSXRlbSBJRDogODE5ODU5NGRkZPrMLLFQvmo+MLwqVKBot2d5qZsCB2AzcE5yt2ZpctSS">
+</div>
+
+<div>
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="EE4AFCB2">
+</div>
+    <div>
+        <span id="lblError" class="MainHeader8" style="color:Red;"></span>
+        <div id="pnlForm">
+	
+            <table class="SubHeader" border="0" cellspacing="0" cellpadding="0" width="100%" style="height: 18">
+                <tbody><tr bgcolor="#000000">
+                    <td width="100%">
+                        <table border="0" cellspacing="0" cellpadding="0" width="100%" style="height: 18">
+                            <tbody><tr>
+                                <td bgcolor="#000000" align="center" valign="middle" width="35" style="white-space: nowrap">
+                                    <img id="Image1" src="Images/SmallBIDLogo.gif" style="height:18px;border-width:0px;">
+                                </td>
+                                <td class="buttonStyleCustSelected" valign="middle" width="90" align="center" style="white-space: nowrap">
+                                    Item Detail
+                                </td>
+                                
+                                <td id="td_Comments" width="90" align="center" valign="middle" style="white-space: nowrap">
+                                    <a id="hyp_Comments" class="buttonStyleCust" href="../bidnet3/CommentsTab.aspx?CommentType=bi&amp;NoCom=&amp;RequestId=8197643&amp;ItemSuffixId=9314247" target="_self">Comments</a>
+                                </td>
+	
+                                
+                                
+                                
+                                
+                                <td id="td_Pricing" width="90" align="center" valign="middle" style="white-space: nowrap">
+                                    <a id="hyp_Pricing" class="buttonStyleCust" href="../bidnet2/ItemPricing2.aspx?RequestId=8197643&amp;ItemSuffixId=9314247" target="_self">Pricing</a>
+                                </td>
+	
+                                
+                                
+                                
+                                <td>
+                                    &nbsp;
+                                </td>
+                            </tr>
+                        </tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+            <table width="800" border="0" cellspacing="2" cellpadding="0">
+                <tbody><tr>
+                    <td align="right">
+                        <span id="lbl_ItemID_hd" class="MainHeader8">Item #:</span>
+                    </td>
+                    <td>
+                        <span id="lbl_ItemID" class="body">16025patc10onx</span>&nbsp;&nbsp;
+                        
+                        <a></a><a href="#" onclick="return SFItemLink(&quot;01tNr00000FSUc1&quot; )"><span class="fa-md icon-cloud"><i class="fa fa-cloud"></i></span></a>&nbsp;
+                    </td>
+                    <td align="right">
+                        <span id="lbl_Season_hd" class="MainHeader8">Season:</span>
+                    </td>
+                    <td>
+                        <span id="lbl_Season" class="body">Season 4 2026</span>
+                    </td>
+                    <td align="right">
+                        
+                    </td>
+                    <td>
+                        
+                    </td>
+                </tr>
+                <tr>
+                    <td valign="top" align="right">
+                        <span id="lbl_ItemDesc_hd" class="MainHeader8">Item Desc:</span>
+                    </td>
+                    <td>
+                        <textarea name="txt_ItemDesc" rows="3" cols="25" id="txt_ItemDesc" disabled="disabled" class="body" onkeydown="LimitItemDescLength(event, this);">[Q4 26 CLOTHING] Silicone Patch with Silicone Loop Tag</textarea>
+                    </td>
+                    <td colspan="2" valign="top">
+                        <table width="100%">
+                            <tbody><tr>
+                                <td valign="top" align="right">
+                                    
+                                </td>
+                                <td valign="top">
+                                    
+                                </td>
+                            </tr>
+                            <tr>
+                                <td align="right">
+                                    
+                                </td>
+                                <td>
+                                    
+                                </td>
+                            </tr>
+                        </tbody></table>
+                    </td>
+                    <td valign="top" align="right">
+                        <span id="lbl_Brands_hd" class="MainHeader8">Brands:</span>
+                    </td>
+                    <td valign="top">
+                        <select name="ddl_Brands" id="ddl_Brands" disabled="disabled" class="body" style="width:200px;">
+		<option value="0">Please Select</option>
+		<option selected="selected" value="2617">Skims</option>
+
+	</select>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right">
+                        <span id="lbl_ColorName_hd" class="MainHeader8">Color Name:</span>
+                    </td>
+                    <td>
+                        <span id="lbl_ColorName" class="body">Onyx</span>
+                    </td>
+                    <td align="right">
+                        
+                    </td>
+                    <td>
+                        
+                    </td>
+                    <td align="right">
+                        
+                    </td>
+                    <td>
+                        
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right">
+                        <span id="lbl_Cancelled_hd" class="MainHeader8">Cancelled:</span>
+                    </td>
+                    <td>
+                        <span id="lbl_Cancelled" class="body">N</span>
+                    </td>
+                    <td align="right">
+                        <span id="lbl_CancelledDate_hd" class="MainHeader8">Cancelled Date:</span>
+                    </td>
+                    <td>
+                        <span id="lbl_CancelledDate" class="body"></span>
+                    </td>
+                    <td align="right">
+                        <span id="lbl_AppDate_hd" class="MainHeader8">App Date:</span>
+                    </td>
+                    <td>
+                        <span id="lbl_AppDate" class="body"></span>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right">
+                        <span id="lbl_HTS_hd" class="MainHeader8">HTS:</span>
+                    </td>
+                    <td colspan="3">
+                        <select name="ddl_HTS" id="ddl_HTS" disabled="disabled" class="body" style="width:200px;">
+		<option value="0">Please Select</option>
+		<option value="1">100% Cotton Bandana</option>
+		<option value="2">100% Nylon Webbing Belt</option>
+		<option value="132">100% Polyester Belt</option>
+		<option value="3">100% Polyester Woven labels</option>
+		<option value="4">100% Polyester Woven Patches</option>
+		<option value="5">100% Polyester Woven Ribbon</option>
+		<option value="6">100% Polyester Woven Tape</option>
+		<option value="55">4819.1000</option>
+		<option value="7">Backpack - Nylon</option>
+		<option value="8">Ball Chains - Nickel</option>
+		<option value="139">Barcode Sticker</option>
+		<option value="9">Beanie Hat</option>
+		<option value="135">Belt - 100% Polyester</option>
+		<option value="10">Belt - PVC</option>
+		<option value="11">Belts - Cotton - Completed</option>
+		<option value="12">Belts - Leather</option>
+		<option value="13">Belts - Leather - Completed</option>
+		<option value="14">Belts - Nylon - Completed</option>
+		<option value="15">Bottle Opener</option>
+		<option value="16">Buckle - Steel</option>
+		<option value="17">Buckles - Alloy</option>
+		<option value="18">Buckles - steel</option>
+		<option value="133">Bungee</option>
+		<option value="134">Button - Real Coconut</option>
+		<option value="126">Button - real corozo</option>
+		<option value="19">Button - Wooden   2.9%</option>
+		<option value="20">Buttons - Plastic</option>
+		<option value="21">Chain Belts</option>
+		<option value="22">Cotton Bag</option>
+		<option value="23">Cow Hide Leather Patches</option>
+		<option value="24">Die Set</option>
+		<option value="25">Drawcords</option>
+		<option value="26">Elastic webbing</option>
+		<option value="27">Embroiered Patches</option>
+		<option value="28">Eyelet – Metal</option>
+		<option value="29">Felt Wristband</option>
+		<option value="30">Freight</option>
+		<option value="31">Handkerchief</option>
+		<option value="125">Hard case</option>
+		<option value="127">Heat Transfer</option>
+		<option value="32">Keychain - Metal</option>
+		<option value="33">Lanyards</option>
+		<option value="34">Leather Bags</option>
+		<option value="35">Leather Patches</option>
+		<option value="36">Leather Scraps</option>
+		<option value="37">Locks of Base Metal of Others</option>
+		<option value="38">Mesh Printed Nylon Bag</option>
+		<option value="39">METAL BADGE</option>
+		<option value="138">Metal bottle opener</option>
+		<option value="40">Metal Chain Belt</option>
+		<option value="41">Metal Jean Buttons-Brass</option>
+		<option value="42">Metal Jean Buttons-Steel</option>
+		<option value="43">Metal Keychain</option>
+		<option value="44">Metal Pin</option>
+		<option value="45">Metal Rings</option>
+		<option value="46">Metal Snap Button</option>
+		<option value="47">Mirror - Glass</option>
+		<option value="48">Mirror - Plastic</option>
+		<option value="49">Mould of Button</option>
+		<option selected="selected" value="50">N/A</option>
+		<option value="137">Notebooks</option>
+		<option value="51">Nugget Driver</option>
+		<option value="52">Nylon Bag</option>
+		<option value="53">Paper Accessories</option>
+		<option value="54">Paper Bag</option>
+		<option value="56">Paper Hang Tags</option>
+		<option value="131">Paper Leather Patch</option>
+		<option value="141">Paper Stickers</option>
+		<option value="57">Paperweight</option>
+		<option value="128">Plastic Box</option>
+		<option value="129">plastic bracelet</option>
+		<option value="58">Plastic buckle</option>
+		<option value="59">Plastic Button</option>
+		<option value="60">Plastic Cord Stops</option>
+		<option value="61">Plastic Hangers</option>
+		<option value="62">Plastic hook</option>
+		<option value="63">Plastic Other</option>
+		<option value="64">Plastic ring</option>
+		<option value="65">Plastic Seat Cover</option>
+		<option value="140">Plastic Tips</option>
+		<option value="114">Poly Bag</option>
+		<option value="66">Polyester Tape</option>
+		<option value="67">Polyester Webbing</option>
+		<option value="68">PU Belt</option>
+		<option value="69">PU Piping</option>
+		<option value="70">PU Waist pouch bag</option>
+		<option value="71">PU Wallet</option>
+		<option value="72">Punching Machine</option>
+		<option value="73">PVC bag</option>
+		<option value="74">PVC belt</option>
+		<option value="106">PVC Carpet</option>
+		<option value="75">PVC Hang Tags</option>
+		<option value="76">PVC key chain w/steel ball chain</option>
+		<option value="77">PVC Patches</option>
+		<option value="78">PVC Wallet</option>
+		<option value="79">PVC Wristbands</option>
+		<option value="122">RCTest</option>
+		<option value="80">Rivets - Steel</option>
+		<option value="81">Rivets- Brass</option>
+		<option value="82">Rubber Articles</option>
+		<option value="83">Rubber Band</option>
+		<option value="84">Rubber felt patch</option>
+		<option value="85">Rubber Hangtag</option>
+		<option value="86">Rubber Patches</option>
+		<option value="136">Self Adhesive Paper</option>
+		<option value="130">Silicon Patches</option>
+		<option value="87">Slide Fastener</option>
+		<option value="124">Slide fasteners - Metal</option>
+		<option value="143">SM TEST</option>
+		<option value="88">Socks - Cotton</option>
+		<option value="89">Socks - Nylon or Acrylic</option>
+		<option value="90">Steel Bottle opener</option>
+		<option value="91">Steel stick pin w/enamel</option>
+		<option value="92">Straw bag</option>
+		<option value="93">Straw Hat</option>
+		<option value="94">Surfboard covers</option>
+		<option value="95">Suspenders - Cotton</option>
+		<option value="96">Suspenders - Nylon</option>
+		<option value="97">Test</option>
+		<option value="98">Thermos</option>
+		<option value="99">Tin Boxes</option>
+		<option value="100">Tin Lunch Boxes</option>
+		<option value="101">Wallet - Cotton</option>
+		<option value="102">Wallet - Leather</option>
+		<option value="103">Wallet - Nylon</option>
+		<option value="104">Wallets - Cotton</option>
+		<option value="105">Wallets - Nylon</option>
+		<option value="107">Wax Comb - Plastic</option>
+		<option value="108">Waxcomb - Plastic Scraper</option>
+		<option value="109">Webbing - Cotton</option>
+		<option value="110">Webbing Belt – 100% Cotton</option>
+		<option value="111">Webbing Belt – 100% Nylon</option>
+		<option value="112">Webbing Nylon</option>
+		<option value="113">Woven Bottoms - 100% Cotton</option>
+		<option value="115">Woven Shirts - 100% Cotton</option>
+		<option value="116">Wristbands - Leather</option>
+		<option value="117">Wristbands - Printed Cotton</option>
+		<option value="118">Wristbands - Printed Nylon</option>
+		<option value="119">Wristbands - PVC</option>
+		<option value="120">Zipper Pull - 100% Metal</option>
+		<option value="121">Zipper Pull - Plastic</option>
+
+	</select>
+                    </td>
+                    <td align="right">
+                        <span id="lbl_Active_hd" class="MainHeader8">Active:</span>
+                    </td>
+                    <td>
+                        <span id="lbl_Active" class="body">Yes</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right">
+                        
+                    </td>
+                    <td>
+                        
+                    </td>
+                    <td align="right">
+                        
+                    </td>
+                    <td>
+                        
+                    </td>
+                    <td align="right">
+                        
+                    </td>
+                    <td>
+                        
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right">
+                        
+                    </td>
+                    <td>
+                        
+                    </td>
+                    <td colspan="3">
+                        
+                    </td>
+                    <td>
+                        
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right" nowrap="">
+                        
+                    </td>
+                    <td>
+                        
+                    </td>
+                    <td align="right">
+                        
+                    </td>
+                    <td>
+                        <select name="ddl_NeedsCutting" id="ddl_NeedsCutting" disabled="disabled" class="body" style="width:100px;">
+		<option selected="selected" value="0">Please Select</option>
+		<option value="Y">Yes</option>
+		<option value="N">No</option>
+
+	</select>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" nowrap="">
+                        
+                        
+                    </td>
+                    <td align="right" nowrap="">
+                        
+                    </td>
+                    <td>
+                        
+                    </td>
+                    <td colspan="2">
+                        &nbsp;&nbsp;
+                        &nbsp;&nbsp;
+                        &nbsp;&nbsp;
+                        
+                    </td>
+                </tr>
+            </tbody></table>
+            <br>
+            <table width="600" border="0" cellspacing="3" cellpadding="0" style="height: 220">
+                <tbody><tr>
+                    <td style="width: 33%; background-color: #CCCCCC; vertical-align: top; text-align: left">
+                        <table id="tbl_ArtworkImage" width="95%" border="0" cellspacing="2" cellpadding="0">
+		<tbody><tr>
+			<td valign="middle" colspan="2" style="height: 25">
+                                     
+                                    <span id="lbl_ArtworkImage" class="MainHeader">Artwork</span>
+                                </td>
+			<td>
+                                     
+                                </td>
+		</tr>
+		<tr>
+			<td colspan="3" style="text-align: center">
+                                    <a id="hyp_ArtworkImage" class="thumb80" onclick="MM_openBrWindow('../Bidnet2/ImageDisplay.aspx?ItemSuffix=9314247&amp;FileType=Artwork&amp;externallink=False','','toolbar=no,location=no,scrollbars=yes,status=yes,menubar=no,resizable=yes,width=490,height=400,left=20,top=20,alwaysRaised,screenX=0,screenY=0')" href="#" style="display:inline-block;border-width:0px;"><img src="https://app4.brandid.com/QAOSImages/16025/A/CI_16025PATC109314247_1.png" id="img_ArtworkImage" cssclass="thumb80" alt="Artwork Image" onerror="replaceImage(this, 'Images/Not-Available.png');" border="0" align="middle" style="vertical-align: middle; text-align: center"></a>
+                                </td>
+		</tr>
+		<tr>
+			<td>
+                                    &nbsp;
+                                    <a id="hyp_ArtworkImageDownload" title="Download" class="body" onclick="MM_openBrWindow('https://app4.brandid.com/Artwork/16025PATC10_9314247.pdf','','toolbar=no,location=no,scrollbars=yes,status=yes,menubar=no,resizable=yes,width=490,height=400,left=20,top=20,alwaysRaised,screenX=0,screenY=0')" href="#">Download</a>
+                                </td>
+			<td>
+                                    
+                                </td>
+			<td align="right">
+                                     
+                                </td>
+		</tr>
+		<tr>
+			<td align="right">
+                                    <span id="lbl_ArtworkImageUpdate_hd" class="MainHeader8">Update:</span>
+                                </td>
+			<td colspan="2" style="margin-left: 40px">
+                                    <span id="lbl_ArtworkImageUpdate" class="body">SERO Agent</span>
+                                </td>
+		</tr>
+		<tr>
+			<td align="right">
+                                    <span id="lbl_ArtworkImageDate_hd" class="MainHeader8">Date:</span>
+                                </td>
+			<td>
+                                    <span id="lbl_ArtworkImageDate" class="body">10/22/2025</span>
+                                </td>
+			<td align="right">
+                                    <a id="hyp_ArtworkImageHistory" title="History" class="body" onclick="MM_openBrWindow('../bidnet2/ArtworkHistory.aspx?ItemSuffixId=9314247&amp;UploadType=Artwork','ArtworkHistoryArtwork9314247','toolbar=no,location=no,scrollbars=yes,status=yes,menubar=no,resizable=yes,width=875,height=700,left=20,top=20,alwaysRaised,screenX=0,screenY=0')" href="#">History</a> 
+                                </td>
+		</tr>
+	</tbody></table>
+	
+                    </td>
+                    <td id="td_SampleImage" style="width: 33%; background-color: #ff0000; vertical-align: top; text-align: left">
+                        <table id="tbl_SampleImage" width="95%" border="0" cellspacing="2" cellpadding="0">
+		<tbody><tr>
+			<td valign="middle" colspan="3" style="height: 25">
+                                     
+                                    <span id="lbl_SampleImage" class="MainHeader">SAMPLE</span>
+                                </td>
+		</tr>
+		<tr>
+			<td colspan="3" style="text-align: center">
+                                    <a id="hyp_SampleImage" class="thumb80" onclick="MM_openBrWindow('../Bidnet2/ImageDisplay.aspx?ItemSuffix=9314247&amp;FileType=BID Sample&amp;externallink=False','','toolbar=no,location=no,scrollbars=yes,status=yes,menubar=no,resizable=yes,width=490,height=400,left=20,top=20,alwaysRaised,screenX=0,screenY=0')" href="#" style="display:inline-block;border-width:0px;"><img src="https://app4.brandid.com/QAOSImages/16025/CI_16025PATC109314247_2.jpg" id="img_SampleImage" cssclass="thumb80" alt="Sample Image" onerror="replaceImage(this, 'Images/Not-Available.png');" border="0" align="middle"></a>
+                                </td>
+		</tr>
+		<tr>
+			<td align="right">
+                                    <span id="lbl_SampleCompAppr_hd" class="MainHeader8">Appr:</span>
+                                </td>
+			<td>
+                                    <span id="lbl_SampleCompAppr" class="body" style="font-weight:bold;">No</span>&nbsp;&nbsp;&nbsp;
+                                    
+                                </td>
+			<td align="right">
+                                     
+                                </td>
+		</tr>
+		<tr>
+			<td align="right">
+                                    <span id="lbl_SampleImageUpdate_hd" class="MainHeader8">Update:</span>
+                                </td>
+			<td colspan="2">
+                                    <span id="lbl_SampleImageUpdate" class="body">Joe Chan</span>
+                                </td>
+		</tr>
+		<tr>
+			<td align="right">
+                                    <span id="lbl_SampleImageDate_hd" class="MainHeader8">Date:</span>
+                                </td>
+			<td>
+                                    <span id="lbl_SampleImageDate" class="body">1/6/2026</span>
+                                </td>
+			<td align="right">
+                                    <a id="hyp_SampleImageHistory" title="History" class="body" onclick="MM_openBrWindow('../bidnet2/ArtworkHistory.aspx?ItemSuffixId=9314247&amp;UploadType=BidSample','ArtworkHistoryBidSample9314247','toolbar=no,location=no,scrollbars=yes,status=yes,menubar=no,resizable=yes,width=875,height=700,left=20,top=20,alwaysRaised,screenX=0,screenY=0')" href="#">History</a> 
+                                </td>
+		</tr>
+	</tbody></table>
+	
+                    </td>
+	
+                    <td style="width: 33%; background-color: #CCCCCC; vertical-align: top; text-align: left">
+                        <table id="tbl_SampleProvidedImage" width="95%" border="0" cellspacing="2" cellpadding="0">
+		<tbody><tr>
+			<td valign="middle" colspan="3" style="height: 25">
+                                     
+                                    <span id="lbl_SampleProvidedImage" class="MainHeader">Sample Provided</span>
+                                </td>
+		</tr>
+		<tr>
+			<td colspan="3" style="text-align: center">
+                                    <a id="hyp_SampleProvidedImage" class="thumb80" href="#" style="display:inline-block;border-width:0px;"><img src="Images/Not-Available.png" id="img_SampleProvidedImage" cssclass="thumb80" alt="Sample Provided Image" onerror="replaceImage(this, 'Images/Not-Available.png');" border="0"></a>
+                                </td>
+		</tr>
+		<tr>
+			<td>
+                                </td>
+			<td>
+                                    
+                                </td>
+			<td align="right">
+                                     
+                                </td>
+		</tr>
+		<tr>
+			<td align="right">
+                                    <span id="lbl_SampleProvidedImageUpdate_hd" class="MainHeader8">Update:</span>
+                                </td>
+			<td colspan="2">
+                                    <span id="lbl_SampleProvidedImageUpdate" class="body"></span>
+                                </td>
+		</tr>
+		<tr>
+			<td align="right">
+                                    <span id="lbl_SampleProvidedImageDate_hd" class="MainHeader8">Date:</span>
+                                </td>
+			<td>
+                                    <span id="lbl_SampleProvidedImageDate" class="body"></span>
+                                </td>
+			<td align="right">
+                                    <a id="hyp_SampleProvidedImageHistory" title="History" class="body" onclick="MM_openBrWindow('../bidnet2/ArtworkHistory.aspx?ItemSuffixId=9314247&amp;UploadType=SampleProvided','ArtworkHistorySampleProvided9314247','toolbar=no,location=no,scrollbars=yes,status=yes,menubar=no,resizable=yes,width=875,height=700,left=20,top=20,alwaysRaised,screenX=0,screenY=0')" href="#">History</a> 
+                                </td>
+		</tr>
+	</tbody></table>
+	
+                    </td>
+                </tr>
+            </tbody></table>
+            <br>
+            
+            
+            <table width="800" border="0" cellpadding="0" cellspacing="2">
+                <tbody><tr>
+                    <td colspan="2">
+                        
+                    </td>
+                </tr>
+            </tbody></table>
+            <table width="800" border="0" cellpadding="0" cellspacing="2" style="height: 25">
+                <tbody><tr>
+                    <td style="background-color: #CCCCCC; width: 60%; height: 25">
+                         
+                        <span id="lbl_Details_hd" class="MainHeader">Details</span>
+                    </td>
+                    <td>
+                        <table border="0" width="100%" cellpadding="0" cellspacing="0">
+                           <tbody><tr>
+                                <td style="background-color: #CCCCCC; height: 25">
+                                     
+                                    <span id="lbl_Pricing_hd" class="MainHeader">Pricing</span>
+                                </td>
+                                <td align="right" style="background-color: #CCCCCC; height: 25">
+                                    &nbsp;
+                                </td>
+                            </tr>
+                        </tbody></table>
+                    </td>
+                </tr>
+                <tr>
+                    <td valign="top" style="width: 60%">
+                        <table width="100%" border="0" cellspacing="0" cellpadding="0" height="25"><tbody><tr><td class="body" width="28%"> </td><td class="body" width="50%"></td><td class="body" width="22%">&nbsp;</td></tr></tbody></table>
+                    </td>
+                    <td valign="top" colspan="2" style="width: 40%">
+                        <table width="100%" border="1'" bordercolor="#CCCCCC" cellspacing="0" cellpadding="4" height="25"><tbody><tr><td class="body" align="center">&nbsp;</td><td class="body" align="center">Vendor Price</td><td class="body" align="center">&nbsp;</td></tr><tr><td class="body" align="center" valign="top" width="33%">1</td><td class="body" align="right" valign="top" height="16" width="33%'">$0.00&nbsp;</td></tr><tr><td class="body" align="center" valign="top" width="33%">500</td><td class="body" align="right" valign="top" height="16" width="33%'">$0.00&nbsp;</td></tr><tr><td class="body" align="center" valign="top" width="33%">1M</td><td class="body" align="right" valign="top" height="16" width="33%'">$893.00&nbsp;</td></tr><tr><td class="body" align="center" valign="top" width="33%">1.5M</td><td class="body" align="right" valign="top" height="16" width="33%'">$893.00&nbsp;</td></tr><tr><td class="body" align="center" valign="top" width="33%">2M</td><td class="body" align="right" valign="top" height="16" width="33%'">$893.00&nbsp;</td></tr><tr><td class="body" align="center" valign="top" width="33%">2.5M</td><td class="body" align="right" valign="top" height="16" width="33%'">$805.00&nbsp;</td></tr><tr><td class="body" align="center" valign="top" width="33%">5M</td><td class="body" align="right" valign="top" height="16" width="33%'">$687.00&nbsp;</td></tr><tr><td class="body" align="center" valign="top" width="33%">10M</td><td class="body" align="right" valign="top" height="16" width="33%'">$605.00&nbsp;</td></tr><tr><td class="body" align="center" valign="top" width="33%">20M</td><td class="body" align="right" valign="top" height="16" width="33%'">$605.00&nbsp;</td></tr><tr><td class="body" align="center" valign="top" width="33%">25M</td><td class="body" align="right" valign="top" height="16" width="33%'">$568.00&nbsp;</td></tr><tr><td class="body" align="center" valign="top" width="33%">50M</td><td class="body" align="right" valign="top" height="16" width="33%'">$555.00&nbsp;</td></tr><tr><td class="body" align="center" valign="top" width="33%">75M</td><td class="body" align="right" valign="top" height="16" width="33%'">$555.00&nbsp;</td></tr><tr><td class="body" align="center" valign="top" width="33%">100M</td><td class="body" align="right" valign="top" height="16" width="33%'">$555.00&nbsp;</td></tr><tr><td class="body" align="center" valign="top" width="33%">250M</td><td class="body" align="right" valign="top" height="16" width="33%'">$555.00&nbsp;</td></tr><tr><td class="body" align="center" valign="top" width="33%">500M</td><td class="body" align="right" valign="top" height="16" width="33%'">$555.00&nbsp;</td></tr><tr><td class="body" align="center" valign="top" width="33%">1000M</td><td class="body" align="right" valign="top" height="16" width="33%'">$544.00&nbsp;</td></tr><tr><td class="body" align="center" valign="top" width="33%">1500M</td><td class="body" align="right" valign="top" height="16" width="33%'">$544.00&nbsp;</td></tr><tr><td class="body" align="center" valign="top" width="33%">2000M</td><td class="body" align="right" valign="top" height="16" width="33%'">$544.00&nbsp;</td></tr><tr><td class="body" align="center" valign="top" width="33%">2500M</td><td class="body" align="right" valign="top" height="16" width="33%'">$544.00&nbsp;</td></tr><tr><td class="body" align="center" valign="top" width="33%">3000M</td><td class="body" align="right" valign="top" height="16" width="33%'">$544.00&nbsp;</td></tr></tbody></table><table width="100%" border="0" cellpadding="4" cellspacing="0"><tbody><tr><td colspan="3" align="left class=" body'=""><div class="MainHeader">Pricing Note:</div><div class="body">These prices are quoted per 1000.<br>M = 1000.</div></td></tr></tbody></table>
+                    </td>
+                </tr>
+            </tbody></table>
+            <br>
+            <table width="800" border="0">
+                <tbody><tr>
+                    <td>
+                        <a href="javascript:void(0)" onclick="self.close();return false">
+                            <img src="images/closebuttonwhite.gif" border="0" height="21" width="66" alt="Close"></a>
+                        &nbsp;&nbsp;
+                        <img src="images/printButton.gif" border="0" height="21" onclick="javascript:window.print()" width="63" alt="Print">
+                    </td>
+                </tr>
+            </tbody></table>
+            <span id="lblItemId" class="MainHeader8">Item ID: 8198594</span>
+        
+</div>
+    </div>
+    <input name="hidSFURL" type="hidden" id="hidSFURL" style="WIDTH: 72px; HEIGHT: 22px" size="6" value="https://brandid.lightning.force.com/">
+
+    </form>
+
+
+</body></html>

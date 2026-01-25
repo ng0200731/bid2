@@ -1,0 +1,10 @@
+{
+  "login_url": "https://app.e-brandid.com/login/login.aspx",
+  "username": "sales10@fuchanghk.com",
+  "password": "fc31051856",
+  "po_detail_url": "https://app.e-brandid.com/Bidnet/bidnet3/factoryPODetail.aspx",
+  "download_directory": "./downloads",
+  "max_retries": 3,
+  "timeout_seconds": 30,
+  "headless": true
+}

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-BrandID System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Left Sidebar (20%) -->
+        <div class="sidebar">
+            <h2>E-BrandID</h2>
+            <button class="nav-button active" data-view="download-artwork">Download Artwork</button>
+            <button class="nav-button" data-view="order-status">Order Status</button>
+        </div>
+
+        <!-- Right Panel (80%) -->
+        <div class="main-panel">
+            <!-- Download Artwork View -->
+            <div id="download-artwork" class="view active">
+                <h1>Download Artwork</h1>
+
+                <div class="form-section">
+                    <label for="po-input">Enter PO Number(s):</label>
+                    <textarea id="po-input" rows="5" placeholder="Enter PO numbers (one per line)&#10;Example:&#10;1303061&#10;1307938"></textarea>
+
+                    <button id="download-btn" class="submit-btn">Start Download</button>
+                </div>
+
+                <div id="progress-section" class="progress-section" style="display: none;">
+                    <h2>Progress</h2>
+                    <div id="progress-log"></div>
+                </div>
+
+                <div id="results-section" class="results-section" style="display: none;">
+                    <h2>Results</h2>
+                    <table id="results-table">
+                        <thead>
+                            <tr>
+                                <th>PO Number</th>
+                                <th>Status</th>
+                                <th>Items Processed</th>
+                                <th>Files Downloaded</th>
+                                <th>Total Size</th>
+                                <th>Errors</th>
+                            </tr>
+                        </thead>
+                        <tbody id="results-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Order Status View -->
+            <div id="order-status" class="view">
+                <h1>Order Status</h1>
+
+                <div class="form-section">
+                    <label for="status-search">Search PO Number:</label>
+                    <input type="text" id="status-search" placeholder="Enter PO number">
+                    <button class="submit-btn">Search</button>
+                </div>
+
+                <div class="info-box">
+                    <p>Order Status functionality coming soon...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

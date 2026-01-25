@@ -1,0 +1,19 @@
+{
+  "name": "ebrandid-artwork-downloader",
+  "version": "1.0.0",
+  "description": "Automated artwork downloader for e-brandid system",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "server": "node server.js",
+    "test": "node test.js"
+  },
+  "keywords": ["automation", "artwork", "download"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.40.0",
+    "express": "^4.18.2"
+  }
+}
