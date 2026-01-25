@@ -145,3 +145,207 @@ function formatBytes(bytes) {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
 }
+
+// Order Status functionality
+const searchBtn = document.getElementById('search-btn');
+const showAllBtn = document.getElementById('show-all-btn');
+const statusSearch = document.getElementById('status-search');
+const ordersListSection = document.getElementById('orders-list-section');
+const ordersBody = document.getElementById('orders-body');
+const poDetailSection = document.getElementById('po-detail-section');
+const poHeaderInfo = document.getElementById('po-header-info');
+const poItemsBody = document.getElementById('po-items-body');
+const backToListBtn = document.getElementById('back-to-list-btn');
+
+// Show all orders
+showAllBtn.addEventListener('click', async () => {
+    await loadAllOrders();
+});
+
+// Search orders
+searchBtn.addEventListener('click', async () => {
+    const searchTerm = statusSearch.value.trim();
+    if (!searchTerm) {
+        alert('Please enter a search term');
+        return;
+    }
+    await searchOrders(searchTerm);
+});
+
+// Allow Enter key to search
+statusSearch.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        searchBtn.click();
+    }
+});
+
+// Back to list
+backToListBtn.addEventListener('click', () => {
+    poDetailSection.style.display = 'none';
+    ordersListSection.style.display = 'block';
+});
+
+async function loadAllOrders() {
+    try {
+        const response = await fetch('/api/orders');
+        const orders = await response.json();
+        displayOrdersList(orders);
+    } catch (error) {
+        alert('Error loading orders: ' + error.message);
+    }
+}
+
+async function searchOrders(term) {
+    try {
+        const response = await fetch(`/api/orders/search/${encodeURIComponent(term)}`);
+        const orders = await response.json();
+        displayOrdersList(orders);
+    } catch (error) {
+        alert('Error searching orders: ' + error.message);
+    }
+}
+
+function displayOrdersList(orders) {
+    ordersBody.innerHTML = '';
+    ordersListSection.style.display = 'block';
+    poDetailSection.style.display = 'none';
+
+    if (orders.length === 0) {
+        ordersBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No orders found</td></tr>';
+        return;
+    }
+
+    orders.forEach(order => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${order.po_number}</td>
+            <td>${order.status || 'N/A'}</td>
+            <td>${order.company || 'N/A'}</td>
+            <td>${order.vendor_name || 'N/A'}</td>
+            <td>${order.currency || 'N/A'}</td>
+            <td>${order.updated_at ? new Date(order.updated_at).toLocaleDateString() : 'N/A'}</td>
+            <td><button class="view-detail-btn" data-po="${order.po_number}">View Details</button></td>
+        `;
+        ordersBody.appendChild(row);
+    });
+
+    // Add click handlers to view detail buttons
+    document.querySelectorAll('.view-detail-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const poNumber = e.target.getAttribute('data-po');
+            await loadPODetail(poNumber);
+        });
+    });
+}
+
+async function loadPODetail(poNumber) {
+    try {
+        const response = await fetch(`/api/orders/${poNumber}`);
+        const data = await response.json();
+        displayPODetail(data);
+    } catch (error) {
+        alert('Error loading PO details: ' + error.message);
+    }
+}
+
+function displayPODetail(data) {
+    ordersListSection.style.display = 'none';
+    poDetailSection.style.display = 'block';
+
+    // Display header information
+    poHeaderInfo.innerHTML = `
+        <table style="width: 100%; border: 1px solid black; margin-bottom: 20px;">
+            <tr>
+                <td style="padding: 10px; border: 1px solid black;"><strong>PO #:</strong></td>
+                <td style="padding: 10px; border: 1px solid black;">${data.po_number}</td>
+                <td style="padding: 10px; border: 1px solid black;"><strong>Status:</strong></td>
+                <td style="padding: 10px; border: 1px solid black;">${data.status || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid black;"><strong>Company:</strong></td>
+                <td style="padding: 10px; border: 1px solid black;">${data.company || 'N/A'}</td>
+                <td style="padding: 10px; border: 1px solid black;"><strong>Currency:</strong></td>
+                <td style="padding: 10px; border: 1px solid black;">${data.currency || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid black;"><strong>Terms:</strong></td>
+                <td style="padding: 10px; border: 1px solid black;">${data.terms || 'N/A'}</td>
+                <td style="padding: 10px; border: 1px solid black;"><strong>Cancel Date:</strong></td>
+                <td style="padding: 10px; border: 1px solid black;">${data.cancel_date || 'N/A'}</td>
+            </tr>
+        </table>
+
+        <h3>Vendor Information</h3>
+        <table style="width: 100%; border: 1px solid black; margin-bottom: 20px;">
+            <tr>
+                <td style="padding: 10px; border: 1px solid black;"><strong>Purchased From:</strong></td>
+                <td style="padding: 10px; border: 1px solid black;">${data.vendor_name || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid black;"><strong>Address:</strong></td>
+                <td style="padding: 10px; border: 1px solid black;">
+                    ${data.vendor_address1 || ''}<br>
+                    ${data.vendor_address2 || ''}<br>
+                    ${data.vendor_address3 || ''}
+                </td>
+            </tr>
+        </table>
+
+        <h3>Ship To Information</h3>
+        <table style="width: 100%; border: 1px solid black; margin-bottom: 20px;">
+            <tr>
+                <td style="padding: 10px; border: 1px solid black;"><strong>Ship To:</strong></td>
+                <td style="padding: 10px; border: 1px solid black;">${data.ship_to_name || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid black;"><strong>Address:</strong></td>
+                <td style="padding: 10px; border: 1px solid black;">
+                    ${data.ship_to_address1 || ''}<br>
+                    ${data.ship_to_address2 || ''}<br>
+                    ${data.ship_to_address3 || ''}
+                </td>
+            </tr>
+        </table>
+    `;
+
+    // Display line items
+    poItemsBody.innerHTML = '';
+    if (data.items && data.items.length > 0) {
+        let totalQty = 0;
+        let totalAmount = 0;
+
+        data.items.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${item.item_number}</td>
+                <td>${item.description}</td>
+                <td>${item.color}</td>
+                <td>${item.ship_to}</td>
+                <td>${item.need_by}</td>
+                <td style="text-align: right;">${item.qty}</td>
+                <td>${item.bundle_qty}</td>
+                <td style="text-align: right;">$${item.unit_price ? item.unit_price.toFixed(5) : '0.00000'}</td>
+                <td style="text-align: right;">$${item.extension ? item.extension.toFixed(2) : '0.00'}</td>
+            `;
+            poItemsBody.appendChild(row);
+
+            totalQty += item.qty || 0;
+            totalAmount += item.extension || 0;
+        });
+
+        // Add total row
+        const totalRow = document.createElement('tr');
+        totalRow.style.fontWeight = 'bold';
+        totalRow.innerHTML = `
+            <td colspan="5" style="text-align: right;">Total:</td>
+            <td style="text-align: right;">${totalQty}</td>
+            <td></td>
+            <td></td>
+            <td style="text-align: right;">$${totalAmount.toFixed(2)}</td>
+        `;
+        poItemsBody.appendChild(totalRow);
+    } else {
+        poItemsBody.innerHTML = '<tr><td colspan="9" style="text-align: center;">No items found</td></tr>';
+    }
+}
+

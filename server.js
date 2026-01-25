@@ -2,12 +2,17 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import EBrandIDDownloader from './index.js';
+import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3000;
+const PORT = 8765;
+
+// Initialize database
+await initDatabase();
+console.log('Database initialized');
 
 // Middleware
 app.use(express.json());
@@ -96,6 +101,44 @@ app.get('/api/downloads/:poNumber', (req, res) => {
   const poResult = latestJob.results.find(r => r.poNumber === poNumber);
 
   res.json(poResult);
+});
+
+// Get all POs from database
+app.get('/api/orders', (req, res) => {
+  try {
+    const orders = getAllPOs();
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get specific PO details
+app.get('/api/orders/:poNumber', (req, res) => {
+  try {
+    const { poNumber } = req.params;
+    const po = getPOByNumber(poNumber);
+
+    if (!po) {
+      return res.status(404).json({ error: 'PO not found' });
+    }
+
+    const items = getPOItems(poNumber);
+    res.json({ ...po, items });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Search POs
+app.get('/api/orders/search/:term', (req, res) => {
+  try {
+    const { term } = req.params;
+    const results = searchPOs(term);
+    res.json(results);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Background download processor

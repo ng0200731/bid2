@@ -2,6 +2,7 @@ import { chromium } from 'playwright';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { initDatabase, savePOHeader, savePOItem, saveDownloadHistory } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -92,6 +93,85 @@ class EBrandIDDownloader {
 
     console.log(`Successfully navigated to PO ${poNumber}`);
     return true;
+  }
+
+  /**
+   * Extract PO header information from the page
+   */
+  async extractPOHeader(poNumber) {
+    console.log('Extracting PO header information...');
+
+    const poData = await this.page.evaluate(() => {
+      const getText = (selector) => {
+        const el = document.querySelector(selector);
+        return el ? el.textContent.trim() : '';
+      };
+
+      return {
+        poNumber: getText('#lblBidPOid'),
+        status: getText('#lblStatus').replace(/<[^>]*>/g, '').replace(/\*+/g, '').trim(),
+        company: getText('#lblCompany'),
+        currency: getText('#lblCurrency'),
+        terms: getText('#lblTerms'),
+        vendorName: getText('#lblVendorName'),
+        vendorAddress1: getText('#lblVendAddr1'),
+        vendorAddress2: getText('#lblVendAddr2'),
+        vendorAddress3: getText('#lblVendAddr3'),
+        shipToName: getText('#lblBIDName'),
+        shipToAddress1: getText('#lblBIDAddr1'),
+        shipToAddress2: getText('#lblBIDAddr2'),
+        shipToAddress3: getText('#lblBIDAddr3'),
+        cancelDate: getText('#lblCancelDate'),
+        totalAmount: null
+      };
+    });
+
+    poData.poNumber = poNumber; // Ensure PO number is set
+    return poData;
+  }
+
+  /**
+   * Extract PO line items from the page
+   */
+  async extractPOItems(poNumber) {
+    console.log('Extracting PO line items...');
+
+    const items = await this.page.evaluate(() => {
+      const rows = Array.from(document.querySelectorAll('#tblItems tbody tr, table[id*="tblItems"] tbody tr'));
+      const itemRows = rows.filter(row => {
+        const cells = row.querySelectorAll('td');
+        return cells.length >= 9 && !row.classList.contains('tableHeaderText');
+      });
+
+      return itemRows.map(row => {
+        const cells = Array.from(row.querySelectorAll('td'));
+        if (cells.length < 9) return null;
+
+        const parsePrice = (str) => {
+          const cleaned = str.replace(/[$,]/g, '').trim();
+          return cleaned ? parseFloat(cleaned) : 0;
+        };
+
+        const parseInt = (str) => {
+          const cleaned = str.replace(/[,]/g, '').trim();
+          return cleaned && cleaned !== 'NA' ? Number(cleaned) : 0;
+        };
+
+        return {
+          itemNumber: cells[0].textContent.trim(),
+          description: cells[1].textContent.trim(),
+          color: cells[2].textContent.trim(),
+          shipTo: cells[3].textContent.trim(),
+          needBy: cells[4].textContent.trim(),
+          qty: parseInt(cells[5].textContent),
+          bundleQty: cells[6].textContent.trim(),
+          unitPrice: parsePrice(cells[7].textContent),
+          extension: parsePrice(cells[8].textContent)
+        };
+      }).filter(item => item !== null && item.itemNumber && !item.itemNumber.includes('Total'));
+    });
+
+    return items.map(item => ({ ...item, poNumber }));
   }
 
   /**
@@ -233,6 +313,24 @@ class EBrandIDDownloader {
       // Navigate to PO page
       await this.navigateToPO(poNumber);
 
+      // Extract and save PO header information
+      try {
+        const poHeader = await this.extractPOHeader(poNumber);
+        savePOHeader(poHeader);
+        console.log('✓ PO header saved to database');
+      } catch (error) {
+        console.log(`⚠ Could not save PO header: ${error.message}`);
+      }
+
+      // Extract and save PO line items
+      try {
+        const poItems = await this.extractPOItems(poNumber);
+        poItems.forEach(item => savePOItem(item));
+        console.log(`✓ ${poItems.length} line items saved to database`);
+      } catch (error) {
+        console.log(`⚠ Could not save PO items: ${error.message}`);
+      }
+
       // Get all item links
       const items = await this.getItemLinks();
       result.itemsProcessed = items.length;
@@ -261,6 +359,19 @@ class EBrandIDDownloader {
             reason: downloadResult.reason
           });
         }
+      }
+
+      // Save download history to database
+      try {
+        saveDownloadHistory({
+          poNumber: poNumber,
+          filesDownloaded: result.filesDownloaded,
+          totalSize: result.totalSize,
+          status: result.status
+        });
+        console.log('✓ Download history saved to database');
+      } catch (error) {
+        console.log(`⚠ Could not save download history: ${error.message}`);
       }
 
       console.log(`\n${'='.repeat(60)}`);
@@ -380,6 +491,10 @@ async function main() {
 
   console.log(`Processing ${poNumbers.length} PO(s): ${poNumbers.join(', ')}`);
 
+  // Initialize database
+  await initDatabase();
+  console.log('Database initialized');
+
   const downloader = new EBrandIDDownloader();
 
   try {
@@ -395,7 +510,7 @@ async function main() {
 }
 
 // Run if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file:///${process.argv[1].replace(/\\/g, '/')}`) {
   main();
 }
 

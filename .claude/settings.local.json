@@ -15,7 +15,18 @@
       "Bash(git commit -m \"$\\(cat <<''EOF''\nInitial commit: E-BrandID Artwork Downloader with Web Interface\n\nComplete automation tool for downloading artwork files from e-brandid system:\n- Web interface with split-screen layout \\(20% sidebar, 80% main panel\\)\n- Express.js backend server with RESTful API\n- Playwright-based automation for login and artwork extraction\n- Batch processing support for multiple PO numbers\n- Real-time progress tracking and detailed reporting\n- Organized file structure with downloads by PO number\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git branch:*)",
       "Bash(git remote add:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(tee:*)",
+      "Bash(timeout 3 bash:*)",
+      "Bash(cmd /c start-server.bat:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(ls:*)",
+      "Bash(curl:*)",
+      "Bash(find:*)",
+      "Bash(tasklist:*)",
+      "Bash(powershell -Command:*)"
     ]
   }
 }

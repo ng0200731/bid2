@@ -58,12 +58,54 @@
 
                 <div class="form-section">
                     <label for="status-search">Search PO Number:</label>
-                    <input type="text" id="status-search" placeholder="Enter PO number">
-                    <button class="submit-btn">Search</button>
+                    <input type="text" id="status-search" placeholder="Enter PO number or vendor name">
+                    <button id="search-btn" class="submit-btn">Search</button>
+                    <button id="show-all-btn" class="submit-btn">Show All Orders</button>
                 </div>
 
-                <div class="info-box">
-                    <p>Order Status functionality coming soon...</p>
+                <div id="orders-list-section" class="results-section" style="display: none;">
+                    <h2>Purchase Orders</h2>
+                    <table id="orders-table">
+                        <thead>
+                            <tr>
+                                <th>PO Number</th>
+                                <th>Status</th>
+                                <th>Company</th>
+                                <th>Vendor</th>
+                                <th>Currency</th>
+                                <th>Updated</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-body">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="po-detail-section" class="results-section" style="display: none;">
+                    <h2>PO Details</h2>
+                    <button id="back-to-list-btn" class="submit-btn">← Back to List</button>
+
+                    <div id="po-header-info"></div>
+
+                    <h3>Line Items</h3>
+                    <table id="po-items-table">
+                        <thead>
+                            <tr>
+                                <th>Item #</th>
+                                <th>Description</th>
+                                <th>Color</th>
+                                <th>Ship To</th>
+                                <th>Need By</th>
+                                <th>Qty</th>
+                                <th>Bundle Qty</th>
+                                <th>$ Unit Price</th>
+                                <th>Extension</th>
+                            </tr>
+                        </thead>
+                        <tbody id="po-items-body">
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
