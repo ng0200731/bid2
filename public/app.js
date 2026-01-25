@@ -148,6 +148,7 @@ function formatBytes(bytes) {
 
 // Order Status functionality
 const searchBtn = document.getElementById('search-btn');
+const loadMoreBtn = document.getElementById('load-more-btn');
 const showAllBtn = document.getElementById('show-all-btn');
 const statusSearch = document.getElementById('status-search');
 const ordersListSection = document.getElementById('orders-list-section');
@@ -156,6 +157,25 @@ const poDetailSection = document.getElementById('po-detail-section');
 const poHeaderInfo = document.getElementById('po-header-info');
 const poItemsBody = document.getElementById('po-items-body');
 const backToListBtn = document.getElementById('back-to-list-btn');
+
+let currentOffset = 0;
+let currentOrders = [];
+
+// Auto-load latest 10 POs when Order Status view is activated
+document.querySelectorAll('.nav-button').forEach(button => {
+    const originalClickHandler = button.onclick;
+    button.addEventListener('click', () => {
+        if (button.getAttribute('data-view') === 'order-status') {
+            loadLatestOrders(10);
+        }
+    });
+});
+
+// Load more orders (10 more)
+loadMoreBtn.addEventListener('click', async () => {
+    currentOffset += 10;
+    await loadLatestOrders(10, currentOffset, true);
+});
 
 // Show all orders
 showAllBtn.addEventListener('click', async () => {
@@ -185,10 +205,35 @@ backToListBtn.addEventListener('click', () => {
     ordersListSection.style.display = 'block';
 });
 
+async function loadLatestOrders(limit = 10, offset = 0, append = false) {
+    try {
+        const response = await fetch(`/api/orders?limit=${limit}&offset=${offset}`);
+        const orders = await response.json();
+
+        if (append) {
+            // If no more records, show alert and don't update display
+            if (orders.length === 0) {
+                alert('No more records to load');
+                return;
+            }
+            currentOrders = currentOrders.concat(orders);
+        } else {
+            currentOrders = orders;
+            currentOffset = 0;
+        }
+
+        displayOrdersList(currentOrders);
+    } catch (error) {
+        alert('Error loading orders: ' + error.message);
+    }
+}
+
 async function loadAllOrders() {
     try {
         const response = await fetch('/api/orders');
         const orders = await response.json();
+        currentOrders = orders;
+        currentOffset = 0;
         displayOrdersList(orders);
     } catch (error) {
         alert('Error loading orders: ' + error.message);
@@ -199,6 +244,8 @@ async function searchOrders(term) {
     try {
         const response = await fetch(`/api/orders/search/${encodeURIComponent(term)}`);
         const orders = await response.json();
+        currentOrders = orders;
+        currentOffset = 0;
         displayOrdersList(orders);
     } catch (error) {
         alert('Error searching orders: ' + error.message);
@@ -217,14 +264,29 @@ function displayOrdersList(orders) {
 
     orders.forEach(order => {
         const row = document.createElement('tr');
+
+        // Format created_at as YYYY/MM/DD HH:mm:ss
+        let formattedDate = 'N/A';
+        if (order.created_at) {
+            const date = new Date(order.created_at);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            formattedDate = `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+        }
+
         row.innerHTML = `
             <td>${order.po_number}</td>
             <td>${order.status || 'N/A'}</td>
             <td>${order.company || 'N/A'}</td>
             <td>${order.vendor_name || 'N/A'}</td>
             <td>${order.currency || 'N/A'}</td>
-            <td>${order.updated_at ? new Date(order.updated_at).toLocaleDateString() : 'N/A'}</td>
+            <td>${formattedDate}</td>
             <td><button class="view-detail-btn" data-po="${order.po_number}">View Details</button></td>
+            <td><button class="qc-report-btn" data-po="${order.po_number}">QC report</button></td>
         `;
         ordersBody.appendChild(row);
     });
@@ -236,6 +298,14 @@ function displayOrdersList(orders) {
             await loadPODetail(poNumber);
         });
     });
+
+    // Add click handlers to QC report buttons
+    document.querySelectorAll('.qc-report-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const poNumber = e.target.getAttribute('data-po');
+            await generateQCReport(poNumber);
+        });
+    });
 }
 
 async function loadPODetail(poNumber) {
@@ -245,6 +315,33 @@ async function loadPODetail(poNumber) {
         displayPODetail(data);
     } catch (error) {
         alert('Error loading PO details: ' + error.message);
+    }
+}
+
+async function generateQCReport(poNumber) {
+    try {
+        const response = await fetch(`/api/qc-report/${poNumber}`);
+
+        if (!response.ok) {
+            throw new Error(`Failed to generate QC report: ${response.statusText}`);
+        }
+
+        // Get the blob from the response
+        const blob = await response.blob();
+
+        // Create a download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${new Date().toISOString().split('T')[0]}-${poNumber}-qc.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        alert(`QC report generated successfully for PO ${poNumber}`);
+    } catch (error) {
+        alert('Error generating QC report: ' + error.message);
     }
 }
 

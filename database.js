@@ -197,10 +197,29 @@ export function saveDownloadHistory(historyData) {
 }
 
 /**
- * Get all PO headers
+ * Get all PO headers with optional pagination
+ * @param {number} limit - Maximum number of records to return (optional)
+ * @param {number} offset - Number of records to skip (optional)
  */
-export function getAllPOs() {
-  const stmt = db.prepare('SELECT * FROM po_headers ORDER BY updated_at DESC');
+export function getAllPOs(limit = null, offset = 0) {
+  // First get total count to handle offset properly
+  const countStmt = db.prepare('SELECT COUNT(*) as count FROM po_headers');
+  countStmt.step();
+  const totalCount = countStmt.getAsObject().count;
+  countStmt.free();
+
+  // If offset is beyond total records, return empty array
+  if (offset >= totalCount) {
+    return [];
+  }
+
+  let query = 'SELECT * FROM po_headers ORDER BY created_at DESC';
+
+  if (limit !== null) {
+    query += ` LIMIT ${parseInt(limit)} OFFSET ${parseInt(offset)}`;
+  }
+
+  const stmt = db.prepare(query);
   const results = [];
 
   while (stmt.step()) {

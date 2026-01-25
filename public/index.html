@@ -60,7 +60,8 @@
                     <label for="status-search">Search PO Number:</label>
                     <input type="text" id="status-search" placeholder="Enter PO number or vendor name">
                     <button id="search-btn" class="submit-btn">Search</button>
-                    <button id="show-all-btn" class="submit-btn">Show All Orders</button>
+                    <button id="load-more-btn" class="submit-btn">More (10 more)</button>
+                    <button id="show-all-btn" class="submit-btn">All</button>
                 </div>
 
                 <div id="orders-list-section" class="results-section" style="display: none;">
@@ -73,8 +74,9 @@
                                 <th>Company</th>
                                 <th>Vendor</th>
                                 <th>Currency</th>
-                                <th>Updated</th>
+                                <th>Created</th>
                                 <th>Action</th>
+                                <th>QC</th>
                             </tr>
                         </thead>
                         <tbody id="orders-body">
