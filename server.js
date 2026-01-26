@@ -162,6 +162,51 @@ app.get('/api/orders/search/:term', (req, res) => {
   }
 });
 
+// Get profile (username and password)
+app.get('/api/profile', (req, res) => {
+  try {
+    const configPath = path.join(__dirname, 'config.json');
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+
+    res.json({
+      username: config.username || '',
+      password: config.password || ''
+    });
+  } catch (error) {
+    console.error('Error loading profile:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update profile (username and password)
+app.post('/api/profile', (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required' });
+    }
+
+    const configPath = path.join(__dirname, 'config.json');
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+
+    // Update credentials
+    config.username = username;
+    config.password = password;
+
+    // Write back to config.json
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully'
+    });
+  } catch (error) {
+    console.error('Error saving profile:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Generate QC report
 app.get('/api/qc-report/:poNumber', (req, res) => {
   try {
@@ -292,8 +337,27 @@ async function processDownload(jobId, poNumbers) {
   }
 }
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`E-BrandID Web Server running at http://localhost:${PORT}`);
-  console.log(`Open your browser to http://localhost:${PORT} to use the interface`);
-});
+// Start server with automatic port fallback
+function startServer(port, maxAttempts = 10) {
+  const server = app.listen(port, () => {
+    console.log(`E-BrandID Web Server running at http://localhost:${port}`);
+    console.log(`Open your browser to http://localhost:${port} to use the interface`);
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.log(`Port ${port} is already in use, trying port ${port + 1}...`);
+      if (maxAttempts > 1) {
+        startServer(port + 1, maxAttempts - 1);
+      } else {
+        console.error('Could not find an available port after multiple attempts');
+        process.exit(1);
+      }
+    } else {
+      console.error('Server error:', err);
+      process.exit(1);
+    }
+  });
+}
+
+startServer(PORT);
