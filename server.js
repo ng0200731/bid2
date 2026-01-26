@@ -20,6 +20,7 @@ console.log('Database initialized');
 // Middleware
 app.use(express.json());
 app.use(express.static('public'));
+app.use('/downloads', express.static('downloads')); // Serve downloaded files
 
 // Store active jobs
 const jobs = new Map();
