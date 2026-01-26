@@ -56,8 +56,8 @@ async function testEBrandIDApp() {
 
     try {
         // 1. Load application
-        console.log('\n1. Loading application at http://localhost:8765...');
-        await page.goto('http://localhost:8765');
+        console.log('\n1. Loading application at http://localhost:8766...');
+        await page.goto('http://localhost:8766');
         await page.waitForLoadState('networkidle');
         await addOverlay(page, '📱 Application Homepage - Initial Load');
         await page.screenshot({ path: path.join(screenshotsDir, '01_homepage.png'), fullPage: true });
