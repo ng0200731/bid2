@@ -73,6 +73,73 @@ class EBrandIDDownloader {
   }
 
   /**
+   * Extract PO data from the Purchase Order list table
+   * @param {string} poNumber - Purchase Order number
+   */
+  async extractPOListData(poNumber) {
+    console.log(`\nSearching for PO ${poNumber} in list...`);
+
+    try {
+      // Navigate to Purchase Order list page
+      const listUrl = 'https://app.e-brandid.com/Bidnet/bidnet3/factoryPO.aspx';
+      await this.page.goto(listUrl, {
+        waitUntil: 'networkidle',
+        timeout: config.timeout_seconds * 1000
+      });
+
+      // Select "All" from status dropdown
+      await this.page.selectOption('#ddlStatus', '0');
+      await this.page.waitForTimeout(500);
+
+      // Enter PO number in search box
+      await this.page.fill('#txtWONum', poNumber);
+      await this.page.waitForTimeout(500);
+
+      // Submit search (look for search button or form)
+      await this.page.press('#txtWONum', 'Enter');
+      await this.page.waitForTimeout(2000);
+
+      // Extract data from the table row
+      const listData = await this.page.evaluate((po) => {
+        // Find the table row containing this PO number
+        const rows = Array.from(document.querySelectorAll('table tr'));
+        const poRow = rows.find(row => {
+          const cells = row.querySelectorAll('td');
+          return cells.length > 0 && cells[0].textContent.trim() === po;
+        });
+
+        if (!poRow) {
+          return null;
+        }
+
+        const cells = poRow.querySelectorAll('td');
+        return {
+          poNumber: cells[0]?.textContent.trim() || '',
+          vendorName: cells[1]?.textContent.trim() || '',
+          poDate: cells[2]?.textContent.trim() || '',
+          shipBy: cells[3]?.textContent.trim() || '',
+          shipVia: cells[4]?.textContent.trim() || '',
+          orderType: cells[5]?.textContent.trim() || '',
+          status: cells[6]?.textContent.trim() || '',
+          loc: cells[7]?.textContent.trim() || '',
+          prodRep: cells[8]?.textContent.trim() || ''
+        };
+      }, poNumber);
+
+      if (listData) {
+        console.log('✓ Found PO in list, extracted table data');
+        return listData;
+      } else {
+        console.log('⚠ PO not found in list table');
+        return null;
+      }
+    } catch (error) {
+      console.log(`⚠ Could not extract list data: ${error.message}`);
+      return null;
+    }
+  }
+
+  /**
    * Navigate to PO detail page
    * @param {string} poNumber - Purchase Order number
    */
@@ -98,7 +165,7 @@ class EBrandIDDownloader {
   /**
    * Extract PO header information from the page
    */
-  async extractPOHeader(poNumber) {
+  async extractPOHeader(poNumber, listData = null) {
     console.log('Extracting PO header information...');
 
     const poData = await this.page.evaluate(() => {
@@ -122,17 +189,38 @@ class EBrandIDDownloader {
         shipToAddress2: getText('#lblBIDAddr2'),
         shipToAddress3: getText('#lblBIDAddr3'),
         cancelDate: getText('#lblCancelDate'),
-        totalAmount: null,
-        poDate: getText('#lblPODate'),
-        shipBy: getText('#lblShipBy'),
-        shipVia: getText('#lblShipVia'),
-        orderType: getText('#lblOrderType'),
-        loc: getText('#lblLoc'),
-        prodRep: getText('#lblProdRep')
+        totalAmount: null
       };
     });
 
     poData.poNumber = poNumber; // Ensure PO number is set
+
+    // Merge list data if available
+    if (listData) {
+      poData.poDate = listData.poDate || null;
+      poData.shipBy = listData.shipBy || null;
+      poData.shipVia = listData.shipVia || null;
+      poData.orderType = listData.orderType || null;
+      poData.loc = listData.loc || null;
+      poData.prodRep = listData.prodRep || null;
+      // Use status from list if detail page status is empty
+      if (!poData.status && listData.status) {
+        poData.status = listData.status;
+      }
+      // Use vendor name from list if detail page vendor name is empty
+      if (!poData.vendorName && listData.vendorName) {
+        poData.vendorName = listData.vendorName;
+      }
+    } else {
+      // Set to null if no list data
+      poData.poDate = null;
+      poData.shipBy = null;
+      poData.shipVia = null;
+      poData.orderType = null;
+      poData.loc = null;
+      poData.prodRep = null;
+    }
+
     return poData;
   }
 
@@ -313,12 +401,15 @@ class EBrandIDDownloader {
     };
 
     try {
-      // Navigate to PO page
+      // First, extract data from the PO list table
+      const listData = await this.extractPOListData(poNumber);
+
+      // Navigate to PO detail page
       await this.navigateToPO(poNumber);
 
-      // Extract and save PO header information
+      // Extract and save PO header information (merge with list data)
       try {
-        const poHeader = await this.extractPOHeader(poNumber);
+        const poHeader = await this.extractPOHeader(poNumber, listData);
         savePOHeader(poHeader);
         console.log('✓ PO header saved to database');
       } catch (error) {
@@ -371,12 +462,15 @@ class EBrandIDDownloader {
     };
 
     try {
-      // Navigate to PO page
+      // First, extract data from the PO list table
+      const listData = await this.extractPOListData(poNumber);
+
+      // Navigate to PO detail page
       await this.navigateToPO(poNumber);
 
-      // Extract and save PO header information
+      // Extract and save PO header information (merge with list data)
       try {
-        const poHeader = await this.extractPOHeader(poNumber);
+        const poHeader = await this.extractPOHeader(poNumber, listData);
         savePOHeader(poHeader);
         console.log('✓ PO header saved to database');
       } catch (error) {
