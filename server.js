@@ -157,7 +157,19 @@ app.get('/api/orders', (req, res) => {
     const limit = req.query.limit ? parseInt(req.query.limit) : null;
     const offset = req.query.offset ? parseInt(req.query.offset) : 0;
     const orders = getAllPOs(limit, offset);
-    res.json(orders);
+
+    // Add quantity totals for each PO
+    const ordersWithQty = orders.map(order => {
+      const items = getPOItems(order.po_number);
+      const totalQty = items.reduce((sum, item) => {
+        const qtyStr = String(item.qty || 0);
+        const qty = parseInt(qtyStr.replace(/,/g, '')) || 0;
+        return sum + qty;
+      }, 0);
+      return { ...order, total_qty: totalQty };
+    });
+
+    res.json(ordersWithQty);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -168,7 +180,19 @@ app.get('/api/orders/search/:term', (req, res) => {
   try {
     const { term } = req.params;
     const results = searchPOs(term);
-    res.json(results);
+
+    // Add quantity totals for each PO
+    const resultsWithQty = results.map(order => {
+      const items = getPOItems(order.po_number);
+      const totalQty = items.reduce((sum, item) => {
+        const qtyStr = String(item.qty || 0);
+        const qty = parseInt(qtyStr.replace(/,/g, '')) || 0;
+        return sum + qty;
+      }, 0);
+      return { ...order, total_qty: totalQty };
+    });
+
+    res.json(resultsWithQty);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

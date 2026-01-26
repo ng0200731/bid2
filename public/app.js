@@ -421,15 +421,20 @@ async function searchOrders(term) {
 
 function displayOrdersList(orders) {
     ordersBody.innerHTML = '';
+    const ordersFooter = document.getElementById('orders-footer');
+    ordersFooter.innerHTML = '';
     ordersListSection.style.display = 'block';
     poDetailSection.style.display = 'none';
 
     if (orders.length === 0) {
-        ordersBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No orders found</td></tr>';
+        ordersBody.innerHTML = '<tr><td colspan="12" style="text-align: center;">No orders found</td></tr>';
         return;
     }
 
-    orders.forEach(order => {
+    let totalQuantity = 0;
+    let totalAmount = 0;
+
+    orders.forEach((order, index) => {
         const row = document.createElement('tr');
 
         // Format created_at as YYYY/MM/DD HH:mm:ss
@@ -445,11 +450,26 @@ function displayOrdersList(orders) {
             formattedDate = `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
         }
 
+        // Calculate totals
+        const qty = order.total_qty || 0;
+        const amount = order.total_amount || 0;
+        totalQuantity += qty;
+        totalAmount += amount;
+
+        // Format quantity with commas
+        const formattedQty = qty.toLocaleString();
+
+        // Format amount with 2 decimal places
+        const formattedAmount = amount.toFixed(2);
+
         row.innerHTML = `
+            <td>${index + 1}</td>
             <td>${order.po_number}</td>
             <td>${order.status || 'N/A'}</td>
             <td>${order.company || 'N/A'}</td>
             <td>${order.vendor_name || 'N/A'}</td>
+            <td style="text-align: right;">${formattedQty}</td>
+            <td style="text-align: right;">$${formattedAmount}</td>
             <td>${order.currency || 'N/A'}</td>
             <td>${formattedDate}</td>
             <td><button class="view-detail-btn" data-po="${order.po_number}">View Details</button></td>
@@ -458,6 +478,18 @@ function displayOrdersList(orders) {
         `;
         ordersBody.appendChild(row);
     });
+
+    // Add totals row in footer
+    const totalRow = document.createElement('tr');
+    totalRow.style.fontWeight = 'bold';
+    totalRow.style.backgroundColor = '#f0f0f0';
+    totalRow.innerHTML = `
+        <td colspan="5" style="text-align: right;">Total:</td>
+        <td style="text-align: right;">${totalQuantity.toLocaleString()}</td>
+        <td style="text-align: right;">$${totalAmount.toFixed(2)}</td>
+        <td colspan="5"></td>
+    `;
+    ordersFooter.appendChild(totalRow);
 
     // Add click handlers to view detail buttons
     document.querySelectorAll('.view-detail-btn').forEach(btn => {
