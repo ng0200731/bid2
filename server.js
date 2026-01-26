@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import xlsx from 'xlsx';
 import fs from 'fs';
+import os from 'os';
 import EBrandIDDownloader from './index.js';
 import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs } from './database.js';
 
@@ -337,11 +338,32 @@ async function processDownload(jobId, poNumbers) {
   }
 }
 
+// Get local IP address for network access
+function getLocalIPAddress() {
+  const nets = os.networkInterfaces();
+
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+      // Skip internal (loopback) and non-IPv4 addresses
+      if (net.family === 'IPv4' && !net.internal) {
+        return net.address;
+      }
+    }
+  }
+  return 'localhost';
+}
+
 // Start server with automatic port fallback
 function startServer(port, maxAttempts = 10) {
-  const server = app.listen(port, () => {
-    console.log(`E-BrandID Web Server running at http://localhost:${port}`);
-    console.log(`Open your browser to http://localhost:${port} to use the interface`);
+  const server = app.listen(port, '0.0.0.0', async () => {
+    const localIP = await getLocalIPAddress();
+    console.log(`\n${'='.repeat(60)}`);
+    console.log('E-BrandID Web Server is running!');
+    console.log(`${'='.repeat(60)}`);
+    console.log(`\nLocal access:    http://localhost:${port}`);
+    console.log(`Network access:  http://${localIP}:${port}`);
+    console.log(`\nShare the network URL with other users on your network.`);
+    console.log(`${'='.repeat(60)}\n`);
   });
 
   server.on('error', (err) => {
