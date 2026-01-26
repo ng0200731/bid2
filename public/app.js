@@ -431,9 +431,6 @@ function displayOrdersList(orders) {
         return;
     }
 
-    let totalQuantity = 0;
-    let totalAmount = 0;
-
     orders.forEach((order, index) => {
         const row = document.createElement('tr');
 
@@ -450,16 +447,12 @@ function displayOrdersList(orders) {
             formattedDate = `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
         }
 
-        // Calculate totals
-        const qty = order.total_qty || 0;
-        const amount = order.total_amount || 0;
-        totalQuantity += qty;
-        totalAmount += amount;
-
         // Format quantity with commas
+        const qty = order.total_qty || 0;
         const formattedQty = qty.toLocaleString();
 
         // Format amount with 2 decimal places
+        const amount = order.total_amount || 0;
         const formattedAmount = amount.toFixed(2);
 
         row.innerHTML = `
@@ -479,18 +472,6 @@ function displayOrdersList(orders) {
         `;
         ordersBody.appendChild(row);
     });
-
-    // Add totals row in footer
-    const totalRow = document.createElement('tr');
-    totalRow.style.fontWeight = 'bold';
-    totalRow.style.backgroundColor = '#f0f0f0';
-    totalRow.innerHTML = `
-        <td colspan="6" style="text-align: right;">Total:</td>
-        <td style="text-align: right;">${totalQuantity.toLocaleString()}</td>
-        <td style="text-align: right;">$${totalAmount.toFixed(2)}</td>
-        <td colspan="5"></td>
-    `;
-    ordersFooter.appendChild(totalRow);
 
     // Add click handlers to view detail buttons
     document.querySelectorAll('.view-detail-btn').forEach(btn => {
