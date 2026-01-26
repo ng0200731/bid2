@@ -26,7 +26,12 @@
       "Bash(curl:*)",
       "Bash(find:*)",
       "Bash(tasklist:*)",
-      "Bash(powershell -Command:*)"
+      "Bash(powershell -Command:*)",
+      "Bash(git commit:*)",
+      "Bash(python test_ebrandid.py:*)",
+      "Bash(pip show:*)",
+      "Bash(git add:*)",
+      "Bash(echo:*)"
     ]
   }
 }
