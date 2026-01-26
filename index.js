@@ -80,27 +80,75 @@ class EBrandIDDownloader {
     console.log(`\nSearching for PO ${poNumber} in list...`);
 
     try {
-      // Navigate to Purchase Order list page
-      const listUrl = 'https://app.e-brandid.com/Bidnet/bidnet3/factoryPO.aspx';
-      await this.page.goto(listUrl, {
-        waitUntil: 'networkidle',
+      // After login, we should already be on index.aspx with frames
+      // Wait for the page to fully load
+      console.log('Waiting for page to load completely...');
+      await this.page.waitForLoadState('networkidle', {
         timeout: config.timeout_seconds * 1000
       });
+      await this.page.waitForTimeout(2000);
 
-      // Select "All" from status dropdown
-      await this.page.selectOption('#ddlStatus', '0');
+      // The page uses frames - find the navigation frame
+      console.log('Looking for navigation frame...');
+      const navigFrame = this.page.frames().find(f => f.name() === 'navig' || f.url().includes('mnuSetup.aspx'));
+
+      if (!navigFrame) {
+        throw new Error('Could not find navigation frame');
+      }
+
+      console.log('Found navigation frame');
+
+      // Hover over "Search" menu in the navigation frame
+      console.log('Hovering over Search menu...');
+      const searchDiv = navigFrame.locator('div').filter({ hasText: /^Search$/ }).first();
+      await searchDiv.hover();
+
+      // Wait for menu to expand
+      await this.page.waitForTimeout(1500);
+
+      // The menu items appear in the SPACE frame, not the navigation frame
+      // Find the space frame first
+      let spaceFrame = this.page.frames().find(f => f.name() === 'space');
+
+      if (!spaceFrame) {
+        throw new Error('Could not find space frame');
+      }
+
+      // Click on "Purchase Order" from the dropdown menu in the space frame
+      console.log('Clicking Purchase Order from menu...');
+      await spaceFrame.click('text=Purchase Order');
+
+      // Wait for the space frame to navigate to the PO list page
+      await this.page.waitForTimeout(3000);
+
+      console.log('Purchase Order list page should be loaded');
+
+      // Re-find the space frame after navigation
+      spaceFrame = this.page.frames().find(f => f.name() === 'space');
+
+      if (!spaceFrame) {
+        throw new Error('Could not find space frame');
+      }
+
+      console.log('Found space frame');
+
+      // Select "All" from status dropdown in the space frame
+      console.log('Selecting "All" status...');
+      await spaceFrame.selectOption('#ddlStatus', '0');
       await this.page.waitForTimeout(1000);
 
-      // Enter PO number in search box
-      await this.page.fill('#txtWONum', poNumber);
+      // Enter PO number in search box in the space frame
+      console.log(`Entering PO number ${poNumber}...`);
+      await spaceFrame.fill('#txtWONum', poNumber);
       await this.page.waitForTimeout(500);
 
       // Submit search - press Enter
-      await this.page.press('#txtWONum', 'Enter');
+      console.log('Submitting search...');
+      await spaceFrame.press('#txtWONum', 'Enter');
       await this.page.waitForTimeout(3000);
 
-      // Extract data from the table row
-      const listData = await this.page.evaluate((po) => {
+      // Extract data from the table row in the space frame
+      const listData = await spaceFrame.evaluate((po) => {
         // Find all table rows with data cells
         const rows = Array.from(document.querySelectorAll('table tr'));
 
