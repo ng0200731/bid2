@@ -31,7 +31,8 @@
       "Bash(python test_ebrandid.py:*)",
       "Bash(pip show:*)",
       "Bash(git add:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(start http://localhost:8766)"
     ]
   }
 }
