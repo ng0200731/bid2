@@ -122,7 +122,13 @@ class EBrandIDDownloader {
         shipToAddress2: getText('#lblBIDAddr2'),
         shipToAddress3: getText('#lblBIDAddr3'),
         cancelDate: getText('#lblCancelDate'),
-        totalAmount: null
+        totalAmount: null,
+        poDate: getText('#lblPODate'),
+        shipBy: getText('#lblShipBy'),
+        shipVia: getText('#lblShipVia'),
+        orderType: getText('#lblOrderType'),
+        loc: getText('#lblLoc'),
+        prodRep: getText('#lblProdRep')
       };
     });
 

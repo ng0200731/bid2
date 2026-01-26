@@ -427,7 +427,7 @@ function displayOrdersList(orders) {
     poDetailSection.style.display = 'none';
 
     if (orders.length === 0) {
-        ordersBody.innerHTML = '<tr><td colspan="12" style="text-align: center;">No orders found</td></tr>';
+        ordersBody.innerHTML = '<tr><td colspan="19" style="text-align: center;">No orders found</td></tr>';
         return;
     }
 
@@ -458,7 +458,13 @@ function displayOrdersList(orders) {
         row.innerHTML = `
             <td>${index + 1}</td>
             <td>${order.po_number}</td>
+            <td>${order.po_date || 'N/A'}</td>
+            <td>${order.ship_by || 'N/A'}</td>
+            <td>${order.ship_via || 'N/A'}</td>
+            <td>${order.order_type || 'N/A'}</td>
             <td>${order.status || 'N/A'}</td>
+            <td>${order.loc || 'N/A'}</td>
+            <td>${order.prod_rep || 'N/A'}</td>
             <td>${order.company || 'N/A'}</td>
             <td>${order.vendor_name || 'N/A'}</td>
             <td style="text-align: right;">${order.item_count || 0}</td>
@@ -586,6 +592,24 @@ function displayPODetail(data) {
                 <td style="padding: 10px; border: 1px solid black;">${data.terms || 'N/A'}</td>
                 <td style="padding: 10px; border: 1px solid black;"><strong>Cancel Date:</strong></td>
                 <td style="padding: 10px; border: 1px solid black;">${data.cancel_date || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid black;"><strong>PO Date:</strong></td>
+                <td style="padding: 10px; border: 1px solid black;">${data.po_date || 'N/A'}</td>
+                <td style="padding: 10px; border: 1px solid black;"><strong>Ship By:</strong></td>
+                <td style="padding: 10px; border: 1px solid black;">${data.ship_by || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid black;"><strong>Ship Via:</strong></td>
+                <td style="padding: 10px; border: 1px solid black;">${data.ship_via || 'N/A'}</td>
+                <td style="padding: 10px; border: 1px solid black;"><strong>Order Type:</strong></td>
+                <td style="padding: 10px; border: 1px solid black;">${data.order_type || 'N/A'}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid black;"><strong>Loc:</strong></td>
+                <td style="padding: 10px; border: 1px solid black;">${data.loc || 'N/A'}</td>
+                <td style="padding: 10px; border: 1px solid black;"><strong>Prod Rep:</strong></td>
+                <td style="padding: 10px; border: 1px solid black;">${data.prod_rep || 'N/A'}</td>
             </tr>
         </table>
 

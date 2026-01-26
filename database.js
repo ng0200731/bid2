@@ -23,6 +23,8 @@ export async function initDatabase() {
   if (fs.existsSync(DB_PATH)) {
     const buffer = fs.readFileSync(DB_PATH);
     db = new SQL.Database(buffer);
+    // Run migrations for existing databases
+    migrateDatabase();
   } else {
     db = new SQL.Database();
     createTables();
@@ -54,6 +56,12 @@ function createTables() {
       ship_to_address3 TEXT,
       cancel_date TEXT,
       total_amount REAL,
+      po_date TEXT,
+      ship_by TEXT,
+      ship_via TEXT,
+      order_type TEXT,
+      loc TEXT,
+      prod_rep TEXT,
       created_at TEXT,
       updated_at TEXT
     )
@@ -92,6 +100,31 @@ function createTables() {
 }
 
 /**
+ * Migrate existing database to add new columns
+ */
+function migrateDatabase() {
+  try {
+    // Check if new columns exist, if not add them
+    const columns = ['po_date', 'ship_by', 'ship_via', 'order_type', 'loc', 'prod_rep'];
+
+    columns.forEach(column => {
+      try {
+        // Try to select the column to see if it exists
+        db.exec(`SELECT ${column} FROM po_headers LIMIT 1`);
+      } catch (error) {
+        // Column doesn't exist, add it
+        console.log(`Adding column ${column} to po_headers table`);
+        db.run(`ALTER TABLE po_headers ADD COLUMN ${column} TEXT`);
+      }
+    });
+
+    saveDatabase();
+  } catch (error) {
+    console.error('Error during database migration:', error);
+  }
+}
+
+/**
  * Save database to disk
  */
 export function saveDatabase() {
@@ -114,8 +147,9 @@ export function savePOHeader(poData) {
         po_number, status, company, currency, terms,
         vendor_name, vendor_address1, vendor_address2, vendor_address3,
         ship_to_name, ship_to_address1, ship_to_address2, ship_to_address3,
-        cancel_date, total_amount, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        cancel_date, total_amount, po_date, ship_by, ship_via, order_type, loc, prod_rep,
+        created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run([
@@ -134,6 +168,12 @@ export function savePOHeader(poData) {
       poData.shipToAddress3,
       poData.cancelDate,
       poData.totalAmount,
+      poData.poDate,
+      poData.shipBy,
+      poData.shipVia,
+      poData.orderType,
+      poData.loc,
+      poData.prodRep,
       now,
       now
     ]);
