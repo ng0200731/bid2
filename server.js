@@ -158,7 +158,7 @@ app.get('/api/orders', (req, res) => {
     const offset = req.query.offset ? parseInt(req.query.offset) : 0;
     const orders = getAllPOs(limit, offset);
 
-    // Add quantity totals for each PO
+    // Add quantity totals and amount totals for each PO
     const ordersWithQty = orders.map(order => {
       const items = getPOItems(order.po_number);
       const totalQty = items.reduce((sum, item) => {
@@ -166,7 +166,11 @@ app.get('/api/orders', (req, res) => {
         const qty = parseInt(qtyStr.replace(/,/g, '')) || 0;
         return sum + qty;
       }, 0);
-      return { ...order, total_qty: totalQty };
+      const totalAmount = items.reduce((sum, item) => {
+        const extension = parseFloat(item.extension) || 0;
+        return sum + extension;
+      }, 0);
+      return { ...order, total_qty: totalQty, total_amount: totalAmount, item_count: items.length };
     });
 
     res.json(ordersWithQty);
@@ -181,7 +185,7 @@ app.get('/api/orders/search/:term', (req, res) => {
     const { term } = req.params;
     const results = searchPOs(term);
 
-    // Add quantity totals for each PO
+    // Add quantity totals and amount totals for each PO
     const resultsWithQty = results.map(order => {
       const items = getPOItems(order.po_number);
       const totalQty = items.reduce((sum, item) => {
@@ -189,7 +193,11 @@ app.get('/api/orders/search/:term', (req, res) => {
         const qty = parseInt(qtyStr.replace(/,/g, '')) || 0;
         return sum + qty;
       }, 0);
-      return { ...order, total_qty: totalQty };
+      const totalAmount = items.reduce((sum, item) => {
+        const extension = parseFloat(item.extension) || 0;
+        return sum + extension;
+      }, 0);
+      return { ...order, total_qty: totalQty, total_amount: totalAmount, item_count: items.length };
     });
 
     res.json(resultsWithQty);

@@ -468,6 +468,7 @@ function displayOrdersList(orders) {
             <td>${order.status || 'N/A'}</td>
             <td>${order.company || 'N/A'}</td>
             <td>${order.vendor_name || 'N/A'}</td>
+            <td style="text-align: right;">${order.item_count || 0}</td>
             <td style="text-align: right;">${formattedQty}</td>
             <td style="text-align: right;">$${formattedAmount}</td>
             <td>${order.currency || 'N/A'}</td>
@@ -484,7 +485,7 @@ function displayOrdersList(orders) {
     totalRow.style.fontWeight = 'bold';
     totalRow.style.backgroundColor = '#f0f0f0';
     totalRow.innerHTML = `
-        <td colspan="5" style="text-align: right;">Total:</td>
+        <td colspan="6" style="text-align: right;">Total:</td>
         <td style="text-align: right;">${totalQuantity.toLocaleString()}</td>
         <td style="text-align: right;">$${totalAmount.toFixed(2)}</td>
         <td colspan="5"></td>
