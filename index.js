@@ -291,6 +291,61 @@ class EBrandIDDownloader {
   }
 
   /**
+   * Fetch PO information without downloading artwork
+   * @param {string} poNumber - Purchase Order number
+   */
+  async fetchPOInformation(poNumber) {
+    console.log(`\n${'='.repeat(60)}`);
+    console.log(`Fetching PO Information: ${poNumber}`);
+    console.log('='.repeat(60));
+
+    const result = {
+      poNumber: poNumber,
+      status: 'success',
+      itemsFound: 0,
+      error: null
+    };
+
+    try {
+      // Navigate to PO page
+      await this.navigateToPO(poNumber);
+
+      // Extract and save PO header information
+      try {
+        const poHeader = await this.extractPOHeader(poNumber);
+        savePOHeader(poHeader);
+        console.log('✓ PO header saved to database');
+      } catch (error) {
+        console.log(`⚠ Could not save PO header: ${error.message}`);
+        throw error;
+      }
+
+      // Extract and save PO line items
+      try {
+        const poItems = await this.extractPOItems(poNumber);
+        poItems.forEach(item => savePOItem(item));
+        result.itemsFound = poItems.length;
+        console.log(`✓ ${poItems.length} line items saved to database`);
+      } catch (error) {
+        console.log(`⚠ Could not save PO items: ${error.message}`);
+        throw error;
+      }
+
+      console.log(`\n${'='.repeat(60)}`);
+      console.log(`PO ${poNumber} Information Fetched Successfully`);
+      console.log(`  Items found: ${result.itemsFound}`);
+      console.log('='.repeat(60));
+
+    } catch (error) {
+      console.error(`Error fetching PO ${poNumber}:`, error);
+      result.status = 'failed';
+      result.error = error.message;
+    }
+
+    return result;
+  }
+
+  /**
    * Download all artwork for a PO
    * @param {string} poNumber - Purchase Order number
    */

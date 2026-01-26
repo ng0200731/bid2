@@ -268,3 +268,65 @@ tbody tr:hover {
 .info-box p {
     margin: 0;
 }
+
+/* Custom Modal */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-content {
+    background-color: white;
+    border: 2px solid black;
+    padding: 30px;
+    min-width: 400px;
+    max-width: 600px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.modal-message {
+    margin-bottom: 20px;
+    font-size: 16px;
+    line-height: 1.5;
+    white-space: pre-line;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.modal-btn {
+    padding: 10px 20px;
+    border: 1px solid black;
+    background-color: white;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.modal-btn:hover {
+    background-color: #f0f0f0;
+}
+
+.modal-btn.primary {
+    background-color: black;
+    color: white;
+}
+
+.modal-btn.primary:hover {
+    background-color: #333;
+}

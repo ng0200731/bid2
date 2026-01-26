@@ -29,7 +29,8 @@
                             <label for="po-input">Enter PO Number(s):</label>
                             <textarea id="po-input" rows="5" placeholder="Enter PO numbers (one per line)&#10;Example:&#10;1303061&#10;1307938"></textarea>
 
-                            <button id="download-btn" class="submit-btn">Start Download</button>
+                            <button id="fetch-po-btn" class="submit-btn">Fetch PO Information</button>
+                            <button id="download-btn" class="submit-btn">Fetch Artwork</button>
                         </div>
                     </div>
 
@@ -143,6 +144,14 @@
                     </table>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Custom Modal -->
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <div id="modal-message" class="modal-message"></div>
+            <div id="modal-buttons" class="modal-buttons"></div>
         </div>
     </div>
 

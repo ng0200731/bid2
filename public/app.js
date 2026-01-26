@@ -12,13 +12,99 @@ document.querySelectorAll('.nav-button').forEach(button => {
     });
 });
 
+// Custom Modal Functions
+function showModal(message, buttons) {
+    return new Promise((resolve) => {
+        const overlay = document.getElementById('modal-overlay');
+        const messageEl = document.getElementById('modal-message');
+        const buttonsEl = document.getElementById('modal-buttons');
+
+        messageEl.textContent = message;
+        buttonsEl.innerHTML = '';
+
+        buttons.forEach(btn => {
+            const button = document.createElement('button');
+            button.className = `modal-btn ${btn.primary ? 'primary' : ''}`;
+            button.textContent = btn.text;
+            button.onclick = () => {
+                overlay.classList.remove('active');
+                resolve(btn.value);
+            };
+            buttonsEl.appendChild(button);
+        });
+
+        overlay.classList.add('active');
+    });
+}
+
+function showAlert(message) {
+    return showModal(message, [
+        { text: 'OK', value: true, primary: true }
+    ]);
+}
+
+function showConfirm(message) {
+    return showModal(message, [
+        { text: 'Cancel', value: false },
+        { text: 'OK', value: true, primary: true }
+    ]);
+}
+
 // Download Artwork functionality
 const downloadBtn = document.getElementById('download-btn');
+const fetchPOBtn = document.getElementById('fetch-po-btn');
 const poInput = document.getElementById('po-input');
 const progressSection = document.getElementById('progress-section');
 const progressLog = document.getElementById('progress-log');
 const resultsSection = document.getElementById('results-section');
 const resultsBody = document.getElementById('results-body');
+
+// Fetch PO Information button
+fetchPOBtn.addEventListener('click', async () => {
+    const poNumbers = poInput.value
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line && !line.startsWith('#'));
+
+    if (poNumbers.length === 0) {
+        await showAlert('Please enter at least one PO number');
+        return;
+    }
+
+    // Reset UI
+    progressLog.innerHTML = '';
+    resultsBody.innerHTML = '';
+    resultsSection.style.display = 'none';
+    fetchPOBtn.disabled = true;
+    downloadBtn.disabled = true;
+
+    addProgressLog(`Fetching information for ${poNumbers.length} PO(s)...`, 'info');
+
+    try {
+        const response = await fetch('/api/fetch-po', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ poNumbers })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.jobId) {
+            addProgressLog(`Job started with ID: ${data.jobId}`, 'info');
+            pollJobStatus(data.jobId);
+        }
+    } catch (error) {
+        addProgressLog(`Error: ${error.message}`, 'error');
+        fetchPOBtn.disabled = false;
+        downloadBtn.disabled = false;
+    }
+});
 
 downloadBtn.addEventListener('click', async () => {
     const poNumbers = poInput.value
@@ -27,7 +113,7 @@ downloadBtn.addEventListener('click', async () => {
         .filter(line => line && !line.startsWith('#'));
 
     if (poNumbers.length === 0) {
-        alert('Please enter at least one PO number');
+        await showAlert('Please enter at least one PO number');
         return;
     }
 
@@ -87,13 +173,15 @@ async function pollJobStatus(jobId) {
                 }
             } else if (data.status === 'completed') {
                 clearInterval(pollInterval);
-                addProgressLog('Download completed!', 'success');
+                addProgressLog('Process completed!', 'success');
                 displayResults(data.results);
                 downloadBtn.disabled = false;
+                fetchPOBtn.disabled = false;
             } else if (data.status === 'failed') {
                 clearInterval(pollInterval);
                 addProgressLog(`Job failed: ${data.error}`, 'error');
                 downloadBtn.disabled = false;
+                fetchPOBtn.disabled = false;
             }
         } catch (error) {
             clearInterval(pollInterval);
@@ -265,7 +353,7 @@ showAllBtn.addEventListener('click', async () => {
 searchBtn.addEventListener('click', async () => {
     const searchTerm = statusSearch.value.trim();
     if (!searchTerm) {
-        alert('Please enter a search term');
+        await showAlert('Please enter a search term');
         return;
     }
     await searchOrders(searchTerm);
@@ -292,7 +380,7 @@ async function loadLatestOrders(limit = 10, offset = 0, append = false) {
         if (append) {
             // If no more records, show alert and don't update display
             if (orders.length === 0) {
-                alert('No more records to load');
+                await showAlert('No more records to load');
                 return;
             }
             currentOrders = currentOrders.concat(orders);
@@ -303,7 +391,7 @@ async function loadLatestOrders(limit = 10, offset = 0, append = false) {
 
         displayOrdersList(currentOrders);
     } catch (error) {
-        alert('Error loading orders: ' + error.message);
+        await showAlert('Error loading orders: ' + error.message);
     }
 }
 
@@ -315,7 +403,7 @@ async function loadAllOrders() {
         currentOffset = 0;
         displayOrdersList(orders);
     } catch (error) {
-        alert('Error loading orders: ' + error.message);
+        await showAlert('Error loading orders: ' + error.message);
     }
 }
 
@@ -327,7 +415,7 @@ async function searchOrders(term) {
         currentOffset = 0;
         displayOrdersList(orders);
     } catch (error) {
-        alert('Error searching orders: ' + error.message);
+        await showAlert('Error searching orders: ' + error.message);
     }
 }
 
@@ -402,7 +490,7 @@ async function loadPODetail(poNumber) {
         const data = await response.json();
         displayPODetail(data);
     } catch (error) {
-        alert('Error loading PO details: ' + error.message);
+        await showAlert('Error loading PO details: ' + error.message);
     }
 }
 
@@ -427,15 +515,15 @@ async function generateQCReport(poNumber) {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
 
-        alert(`QC report generated successfully for PO ${poNumber}`);
+        await showAlert(`QC report generated successfully for PO ${poNumber}`);
     } catch (error) {
-        alert('Error generating QC report: ' + error.message);
+        await showAlert('Error generating QC report: ' + error.message);
     }
 }
 
 async function deletePO(poNumber) {
     // Prompt user for confirmation
-    const confirmed = confirm(`Are you sure you want to delete PO ${poNumber}?\n\nThis action cannot be undone.`);
+    const confirmed = await showConfirm(`Are you sure you want to delete PO ${poNumber}?\n\nThis action cannot be undone.`);
 
     if (!confirmed) {
         return;
@@ -451,12 +539,12 @@ async function deletePO(poNumber) {
         }
 
         const data = await response.json();
-        alert(`PO ${poNumber} deleted successfully`);
+        await showAlert(`PO ${poNumber} deleted successfully`);
 
         // Reload the orders list
         await loadLatestOrders(10);
     } catch (error) {
-        alert('Error deleting PO: ' + error.message);
+        await showAlert('Error deleting PO: ' + error.message);
     }
 }
 

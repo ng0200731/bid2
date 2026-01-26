@@ -72,6 +72,33 @@ app.post('/api/download', async (req, res) => {
   res.json({ jobId, status: 'started' });
 });
 
+// Fetch PO information (without downloading artwork)
+app.post('/api/fetch-po', async (req, res) => {
+  const { poNumbers } = req.body;
+
+  if (!poNumbers || !Array.isArray(poNumbers) || poNumbers.length === 0) {
+    return res.status(400).json({ error: 'Invalid PO numbers' });
+  }
+
+  const jobId = `job_${jobIdCounter++}`;
+
+  // Create job entry
+  jobs.set(jobId, {
+    id: jobId,
+    status: 'processing',
+    poNumbers: poNumbers,
+    results: [],
+    currentPO: null,
+    progress: null,
+    startTime: new Date()
+  });
+
+  // Start fetch process in background
+  processFetchPO(jobId, poNumbers);
+
+  res.json({ jobId, status: 'started' });
+});
+
 // Get job status
 app.get('/api/status/:jobId', (req, res) => {
   const { jobId } = req.params;
@@ -343,6 +370,44 @@ async function processDownload(jobId, poNumbers) {
 
   } catch (error) {
     console.error('Download error:', error);
+    job.status = 'failed';
+    job.error = error.message;
+    job.completedTime = new Date();
+  } finally {
+    await downloader.close();
+  }
+}
+
+// Background fetch PO information processor
+async function processFetchPO(jobId, poNumbers) {
+  const job = jobs.get(jobId);
+  const downloader = new EBrandIDDownloader();
+
+  try {
+    // Initialize and login
+    job.progress = 'Initializing browser...';
+    await downloader.initialize();
+
+    job.progress = 'Logging in...';
+    await downloader.login();
+
+    // Process each PO
+    for (const poNumber of poNumbers) {
+      job.currentPO = poNumber;
+      job.progress = `Fetching PO ${poNumber} information...`;
+
+      const result = await downloader.fetchPOInformation(poNumber);
+      job.results.push(result);
+    }
+
+    // Mark as completed
+    job.status = 'completed';
+    job.completedTime = new Date();
+    job.currentPO = null;
+    job.progress = 'All PO information fetched';
+
+  } catch (error) {
+    console.error('Fetch PO error:', error);
     job.status = 'failed';
     job.error = error.message;
     job.completedTime = new Date();
