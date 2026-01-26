@@ -303,6 +303,37 @@ export function searchPOs(searchTerm) {
 }
 
 /**
+ * Delete PO and all related data
+ */
+export function deletePO(poNumber) {
+  try {
+    // Delete PO items first (foreign key constraint)
+    const itemsStmt = db.prepare('DELETE FROM po_items WHERE po_number = ?');
+    itemsStmt.bind([poNumber]);
+    itemsStmt.step();
+    itemsStmt.free();
+
+    // Delete download history
+    const historyStmt = db.prepare('DELETE FROM download_history WHERE po_number = ?');
+    historyStmt.bind([poNumber]);
+    historyStmt.step();
+    historyStmt.free();
+
+    // Delete PO header
+    const headerStmt = db.prepare('DELETE FROM po_headers WHERE po_number = ?');
+    headerStmt.bind([poNumber]);
+    headerStmt.step();
+    headerStmt.free();
+
+    saveDatabase();
+    return true;
+  } catch (error) {
+    console.error('Error deleting PO:', error);
+    throw new Error(`Failed to delete PO: ${error.message}`);
+  }
+}
+
+/**
  * Close database
  */
 export function closeDatabase() {

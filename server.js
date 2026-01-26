@@ -5,7 +5,7 @@ import xlsx from 'xlsx';
 import fs from 'fs';
 import os from 'os';
 import EBrandIDDownloader from './index.js';
-import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs } from './database.js';
+import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs, deletePO } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -136,6 +136,17 @@ app.get('/api/orders', (req, res) => {
   }
 });
 
+// Search POs (must come before /:poNumber to avoid matching "search" as a PO number)
+app.get('/api/orders/search/:term', (req, res) => {
+  try {
+    const { term } = req.params;
+    const results = searchPOs(term);
+    res.json(results);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get specific PO details
 app.get('/api/orders/:poNumber', (req, res) => {
   try {
@@ -153,13 +164,14 @@ app.get('/api/orders/:poNumber', (req, res) => {
   }
 });
 
-// Search POs
-app.get('/api/orders/search/:term', (req, res) => {
+// Delete PO
+app.delete('/api/orders/:poNumber', (req, res) => {
   try {
-    const { term } = req.params;
-    const results = searchPOs(term);
-    res.json(results);
+    const { poNumber } = req.params;
+    deletePO(poNumber);
+    res.json({ success: true, message: `PO ${poNumber} deleted successfully` });
   } catch (error) {
+    console.error('Error deleting PO:', error);
     res.status(500).json({ error: error.message });
   }
 });

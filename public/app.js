@@ -69,8 +69,7 @@ function addProgressLog(message, type = 'info') {
     const item = document.createElement('div');
     item.className = `progress-item ${type}`;
     item.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-    progressLog.appendChild(item);
-    progressLog.scrollTop = progressLog.scrollHeight;
+    progressLog.insertBefore(item, progressLog.firstChild);
 }
 
 async function pollJobStatus(jobId) {
@@ -367,6 +366,7 @@ function displayOrdersList(orders) {
             <td>${formattedDate}</td>
             <td><button class="view-detail-btn" data-po="${order.po_number}">View Details</button></td>
             <td><button class="qc-report-btn" data-po="${order.po_number}">QC report</button></td>
+            <td><button class="delete-btn" data-po="${order.po_number}">Delete</button></td>
         `;
         ordersBody.appendChild(row);
     });
@@ -384,6 +384,14 @@ function displayOrdersList(orders) {
         btn.addEventListener('click', async (e) => {
             const poNumber = e.target.getAttribute('data-po');
             await generateQCReport(poNumber);
+        });
+    });
+
+    // Add click handlers to delete buttons
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const poNumber = e.target.getAttribute('data-po');
+            await deletePO(poNumber);
         });
     });
 }
@@ -422,6 +430,33 @@ async function generateQCReport(poNumber) {
         alert(`QC report generated successfully for PO ${poNumber}`);
     } catch (error) {
         alert('Error generating QC report: ' + error.message);
+    }
+}
+
+async function deletePO(poNumber) {
+    // Prompt user for confirmation
+    const confirmed = confirm(`Are you sure you want to delete PO ${poNumber}?\n\nThis action cannot be undone.`);
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/orders/${poNumber}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to delete PO: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        alert(`PO ${poNumber} deleted successfully`);
+
+        // Reload the orders list
+        await loadLatestOrders(10);
+    } catch (error) {
+        alert('Error deleting PO: ' + error.message);
     }
 }
 
