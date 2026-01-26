@@ -13,6 +13,7 @@
             <h2>E-BrandID</h2>
             <button class="nav-button active" data-view="download-artwork">Download Artwork</button>
             <button class="nav-button" data-view="order-status">Order Status</button>
+            <button class="nav-button" data-view="profile">Profile</button>
         </div>
 
         <!-- Right Panel (80%) -->
@@ -50,6 +51,29 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            <!-- Profile View -->
+            <div id="profile" class="view">
+                <h1>Profile Settings</h1>
+
+                <div class="form-section">
+                    <h3>Update Login Credentials</h3>
+                    <p>Update your E-BrandID login credentials below.</p>
+
+                    <label for="profile-username">Username:</label>
+                    <input type="text" id="profile-username" placeholder="Enter username">
+
+                    <label for="profile-password">Password:</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="profile-password" placeholder="Enter password">
+                        <span class="password-toggle-icon" id="password-toggle">👁️</span>
+                    </div>
+
+                    <button id="save-profile-btn" class="submit-btn">Save Changes</button>
+                </div>
+
+                <div id="profile-message" style="display: none; margin-top: 20px; padding: 10px; border-radius: 4px;"></div>
             </div>
 
             <!-- Order Status View -->

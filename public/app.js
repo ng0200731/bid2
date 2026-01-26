@@ -146,6 +146,86 @@ function formatBytes(bytes) {
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
 }
 
+// Profile functionality
+const profileUsername = document.getElementById('profile-username');
+const profilePassword = document.getElementById('profile-password');
+const saveProfileBtn = document.getElementById('save-profile-btn');
+const profileMessage = document.getElementById('profile-message');
+const passwordToggle = document.getElementById('password-toggle');
+
+// Toggle password visibility
+passwordToggle.addEventListener('click', () => {
+    if (profilePassword.type === 'password') {
+        profilePassword.type = 'text';
+        passwordToggle.textContent = '🙈';
+    } else {
+        profilePassword.type = 'password';
+        passwordToggle.textContent = '👁️';
+    }
+});
+
+// Load profile when Profile view is activated
+document.querySelectorAll('.nav-button').forEach(button => {
+    button.addEventListener('click', () => {
+        if (button.getAttribute('data-view') === 'profile') {
+            loadProfile();
+        }
+    });
+});
+
+// Save profile
+saveProfileBtn.addEventListener('click', async () => {
+    await saveProfile();
+});
+
+async function loadProfile() {
+    try {
+        const response = await fetch('/api/profile');
+        const data = await response.json();
+        profileUsername.value = data.username || '';
+        profilePassword.value = data.password || '';
+    } catch (error) {
+        showProfileMessage('Error loading profile: ' + error.message, 'error');
+    }
+}
+
+async function saveProfile() {
+    const username = profileUsername.value.trim();
+    const password = profilePassword.value.trim();
+
+    if (!username || !password) {
+        showProfileMessage('Username and password are required', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/profile', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to save profile: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        showProfileMessage('Profile updated successfully! Changes will take effect on next login.', 'success');
+    } catch (error) {
+        showProfileMessage('Error saving profile: ' + error.message, 'error');
+    }
+}
+
+function showProfileMessage(message, type) {
+    profileMessage.textContent = message;
+    profileMessage.style.display = 'block';
+    profileMessage.style.backgroundColor = type === 'success' ? '#d4edda' : '#f8d7da';
+    profileMessage.style.color = type === 'success' ? '#155724' : '#721c24';
+    profileMessage.style.border = `1px solid ${type === 'success' ? '#c3e6cb' : '#f5c6cb'}`;
+}
+
 // Order Status functionality
 const searchBtn = document.getElementById('search-btn');
 const loadMoreBtn = document.getElementById('load-more-btn');
