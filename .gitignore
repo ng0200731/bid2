@@ -5,3 +5,4 @@ downloads/
 .DS_Store
 *.output
 C:\Users\ng\AppData\Local\Temp\
+.claude/settings.local.json
