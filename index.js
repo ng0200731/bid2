@@ -89,45 +89,58 @@ class EBrandIDDownloader {
 
       // Select "All" from status dropdown
       await this.page.selectOption('#ddlStatus', '0');
-      await this.page.waitForTimeout(500);
+      await this.page.waitForTimeout(1000);
 
       // Enter PO number in search box
       await this.page.fill('#txtWONum', poNumber);
       await this.page.waitForTimeout(500);
 
-      // Submit search (look for search button or form)
+      // Submit search - press Enter
       await this.page.press('#txtWONum', 'Enter');
-      await this.page.waitForTimeout(2000);
+      await this.page.waitForTimeout(3000);
 
       // Extract data from the table row
       const listData = await this.page.evaluate((po) => {
-        // Find the table row containing this PO number
+        // Find all table rows with data cells
         const rows = Array.from(document.querySelectorAll('table tr'));
-        const poRow = rows.find(row => {
+
+        // Look for the row containing this PO number
+        for (const row of rows) {
           const cells = row.querySelectorAll('td');
-          return cells.length > 0 && cells[0].textContent.trim() === po;
-        });
+          if (cells.length >= 9) {
+            // Get text from first cell, checking both direct text and link text
+            const firstCellText = cells[0].textContent.trim();
+            const linkText = cells[0].querySelector('a')?.textContent.trim();
 
-        if (!poRow) {
-          return null;
+            // Check if either matches the PO number
+            if (firstCellText === po || linkText === po) {
+              return {
+                poNumber: firstCellText || linkText,
+                vendorName: cells[1]?.textContent.trim() || '',
+                poDate: cells[2]?.textContent.trim() || '',
+                shipBy: cells[3]?.textContent.trim() || '',
+                shipVia: cells[4]?.textContent.trim() || '',
+                orderType: cells[5]?.textContent.trim() || '',
+                status: cells[6]?.textContent.trim() || '',
+                loc: cells[7]?.textContent.trim() || '',
+                prodRep: cells[8]?.textContent.trim() || ''
+              };
+            }
+          }
         }
-
-        const cells = poRow.querySelectorAll('td');
-        return {
-          poNumber: cells[0]?.textContent.trim() || '',
-          vendorName: cells[1]?.textContent.trim() || '',
-          poDate: cells[2]?.textContent.trim() || '',
-          shipBy: cells[3]?.textContent.trim() || '',
-          shipVia: cells[4]?.textContent.trim() || '',
-          orderType: cells[5]?.textContent.trim() || '',
-          status: cells[6]?.textContent.trim() || '',
-          loc: cells[7]?.textContent.trim() || '',
-          prodRep: cells[8]?.textContent.trim() || ''
-        };
+        return null;
       }, poNumber);
 
       if (listData) {
         console.log('✓ Found PO in list, extracted table data');
+        console.log(`  Vendor: ${listData.vendorName}`);
+        console.log(`  PO Date: ${listData.poDate}`);
+        console.log(`  Ship By: ${listData.shipBy}`);
+        console.log(`  Ship Via: ${listData.shipVia}`);
+        console.log(`  Order Type: ${listData.orderType}`);
+        console.log(`  Status: ${listData.status}`);
+        console.log(`  Loc: ${listData.loc}`);
+        console.log(`  Prod Rep: ${listData.prodRep}`);
         return listData;
       } else {
         console.log('⚠ PO not found in list table');
