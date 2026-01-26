@@ -1,9 +1,7 @@
 @echo off
 echo Starting E-BrandID Web Server...
 echo.
-echo Server will start on http://localhost:8766
-echo Browser will open automatically in 5 seconds...
+echo Please wait for the server to start...
+echo The server will display the correct URL to open in your browser.
 echo.
-start /B npm run server
-timeout /t 5 /nobreak >nul
-start http://localhost:8766
+npm run server
