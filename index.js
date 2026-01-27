@@ -25,12 +25,10 @@ class EBrandIDDownloader {
     console.log('Initializing browser...');
     this.browser = await chromium.launch({
       headless: config.headless,
-      timeout: config.timeout_seconds * 1000,
-      proxy: { server: 'per-context' }
+      timeout: config.timeout_seconds * 1000
     });
     this.context = await this.browser.newContext({
-      acceptDownloads: true,
-      proxy: { server: 'system' }
+      acceptDownloads: true
     });
     this.page = await this.context.newPage();
     console.log('Browser initialized successfully');
