@@ -5,7 +5,7 @@ import xlsx from 'xlsx';
 import fs from 'fs';
 import os from 'os';
 import EBrandIDDownloader from './index.js';
-import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs, deletePO } from './database.js';
+import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs, deletePO, deleteAllPOs } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -231,6 +231,17 @@ app.delete('/api/orders/:poNumber', (req, res) => {
     res.json({ success: true, message: `PO ${poNumber} deleted successfully` });
   } catch (error) {
     console.error('Error deleting PO:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete all POs
+app.delete('/api/orders', (req, res) => {
+  try {
+    deleteAllPOs();
+    res.json({ success: true, message: 'All Purchase Orders deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting all POs:', error);
     res.status(500).json({ error: error.message });
   }
 });

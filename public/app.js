@@ -317,6 +317,7 @@ function showProfileMessage(message, type) {
 const searchBtn = document.getElementById('search-btn');
 const loadMoreBtn = document.getElementById('load-more-btn');
 const showAllBtn = document.getElementById('show-all-btn');
+const deleteAllBtn = document.getElementById('delete-all-btn');
 const statusSearch = document.getElementById('status-search');
 const ordersListSection = document.getElementById('orders-list-section');
 const ordersBody = document.getElementById('orders-body');
@@ -363,6 +364,36 @@ searchBtn.addEventListener('click', async () => {
 statusSearch.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         searchBtn.click();
+    }
+});
+
+// Delete all POs
+deleteAllBtn.addEventListener('click', async () => {
+    // Prompt user for confirmation
+    const confirmed = await showConfirm('Are you sure you want to delete all Purchase Orders?\n\nThis action cannot be undone.');
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/orders', {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to delete all POs: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        await showAlert('All Purchase Orders deleted successfully');
+
+        // Clear the orders list display
+        ordersBody.innerHTML = '<tr><td colspan="19" style="text-align: center;">No orders found</td></tr>';
+        currentOrders = [];
+        currentOffset = 0;
+    } catch (error) {
+        await showAlert('Error deleting all POs: ' + error.message);
     }
 });
 

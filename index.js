@@ -73,11 +73,10 @@ class EBrandIDDownloader {
   }
 
   /**
-   * Extract PO data from the Purchase Order list table
-   * @param {string} poNumber - Purchase Order number
+   * Navigate to Purchase Order list page (one-time setup)
    */
-  async extractPOListData(poNumber) {
-    console.log(`\nSearching for PO ${poNumber} in list...`);
+  async navigateToPOListPage() {
+    console.log('\nNavigating to Purchase Order list page...');
 
     try {
       // After login, we should already be on index.aspx with frames
@@ -136,6 +135,30 @@ class EBrandIDDownloader {
       console.log('Selecting "All" status...');
       await spaceFrame.selectOption('#ddlStatus', '0');
       await this.page.waitForTimeout(1000);
+
+      console.log('✓ Purchase Order list page ready');
+      return true;
+    } catch (error) {
+      console.error('Failed to navigate to PO list page:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Extract PO data from the Purchase Order list table
+   * Assumes we're already on the list page
+   * @param {string} poNumber - Purchase Order number
+   */
+  async extractPOListData(poNumber) {
+    console.log(`\nSearching for PO ${poNumber} in list...`);
+
+    try {
+      // Find the space frame
+      const spaceFrame = this.page.frames().find(f => f.name() === 'space');
+
+      if (!spaceFrame) {
+        throw new Error('Could not find space frame');
+      }
 
       // Enter PO number in search box in the space frame
       console.log(`Entering PO number ${poNumber}...`);
@@ -204,9 +227,9 @@ class EBrandIDDownloader {
    * Navigate to PO detail page
    * @param {string} poNumber - Purchase Order number
    */
-  async navigateToPO(poNumber) {
+  async navigateToPODetailPage(poNumber) {
     const poUrl = `${config.po_detail_url}?po_id=${poNumber}`;
-    console.log(`\nNavigating to PO ${poNumber}...`);
+    console.log(`\nNavigating to PO detail page ${poNumber}...`);
 
     await this.page.goto(poUrl, {
       waitUntil: 'networkidle',
@@ -219,7 +242,33 @@ class EBrandIDDownloader {
       throw new Error(`Failed to navigate to PO ${poNumber}`);
     }
 
-    console.log(`Successfully navigated to PO ${poNumber}`);
+    console.log(`✓ PO detail page loaded`);
+    return true;
+  }
+
+  /**
+   * Navigate back to Purchase Order list page
+   */
+  async navigateBackToPOListPage() {
+    console.log('\nNavigating back to index page...');
+
+    // Navigate back to index.aspx (which has the list page in the space frame)
+    const indexPageUrl = 'https://app.e-brandid.com/Bidnet/index.aspx';
+
+    await this.page.goto(indexPageUrl, {
+      waitUntil: 'networkidle',
+      timeout: config.timeout_seconds * 1000
+    });
+
+    await this.page.waitForTimeout(2000);
+
+    // Find the space frame
+    const spaceFrame = this.page.frames().find(f => f.name() === 'space');
+    if (!spaceFrame) {
+      throw new Error('Could not find space frame');
+    }
+
+    console.log('✓ Back on index page with list page loaded');
     return true;
   }
 
@@ -462,13 +511,16 @@ class EBrandIDDownloader {
     };
 
     try {
-      // First, extract data from the PO list table
+      // Step 1: Navigate to PO list page (hover Search → click Purchase Order)
+      await this.navigateToPOListPage();
+
+      // Step 2: Search and extract data from the PO list table
       const listData = await this.extractPOListData(poNumber);
 
-      // Navigate to PO detail page
-      await this.navigateToPO(poNumber);
+      // Step 3: Navigate to PO detail page
+      await this.navigateToPODetailPage(poNumber);
 
-      // Extract and save PO header information (merge with list data)
+      // Step 4: Extract and save PO header information (merge with list data)
       try {
         const poHeader = await this.extractPOHeader(poNumber, listData);
         savePOHeader(poHeader);
@@ -478,7 +530,7 @@ class EBrandIDDownloader {
         throw error;
       }
 
-      // Extract and save PO line items
+      // Step 5: Extract and save PO line items
       try {
         const poItems = await this.extractPOItems(poNumber);
         poItems.forEach(item => savePOItem(item));
@@ -493,6 +545,9 @@ class EBrandIDDownloader {
       console.log(`PO ${poNumber} Information Fetched Successfully`);
       console.log(`  Items found: ${result.itemsFound}`);
       console.log('='.repeat(60));
+
+      // Step 6: Navigate back to index page for next PO
+      await this.navigateBackToPOListPage();
 
     } catch (error) {
       console.error(`Error fetching PO ${poNumber}:`, error);
@@ -523,13 +578,16 @@ class EBrandIDDownloader {
     };
 
     try {
-      // First, extract data from the PO list table
+      // Step 1: Navigate to PO list page (hover Search → click Purchase Order)
+      await this.navigateToPOListPage();
+
+      // Step 2: Search and extract data from the PO list table
       const listData = await this.extractPOListData(poNumber);
 
-      // Navigate to PO detail page
-      await this.navigateToPO(poNumber);
+      // Step 3: Navigate to PO detail page
+      await this.navigateToPODetailPage(poNumber);
 
-      // Extract and save PO header information (merge with list data)
+      // Step 4: Extract and save PO header information (merge with list data)
       try {
         const poHeader = await this.extractPOHeader(poNumber, listData);
         savePOHeader(poHeader);
@@ -538,7 +596,7 @@ class EBrandIDDownloader {
         console.log(`⚠ Could not save PO header: ${error.message}`);
       }
 
-      // Extract and save PO line items
+      // Step 5: Extract and save PO line items
       try {
         const poItems = await this.extractPOItems(poNumber);
         poItems.forEach(item => savePOItem(item));
@@ -554,6 +612,8 @@ class EBrandIDDownloader {
       if (items.length === 0) {
         console.log('⚠ No items found for this PO');
         result.status = 'no_items';
+        // Navigate back to index page even if no items
+        await this.navigateBackToPOListPage();
         return result;
       }
 
@@ -599,6 +659,9 @@ class EBrandIDDownloader {
         console.log(`  Errors: ${result.errors.length}`);
       }
       console.log('='.repeat(60));
+
+      // Step 6: Navigate back to index page for next PO
+      await this.navigateBackToPOListPage();
 
     } catch (error) {
       console.error(`\n✗ Failed to process PO ${poNumber}: ${error.message}`);

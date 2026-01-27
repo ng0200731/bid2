@@ -374,6 +374,22 @@ export function deletePO(poNumber) {
 }
 
 /**
+ * Delete all POs and related data
+ */
+export function deleteAllPOs() {
+  try {
+    db.run('DELETE FROM po_items');
+    db.run('DELETE FROM download_history');
+    db.run('DELETE FROM po_headers');
+    saveDatabase();
+    return true;
+  } catch (error) {
+    console.error('Error deleting all POs:', error);
+    throw new Error(`Failed to delete all POs: ${error.message}`);
+  }
+}
+
+/**
  * Close database
  */
 export function closeDatabase() {
