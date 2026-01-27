@@ -25,7 +25,12 @@ class EBrandIDDownloader {
     console.log('Initializing browser...');
     this.browser = await chromium.launch({
       headless: config.headless,
-      timeout: config.timeout_seconds * 1000
+      timeout: config.timeout_seconds * 1000,
+      args: [
+        '--disable-features=NetworkService',
+        '--disable-features=VizDisplayCompositor',
+        '--host-resolver-rules="MAP app.e-brandid.com 13.77.146.165"'
+      ]
     });
     this.context = await this.browser.newContext({
       acceptDownloads: true
