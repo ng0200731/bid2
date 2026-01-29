@@ -809,6 +809,47 @@ window.showMessageDetails = function(refNumber) {
             messageLink.textContent = 'No link available';
         }
 
+        // Intercept clicks on Reply button within the message content
+        // Find all input buttons and regular buttons
+        const allButtons = modalBody.querySelectorAll('input[type="button"], button');
+        allButtons.forEach(btn => {
+            // Check if the button text/value contains "Reply"
+            const buttonText = (btn.value || btn.textContent || '').trim();
+            if (buttonText.toLowerCase().includes('reply')) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // Extract CommentId from the stored message link or use the stored commentId
+                    let commentId = null;
+
+                    // Try to get commentId from the message object first
+                    if (message.commentId) {
+                        commentId = message.commentId;
+                    } else if (message.messageLink) {
+                        // Fallback: extract from URL
+                        try {
+                            const url = new URL(message.messageLink);
+                            commentId = url.searchParams.get('CommentId');
+                        } catch (error) {
+                            console.error('Could not extract CommentId:', error);
+                        }
+                    }
+
+                    if (commentId) {
+                        // Construct the reply URL
+                        const replyUrl = `https://app.e-brandid.com/Bidnet/bidnet2/CommentsNewMessage.aspx?Type=RA&CommentId=${commentId}`;
+                        console.log('Opening reply URL:', replyUrl);
+
+                        // Open in new window
+                        window.open(replyUrl, '_blank');
+                    } else {
+                        alert('Could not determine CommentId for reply');
+                    }
+                });
+            }
+        });
+
         // Show the modal
         modal.style.display = 'flex';
     }
@@ -818,6 +859,33 @@ window.showMessageDetails = function(refNumber) {
 document.getElementById('message-close-btn').addEventListener('click', () => {
     const modal = document.getElementById('message-detail-modal');
     modal.style.display = 'none';
+});
+
+// Reply button functionality
+document.getElementById('message-reply-btn').addEventListener('click', () => {
+    // Get the current message from the modal
+    const modal = document.getElementById('message-detail-modal');
+    const messageLink = document.getElementById('message-link');
+
+    // Extract CommentId from the link
+    let commentId = null;
+    try {
+        const url = new URL(messageLink.href);
+        commentId = url.searchParams.get('CommentId');
+    } catch (error) {
+        console.error('Could not extract CommentId:', error);
+    }
+
+    if (commentId) {
+        // Construct the reply URL
+        const replyUrl = `https://app.e-brandid.com/Bidnet/bidnet2/CommentsNewMessage.aspx?Type=RA&CommentId=${commentId}`;
+        console.log('Opening reply URL:', replyUrl);
+
+        // Open in new window
+        window.open(replyUrl, '_blank');
+    } else {
+        alert('Could not determine CommentId for reply');
+    }
 });
 
 // Close message detail modal when clicking outside the content

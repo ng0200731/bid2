@@ -466,6 +466,21 @@ tbody tr:hover {
     text-decoration: underline;
 }
 
+.message-reply-btn {
+    padding: 5px 15px;
+    border: 1px solid black;
+    background-color: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    flex-shrink: 0;
+    margin-left: 10px;
+}
+
+.message-reply-btn:hover {
+    background-color: #f0f0f0;
+}
+
 .message-close-btn {
     width: 30px;
     height: 30px;
@@ -478,6 +493,7 @@ tbody tr:hover {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    margin-left: 10px;
 }
 
 .message-close-btn:hover {
