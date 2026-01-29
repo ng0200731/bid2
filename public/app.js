@@ -792,9 +792,41 @@ window.showMessageDetails = function(refNumber) {
     // Find the message in the current results
     const message = window.currentMessages.find(m => m.refNumber === refNumber);
     if (message && message.fullDetails) {
-        showAlert(message.fullDetails);
+        // Show the message detail modal with styled HTML
+        const modal = document.getElementById('message-detail-modal');
+        const modalBody = document.getElementById('message-detail-body');
+        const messageLink = document.getElementById('message-link');
+
+        // Set the HTML content (preserving styles)
+        modalBody.innerHTML = message.fullDetails;
+
+        // Set the message link
+        if (message.messageLink) {
+            messageLink.href = message.messageLink;
+            messageLink.textContent = message.messageLink;
+        } else {
+            messageLink.href = '#';
+            messageLink.textContent = 'No link available';
+        }
+
+        // Show the modal
+        modal.style.display = 'flex';
     }
 };
+
+// Close message detail modal when clicking the X button
+document.getElementById('message-close-btn').addEventListener('click', () => {
+    const modal = document.getElementById('message-detail-modal');
+    modal.style.display = 'none';
+});
+
+// Close message detail modal when clicking outside the content
+document.getElementById('message-detail-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'message-detail-modal') {
+        const modal = document.getElementById('message-detail-modal');
+        modal.style.display = 'none';
+    }
+});
 
 // Make deleteMessageById globally accessible
 window.deleteMessageById = async function(messageId) {
@@ -899,7 +931,8 @@ loadAllMsgBtn.addEventListener('click', async () => {
                 receivedDate: msg.received_date,
                 subject: msg.subject,
                 comment: msg.comment,
-                fullDetails: msg.full_details
+                fullDetails: msg.full_details,
+                messageLink: msg.message_link
             })));
         } else {
             messagesTitle.textContent = 'No Messages Found';

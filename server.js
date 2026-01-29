@@ -547,7 +547,9 @@ async function processFetchMessages(jobId) {
         receivedDate: message.receivedDate,
         subject: message.subject,
         comment: message.comment,
-        fullDetails: message.fullDetails
+        fullDetails: message.fullDetails,
+        messageLink: message.messageLink,
+        commentId: message.commentId
       });
     }
 

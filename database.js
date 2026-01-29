@@ -108,6 +108,8 @@ function createTables() {
       subject TEXT,
       comment TEXT,
       full_details TEXT,
+      message_link TEXT,
+      comment_id TEXT,
       created_at TEXT,
       updated_at TEXT
     )
@@ -134,6 +136,8 @@ function migrateDatabase() {
           subject TEXT,
           comment TEXT,
           full_details TEXT,
+          message_link TEXT,
+          comment_id TEXT,
           created_at TEXT,
           updated_at TEXT
         )
@@ -153,6 +157,24 @@ function migrateDatabase() {
         db.run(`ALTER TABLE po_headers ADD COLUMN ${column} TEXT`);
       }
     });
+
+    // Check if message_link column exists in messages table
+    try {
+      db.exec(`SELECT message_link FROM messages LIMIT 1`);
+    } catch (error) {
+      // Column doesn't exist, add it
+      console.log('Adding column message_link to messages table');
+      db.run(`ALTER TABLE messages ADD COLUMN message_link TEXT`);
+    }
+
+    // Check if comment_id column exists in messages table
+    try {
+      db.exec(`SELECT comment_id FROM messages LIMIT 1`);
+    } catch (error) {
+      // Column doesn't exist, add it
+      console.log('Adding column comment_id to messages table');
+      db.run(`ALTER TABLE messages ADD COLUMN comment_id TEXT`);
+    }
 
     saveDatabase();
   } catch (error) {
@@ -444,9 +466,9 @@ export function saveMessage(messageData) {
 
     const stmt = db.prepare(`
       INSERT OR REPLACE INTO messages (
-        ref_number, author, received_date, subject, comment, full_details,
+        ref_number, author, received_date, subject, comment, full_details, message_link, comment_id,
         created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run([
@@ -456,6 +478,8 @@ export function saveMessage(messageData) {
       messageData.subject,
       messageData.comment,
       messageData.fullDetails,
+      messageData.messageLink || null,
+      messageData.commentId || null,
       now,
       now
     ]);

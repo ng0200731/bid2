@@ -302,12 +302,29 @@ class EBrandIDDownloader {
           await popup.waitForLoadState('networkidle');
           await popup.waitForTimeout(1000);
 
-          // Extract full details from the popup
+          // Capture the message link (URL)
+          const messageLink = popup.url();
+          console.log(`  Message link: ${messageLink}`);
+
+          // Extract CommentId from URL
+          let commentId = null;
+          try {
+            const url = new URL(messageLink);
+            commentId = url.searchParams.get('CommentId');
+            console.log(`  Comment ID: ${commentId}`);
+          } catch (error) {
+            console.log(`  Could not extract Comment ID: ${error.message}`);
+          }
+
+          // Extract full details from the popup with HTML styling
           const fullDetails = await popup.evaluate(() => {
-            return document.body.innerText;
+            // Get the full HTML content with styling
+            return document.body.innerHTML;
           });
 
           message.fullDetails = fullDetails;
+          message.messageLink = messageLink;
+          message.commentId = commentId;
           console.log(`✓ Extracted details for Subject: ${message.subject}`);
 
           // Close the popup
