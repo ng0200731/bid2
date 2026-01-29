@@ -482,3 +482,34 @@ export function getAllMessages() {
   stmt.free();
   return results;
 }
+
+/**
+ * Delete a single message by ID
+ */
+export function deleteMessage(id) {
+  try {
+    const stmt = db.prepare('DELETE FROM messages WHERE id = ?');
+    stmt.bind([id]);
+    stmt.step();
+    stmt.free();
+    saveDatabase();
+    return { success: true, message: 'Message deleted successfully' };
+  } catch (error) {
+    console.error('Error deleting message:', error);
+    throw new Error(`Failed to delete message: ${error.message}`);
+  }
+}
+
+/**
+ * Delete all messages
+ */
+export function deleteAllMessages() {
+  try {
+    db.run('DELETE FROM messages');
+    saveDatabase();
+    return { success: true, message: 'All messages deleted successfully' };
+  } catch (error) {
+    console.error('Error deleting all messages:', error);
+    throw new Error(`Failed to delete messages: ${error.message}`);
+  }
+}

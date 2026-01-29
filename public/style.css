@@ -56,6 +56,7 @@ body {
     width: 80%;
     padding: 30px;
     overflow-y: auto;
+    height: 100vh;
 }
 
 .view {
@@ -293,6 +294,10 @@ textarea {
     text-align: center;
 }
 
+.messages-table td:nth-child(7) { /* Delete button */
+    text-align: center;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
@@ -364,15 +369,19 @@ tbody tr:hover {
     border: 2px solid black;
     padding: 30px;
     min-width: 400px;
-    max-width: 600px;
+    max-width: 80%;
+    max-height: 80vh;
+    overflow-y: auto;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
 .modal-message {
     margin-bottom: 20px;
-    font-size: 16px;
-    line-height: 1.5;
-    white-space: pre-line;
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .modal-buttons {

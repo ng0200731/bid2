@@ -770,6 +770,9 @@ function displayMessages(messages) {
     messagesBody.innerHTML = '';
     messagesListSection.style.display = 'block';
 
+    // Store messages globally for showMessageDetails
+    window.currentMessages = messages;
+
     messages.forEach(message => {
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -779,6 +782,7 @@ function displayMessages(messages) {
             <td>${message.subject}</td>
             <td>${message.comment}</td>
             <td><button class="submit-btn" onclick="showMessageDetails('${message.refNumber}')">View</button></td>
+            <td><button class="submit-btn" onclick="deleteMessageById(${message.id})" style="background-color: #d32f2f;">Delete</button></td>
         `;
         messagesBody.appendChild(row);
     });
@@ -789,6 +793,52 @@ window.showMessageDetails = function(refNumber) {
     const message = window.currentMessages.find(m => m.refNumber === refNumber);
     if (message && message.fullDetails) {
         showAlert(message.fullDetails);
+    }
+};
+
+// Make deleteMessageById globally accessible
+window.deleteMessageById = async function(messageId) {
+    try {
+        console.log('deleteMessageById called with ID:', messageId);
+
+        if (!messageId) {
+            console.error('No message ID provided');
+            await showAlert('Error: No message ID provided');
+            return;
+        }
+
+        console.log('Showing confirmation dialog...');
+        const confirmed = await showConfirm('Are you sure you want to delete this message?');
+        console.log('User confirmed:', confirmed);
+
+        if (!confirmed) {
+            return;
+        }
+
+        console.log('Sending delete request...');
+        const response = await fetch(`/api/messages/${messageId}`, {
+            method: 'DELETE'
+        });
+
+        console.log('Delete response status:', response.status);
+
+        if (!response.ok) {
+            throw new Error(`Failed to delete message: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        console.log('Delete result:', result);
+
+        await showAlert('Message deleted successfully');
+
+        // Reload messages by triggering the load button
+        const loadBtn = document.getElementById('load-all-msg-btn');
+        if (loadBtn) {
+            loadBtn.click();
+        }
+    } catch (error) {
+        console.error('Error in deleteMessageById:', error);
+        await showAlert('Error deleting message: ' + error.message);
     }
 };
 
@@ -843,6 +893,7 @@ loadAllMsgBtn.addEventListener('click', async () => {
         if (data.messages && data.messages.length > 0) {
             messagesTitle.textContent = `All Messages from Database (${data.messages.length} total)`;
             displayMessages(data.messages.map(msg => ({
+                id: msg.id,
                 refNumber: msg.ref_number,
                 author: msg.author,
                 receivedDate: msg.received_date,
@@ -852,13 +903,49 @@ loadAllMsgBtn.addEventListener('click', async () => {
             })));
         } else {
             messagesTitle.textContent = 'No Messages Found';
-            messagesBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No messages in database</td></tr>';
+            messagesBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No messages in database</td></tr>';
         }
 
         loadAllMsgBtn.disabled = false;
     } catch (error) {
         alert(`Error loading messages: ${error.message}`);
         loadAllMsgBtn.disabled = false;
+    }
+});
+
+// Delete all messages button
+const deleteAllMsgBtn = document.getElementById('delete-all-msg-btn');
+
+deleteAllMsgBtn.addEventListener('click', async () => {
+    try {
+        const confirmed = await showConfirm('Are you sure you want to delete ALL messages?\n\nThis action cannot be undone.');
+
+        if (!confirmed) {
+            return;
+        }
+
+        deleteAllMsgBtn.disabled = true;
+
+        const response = await fetch('/api/messages', {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to delete messages: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        await showAlert(result.message || 'All messages deleted successfully');
+
+        // Clear the messages display
+        messagesBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No messages in database</td></tr>';
+        messagesTitle.textContent = 'No Messages Found';
+        messagesListSection.style.display = 'none';
+
+        deleteAllMsgBtn.disabled = false;
+    } catch (error) {
+        await showAlert('Error deleting messages: ' + error.message);
+        deleteAllMsgBtn.disabled = false;
     }
 });
 

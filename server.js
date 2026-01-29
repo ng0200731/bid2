@@ -5,7 +5,7 @@ import xlsx from 'xlsx';
 import fs from 'fs';
 import os from 'os';
 import EBrandIDDownloader from './index.js';
-import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs, deletePO, deleteAllPOs, saveMessage, getAllMessages } from './database.js';
+import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs, deletePO, deleteAllPOs, saveMessage, getAllMessages, deleteMessage, deleteAllMessages } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -317,6 +317,29 @@ app.get('/api/messages', (req, res) => {
     res.json({ messages });
   } catch (error) {
     console.error('Error fetching messages:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete all messages (must come BEFORE the :id route)
+app.delete('/api/messages', (req, res) => {
+  try {
+    const result = deleteAllMessages();
+    res.json(result);
+  } catch (error) {
+    console.error('Error deleting all messages:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete a single message
+app.delete('/api/messages/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = deleteMessage(id);
+    res.json(result);
+  } catch (error) {
+    console.error('Error deleting message:', error);
     res.status(500).json({ error: error.message });
   }
 });
