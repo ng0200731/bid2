@@ -5,7 +5,7 @@ import xlsx from 'xlsx';
 import fs from 'fs';
 import os from 'os';
 import EBrandIDDownloader from './index.js';
-import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs, deletePO, deleteAllPOs } from './database.js';
+import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs, deletePO, deleteAllPOs, saveMessage, getAllMessages } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -291,6 +291,36 @@ app.post('/api/profile', (req, res) => {
   }
 });
 
+// Fetch messages
+app.post('/api/fetch-messages', async (req, res) => {
+  const jobId = `job_${jobIdCounter++}`;
+
+  // Create job entry
+  jobs.set(jobId, {
+    id: jobId,
+    status: 'processing',
+    results: [],
+    progress: null,
+    startTime: new Date()
+  });
+
+  // Start fetch messages process in background
+  processFetchMessages(jobId);
+
+  res.json({ jobId, status: 'started' });
+});
+
+// Get all messages from database
+app.get('/api/messages', (req, res) => {
+  try {
+    const messages = getAllMessages();
+    res.json({ messages });
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Generate QC report
 app.get('/api/qc-report/:poNumber', (req, res) => {
   try {
@@ -451,6 +481,61 @@ async function processFetchPO(jobId, poNumbers) {
 
   } catch (error) {
     console.error('Fetch PO error:', error);
+    job.status = 'failed';
+    job.error = error.message;
+    job.completedTime = new Date();
+  } finally {
+    await downloader.close();
+  }
+}
+
+// Background fetch messages processor
+async function processFetchMessages(jobId) {
+  const job = jobs.get(jobId);
+  const downloader = new EBrandIDDownloader();
+
+  try {
+    // Initialize and login
+    job.progress = 'Initializing browser...';
+    await downloader.initialize();
+
+    job.progress = 'Logging in...';
+    await downloader.login();
+
+    // Navigate to Message page
+    job.progress = 'Navigating to Message page...';
+    await downloader.navigateToMessagePage();
+
+    // Extract messages from the page
+    job.progress = 'Extracting messages...';
+    const messagesData = await downloader.extractMessages();
+
+    // Add debug info to progress
+    if (messagesData.debug && messagesData.debug.length > 0) {
+      job.progress = `Debug: Found ${messagesData.debug.length} rows. First row cells: ${JSON.stringify(messagesData.debug[0])}`;
+    }
+
+    // Save messages to database
+    job.progress = `Saving ${messagesData.messages.length} messages to database...`;
+    for (const message of messagesData.messages) {
+      saveMessage({
+        refNumber: message.refNumber,
+        author: message.author,
+        receivedDate: message.receivedDate,
+        subject: message.subject,
+        comment: message.comment,
+        fullDetails: message.fullDetails
+      });
+    }
+
+    // Mark as completed
+    job.status = 'completed';
+    job.completedTime = new Date();
+    job.progress = `Successfully extracted and saved ${messagesData.messages.length} messages`;
+    job.results = messagesData.messages;
+
+  } catch (error) {
+    console.error('Fetch messages error:', error);
     job.status = 'failed';
     job.error = error.message;
     job.completedTime = new Date();

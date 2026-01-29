@@ -97,13 +97,49 @@ function createTables() {
       FOREIGN KEY (po_number) REFERENCES po_headers(po_number)
     )
   `);
+
+  // Messages table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ref_number TEXT,
+      author TEXT,
+      received_date TEXT,
+      subject TEXT,
+      comment TEXT,
+      full_details TEXT,
+      created_at TEXT,
+      updated_at TEXT
+    )
+  `);
 }
 
 /**
- * Migrate existing database to add new columns
+ * Migrate existing database to add new columns and tables
  */
 function migrateDatabase() {
   try {
+    // Check if messages table exists, if not create it
+    try {
+      db.exec(`SELECT 1 FROM messages LIMIT 1`);
+    } catch (error) {
+      // Messages table doesn't exist, create it
+      console.log('Creating messages table...');
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS messages (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          ref_number TEXT,
+          author TEXT,
+          received_date TEXT,
+          subject TEXT,
+          comment TEXT,
+          full_details TEXT,
+          created_at TEXT,
+          updated_at TEXT
+        )
+      `);
+    }
+
     // Check if new columns exist, if not add them
     const columns = ['po_date', 'ship_by', 'ship_via', 'order_type', 'loc', 'prod_rep'];
 
@@ -397,4 +433,52 @@ export function closeDatabase() {
     db.close();
     db = null;
   }
+}
+
+/**
+ * Save message to database
+ */
+export function saveMessage(messageData) {
+  try {
+    const now = new Date().toISOString();
+
+    const stmt = db.prepare(`
+      INSERT OR REPLACE INTO messages (
+        ref_number, author, received_date, subject, comment, full_details,
+        created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run([
+      messageData.refNumber,
+      messageData.author,
+      messageData.receivedDate,
+      messageData.subject,
+      messageData.comment,
+      messageData.fullDetails,
+      now,
+      now
+    ]);
+
+    stmt.free();
+    saveDatabase();
+  } catch (error) {
+    console.error('Error in saveMessage:', error);
+    throw new Error(`Failed to save message: ${error.message}`);
+  }
+}
+
+/**
+ * Get all messages
+ */
+export function getAllMessages() {
+  const stmt = db.prepare('SELECT * FROM messages ORDER BY received_date DESC');
+  const results = [];
+
+  while (stmt.step()) {
+    results.push(stmt.getAsObject());
+  }
+
+  stmt.free();
+  return results;
 }

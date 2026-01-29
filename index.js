@@ -2,7 +2,7 @@ import { chromium } from 'playwright';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { initDatabase, savePOHeader, savePOItem, saveDownloadHistory } from './database.js';
+import { initDatabase, savePOHeader, savePOItem, saveDownloadHistory, saveMessage } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -145,6 +145,180 @@ class EBrandIDDownloader {
       return true;
     } catch (error) {
       console.error('Failed to navigate to PO list page:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Navigate to Message page
+   */
+  async navigateToMessagePage() {
+    console.log('\nNavigating to Message page...');
+
+    try {
+      // After login, we should already be on index.aspx with frames
+      // Wait for the page to fully load
+      console.log('Waiting for page to load completely...');
+      await this.page.waitForLoadState('networkidle', {
+        timeout: config.timeout_seconds * 1000
+      });
+      await this.page.waitForTimeout(2000);
+
+      // The page uses frames - find the navigation frame
+      console.log('Looking for navigation frame...');
+      const navigFrame = this.page.frames().find(f => f.name() === 'navig' || f.url().includes('mnuSetup.aspx'));
+
+      if (!navigFrame) {
+        throw new Error('Could not find navigation frame');
+      }
+
+      console.log('Found navigation frame');
+
+      // Hover over "Messages" menu and click it
+      console.log('Hovering over Messages menu and clicking...');
+      const messagesDiv = navigFrame.locator('div').filter({ hasText: /^Messages$/ }).first();
+      await messagesDiv.hover();
+      await this.page.waitForTimeout(500);
+      await messagesDiv.click();
+
+      // Wait for the message page to load
+      await this.page.waitForTimeout(3000);
+
+      console.log('✓ Message page ready');
+      return true;
+    } catch (error) {
+      console.error('Failed to navigate to Message page:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Extract messages from the Messages page (only 1/26/26)
+   */
+  async extractMessages() {
+    console.log('\nExtracting messages from Messages page...');
+
+    try {
+      // Find the space frame
+      const spaceFrame = this.page.frames().find(f => f.name() === 'space');
+
+      if (!spaceFrame) {
+        throw new Error('Could not find space frame');
+      }
+
+      // Extract all messages from the table, filtering by date 1/26/26
+      const messages = await spaceFrame.evaluate(() => {
+        const rows = Array.from(document.querySelectorAll('table tr'));
+        const messageData = [];
+        const debugInfo = [];
+
+        for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+          const row = rows[rowIndex];
+          const cells = row.querySelectorAll('td');
+
+          // Debug: log what we find
+          if (cells.length > 0) {
+            debugInfo.push({
+              cellCount: cells.length,
+              cell0: cells[0]?.textContent.trim().substring(0, 50),
+              cell1: cells[1]?.textContent.trim().substring(0, 50),
+              cell2: cells[2]?.textContent.trim().substring(0, 50),
+              cell3: cells[3]?.textContent.trim().substring(0, 50),
+              cell4: cells[4]?.textContent.trim().substring(0, 50),
+              cell5: cells[5]?.textContent.trim().substring(0, 50),
+              cell6: cells[6]?.textContent.trim().substring(0, 50),
+              cell7: cells[7]?.textContent.trim().substring(0, 50),
+              hasSubHeader: cells[0]?.className?.includes('SubHeader')
+            });
+          }
+
+          // Skip header rows (rows with SubHeader class or th elements)
+          if (cells.length > 0 && cells[0].className?.includes('SubHeader')) {
+            continue;
+          }
+
+          if (cells.length >= 8) {
+            // Extract: Ref#, Author, Received, Subject, Comment
+            // Note: First 3 cells are icon columns, data starts at cells[3]
+            const refNumber = cells[3].textContent.trim();
+            const author = cells[4].textContent.trim();
+            const receivedDate = cells[5].textContent.trim();
+            const subjectCell = cells[6];
+            const subject = subjectCell.textContent.trim();
+            const comment = cells[7].textContent.trim();
+
+            // Only include messages from 1/26/26 (any time from 00:00 to 23:59)
+            // The Received column format is like "1/26/26 22:25"
+            // Check if the date starts with "1/26/26"
+            if (receivedDate.startsWith('1/26/26') || receivedDate.startsWith('01/26/26')) {
+              // Check if Subject cell has a link
+              const subjectLink = subjectCell.querySelector('a');
+              const hasSubjectLink = subjectLink !== null;
+
+              messageData.push({
+                refNumber,
+                author,
+                receivedDate,
+                subject,
+                comment,
+                rowIndex,
+                hasSubjectLink
+              });
+            }
+          }
+        }
+
+        return { messages: messageData, debug: debugInfo };
+      });
+
+      console.log(`✓ Found ${messages.messages.length} messages from 1/26/26`);
+      console.log('Debug info (first 5 rows):', JSON.stringify(messages.debug.slice(0, 5), null, 2));
+
+      // Limit to first 10 messages
+      const messagesToProcess = messages.messages.slice(0, 10);
+      console.log(`Processing first ${messagesToProcess.length} messages...`);
+
+      // For each message, click into the Subject to get full details
+      for (const message of messagesToProcess) {
+        if (message.hasSubjectLink) {
+          console.log(`\nClicking into message Subject: ${message.subject}`);
+
+          // Wait for popup to open when clicking the Subject link in the specific row
+          const [popup] = await Promise.all([
+            this.page.waitForEvent('popup'),
+            spaceFrame.evaluate((rowIndex) => {
+              const rows = Array.from(document.querySelectorAll('table tr'));
+              const row = rows[rowIndex];
+              const cells = row.querySelectorAll('td');
+              const subjectCell = cells[6]; // Subject column
+              const link = subjectCell.querySelector('a');
+              if (link) {
+                link.click();
+              }
+            }, message.rowIndex)
+          ]);
+
+          // Wait for popup to load
+          await popup.waitForLoadState('networkidle');
+          await popup.waitForTimeout(1000);
+
+          // Extract full details from the popup
+          const fullDetails = await popup.evaluate(() => {
+            return document.body.innerText;
+          });
+
+          message.fullDetails = fullDetails;
+          console.log(`✓ Extracted details for Subject: ${message.subject}`);
+
+          // Close the popup
+          await popup.close();
+          await this.page.waitForTimeout(500);
+        }
+      }
+
+      return messages;
+    } catch (error) {
+      console.error('Failed to extract messages:', error);
       throw error;
     }
   }

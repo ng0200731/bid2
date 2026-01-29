@@ -718,3 +718,147 @@ function displayPODetail(data) {
     }
 }
 
+// Message functionality
+const fetchMsgBtn = document.getElementById('fetch-msg-btn');
+const messageProgressSection = document.getElementById('message-progress-section');
+const messageProgressLog = document.getElementById('message-progress-log');
+const messagesListSection = document.getElementById('messages-list-section');
+const messagesBody = document.getElementById('messages-body');
+
+function addMessageProgressLog(message, type = 'info') {
+    const logEntry = document.createElement('div');
+    logEntry.className = `log-entry ${type}`;
+    logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+    messageProgressLog.appendChild(logEntry);
+    messageProgressLog.scrollTop = messageProgressLog.scrollHeight;
+}
+
+function pollMessageJobStatus(jobId) {
+    const interval = setInterval(async () => {
+        try {
+            const response = await fetch(`/api/status/${jobId}`);
+            const data = await response.json();
+
+            if (data.progress) {
+                addMessageProgressLog(data.progress, 'info');
+            }
+
+            if (data.status === 'completed') {
+                clearInterval(interval);
+                addMessageProgressLog('All messages extracted and saved!', 'success');
+
+                // Display messages in the table
+                if (data.results && data.results.length > 0) {
+                    displayMessages(data.results);
+                }
+
+                fetchMsgBtn.disabled = false;
+            } else if (data.status === 'failed') {
+                clearInterval(interval);
+                addMessageProgressLog(`Job failed: ${data.error}`, 'error');
+                fetchMsgBtn.disabled = false;
+            }
+        } catch (error) {
+            clearInterval(interval);
+            addMessageProgressLog(`Error polling status: ${error.message}`, 'error');
+            fetchMsgBtn.disabled = false;
+        }
+    }, 1000);
+}
+
+function displayMessages(messages) {
+    messagesBody.innerHTML = '';
+    messagesListSection.style.display = 'block';
+
+    messages.forEach(message => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${message.refNumber}</td>
+            <td>${message.author}</td>
+            <td>${message.receivedDate}</td>
+            <td>${message.subject}</td>
+            <td>${message.comment}</td>
+            <td><button class="submit-btn" onclick="showMessageDetails('${message.refNumber}')">View</button></td>
+        `;
+        messagesBody.appendChild(row);
+    });
+}
+
+window.showMessageDetails = function(refNumber) {
+    // Find the message in the current results
+    const message = window.currentMessages.find(m => m.refNumber === refNumber);
+    if (message && message.fullDetails) {
+        showAlert(message.fullDetails);
+    }
+};
+
+fetchMsgBtn.addEventListener('click', async () => {
+    messageProgressLog.innerHTML = '';
+    messagesBody.innerHTML = '';
+    messageProgressSection.style.display = 'block';
+    messagesListSection.style.display = 'none';
+    fetchMsgBtn.disabled = true;
+
+    addMessageProgressLog('Starting message fetch...', 'info');
+
+    try {
+        const response = await fetch('/api/fetch-messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.jobId) {
+            addMessageProgressLog(`Job started with ID: ${data.jobId}`, 'info');
+            pollMessageJobStatus(data.jobId);
+        }
+
+    } catch (error) {
+        addMessageProgressLog(`Error: ${error.message}`, 'error');
+        fetchMsgBtn.disabled = false;
+    }
+});
+
+// Load all messages from database button
+const loadAllMsgBtn = document.getElementById('load-all-msg-btn');
+const messagesTitle = document.getElementById('messages-title');
+
+loadAllMsgBtn.addEventListener('click', async () => {
+    try {
+        messagesBody.innerHTML = '';
+        messageProgressSection.style.display = 'none';
+        messagesListSection.style.display = 'block';
+        loadAllMsgBtn.disabled = true;
+
+        const response = await fetch('/api/messages');
+        const data = await response.json();
+
+        if (data.messages && data.messages.length > 0) {
+            messagesTitle.textContent = `All Messages from Database (${data.messages.length} total)`;
+            displayMessages(data.messages.map(msg => ({
+                refNumber: msg.ref_number,
+                author: msg.author,
+                receivedDate: msg.received_date,
+                subject: msg.subject,
+                comment: msg.comment,
+                fullDetails: msg.full_details
+            })));
+        } else {
+            messagesTitle.textContent = 'No Messages Found';
+            messagesBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No messages in database</td></tr>';
+        }
+
+        loadAllMsgBtn.disabled = false;
+    } catch (error) {
+        alert(`Error loading messages: ${error.message}`);
+        loadAllMsgBtn.disabled = false;
+    }
+});
+

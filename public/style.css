@@ -220,6 +220,77 @@ textarea {
 .results-section {
     border: 1px solid black;
     padding: 20px;
+    margin-top: 20px;
+}
+
+.results-section h2 {
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+/* Table wrapper for horizontal scrolling */
+.table-wrapper {
+    overflow-x: auto;
+    border: 1px solid black;
+}
+
+/* Messages table specific styling */
+.messages-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1000px;
+}
+
+.messages-table th,
+.messages-table td {
+    padding: 12px;
+    text-align: left;
+    border: 1px solid black;
+    vertical-align: top;
+}
+
+.messages-table th {
+    background-color: #333;
+    color: white;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.messages-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.messages-table tbody tr:hover {
+    background-color: #e8e8e8;
+}
+
+/* Column specific styling */
+.messages-table td:nth-child(1) { /* Ref# */
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.messages-table td:nth-child(2) { /* Author */
+    white-space: nowrap;
+}
+
+.messages-table td:nth-child(3) { /* Received */
+    white-space: nowrap;
+}
+
+.messages-table td:nth-child(4) { /* Subject */
+    word-wrap: break-word;
+}
+
+.messages-table td:nth-child(5) { /* Comment */
+    word-wrap: break-word;
+    max-width: 300px;
+}
+
+.messages-table td:nth-child(6) { /* Full Details button */
+    text-align: center;
 }
 
 table {

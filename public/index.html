@@ -13,6 +13,7 @@
             <h2>E-BrandID</h2>
             <button class="nav-button active" data-view="download-artwork">Download</button>
             <button class="nav-button" data-view="order-status">Order Status</button>
+            <button class="nav-button" data-view="message">Message</button>
             <button class="nav-button" data-view="profile">Profile</button>
         </div>
 
@@ -83,6 +84,40 @@
                 </div>
 
                 <div id="profile-message" style="display: none; margin-top: 20px; padding: 10px; border-radius: 4px;"></div>
+            </div>
+
+            <!-- Message View -->
+            <div id="message" class="view">
+                <h1>Message</h1>
+                <div class="form-section">
+                    <button id="fetch-msg-btn" class="submit-btn">Fetch New Messages (1/26/26)</button>
+                    <button id="load-all-msg-btn" class="submit-btn">Load All Messages from Database</button>
+                </div>
+
+                <div id="message-progress-section" class="progress-section" style="display: none;">
+                    <h2>Progress</h2>
+                    <div id="message-progress-log"></div>
+                </div>
+
+                <div id="messages-list-section" class="results-section" style="display: none;">
+                    <h2 id="messages-title">Messages</h2>
+                    <div class="table-wrapper">
+                        <table id="messages-table" class="messages-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 80px;">Ref#</th>
+                                    <th style="width: 120px;">Author</th>
+                                    <th style="width: 140px;">Received</th>
+                                    <th style="width: 250px;">Subject</th>
+                                    <th style="width: 300px;">Comment</th>
+                                    <th style="width: 100px;">Full Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="messages-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <!-- Order Status View -->
