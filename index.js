@@ -200,6 +200,20 @@ class EBrandIDDownloader {
     console.log('\nExtracting messages from Messages page...');
 
     try {
+      // Create screenshots directory
+      const screenshotsDir = path.join(__dirname, 'screenshots');
+      if (!fs.existsSync(screenshotsDir)) {
+        fs.mkdirSync(screenshotsDir, { recursive: true });
+      }
+
+      // Capture screenshot of the messages page
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      await this.page.screenshot({
+        path: path.join(screenshotsDir, `messages-page-${timestamp}.png`),
+        fullPage: true
+      });
+      console.log(`Screenshot saved: messages-page-${timestamp}.png`);
+
       // Find the space frame
       const spaceFrame = this.page.frames().find(f => f.name() === 'space');
 
@@ -320,6 +334,14 @@ class EBrandIDDownloader {
           // Wait for popup to load
           await popup.waitForLoadState('networkidle');
           await popup.waitForTimeout(1000);
+
+          // Capture screenshot of the message popup
+          const popupTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          await popup.screenshot({
+            path: path.join(screenshotsDir, `message-${message.refNumber}-${popupTimestamp}.png`),
+            fullPage: true
+          });
+          console.log(`  Screenshot saved: message-${message.refNumber}-${popupTimestamp}.png`);
 
           // Capture the message link (URL)
           const messageLink = popup.url();
