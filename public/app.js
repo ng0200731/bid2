@@ -12,6 +12,66 @@ document.querySelectorAll('.nav-button').forEach(button => {
     });
 });
 
+// Universal Table Filter Function
+function initializeTableFilters(tableId) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+
+    const filterInputs = table.querySelectorAll('.table-filter');
+    const tbody = table.querySelector('tbody');
+
+    filterInputs.forEach(input => {
+        input.addEventListener('input', () => {
+            filterTable(table, filterInputs, tbody);
+        });
+    });
+}
+
+function filterTable(table, filterInputs, tbody) {
+    const filters = Array.from(filterInputs).map(input => ({
+        column: parseInt(input.getAttribute('data-column')),
+        value: input.value.toLowerCase().trim()
+    }));
+
+    const rows = tbody.querySelectorAll('tr');
+
+    rows.forEach(row => {
+        let shouldShow = true;
+
+        filters.forEach(filter => {
+            if (filter.value === '') return; // Skip empty filters
+
+            const cell = row.cells[filter.column];
+            if (!cell) return;
+
+            const cellText = cell.textContent.toLowerCase();
+            if (!cellText.includes(filter.value)) {
+                shouldShow = false;
+            }
+        });
+
+        if (shouldShow) {
+            row.classList.remove('filtered-out');
+        } else {
+            row.classList.add('filtered-out');
+        }
+    });
+}
+
+// Initialize filters for all tables when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    initializeTableFilters('messages-table');
+    initializeTableFilters('orders-table');
+    initializeTableFilters('po-items-table');
+});
+
+// Re-initialize filters when tables are populated
+function reinitializeFilters() {
+    initializeTableFilters('messages-table');
+    initializeTableFilters('orders-table');
+    initializeTableFilters('po-items-table');
+}
+
 // Custom Modal Functions
 function showModal(message, buttons) {
     return new Promise((resolve) => {
