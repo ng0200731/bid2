@@ -90,7 +90,9 @@
             <div id="message" class="view">
                 <h1>Message</h1>
                 <div class="form-section">
-                    <button id="fetch-msg-btn" class="submit-btn">Fetch New Messages (1/26/26)</button>
+                    <label for="message-date-picker">Select Date:</label>
+                    <input type="date" id="message-date-picker" class="date-picker">
+                    <button id="fetch-msg-btn" class="submit-btn">Fetch Messages</button>
                     <button id="load-all-msg-btn" class="submit-btn">Load All Messages from Database</button>
                     <button id="delete-all-msg-btn" class="submit-btn" style="background-color: #d32f2f;">Delete All Messages</button>
                 </div>
@@ -217,6 +219,17 @@
                 <button class="message-close-btn" id="message-close-btn">✕</button>
             </div>
             <div id="message-detail-body"></div>
+        </div>
+    </div>
+
+    <!-- Reply Modal (Overlay Popup) -->
+    <div id="reply-modal" class="reply-modal" style="display: none;">
+        <div class="reply-modal-content">
+            <div class="reply-modal-header">
+                <span class="reply-modal-title">Reply to Message</span>
+                <button class="reply-modal-close-btn" id="reply-modal-close-btn">✕</button>
+            </div>
+            <iframe id="reply-iframe" class="reply-iframe"></iframe>
         </div>
     </div>
 

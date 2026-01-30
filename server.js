@@ -293,6 +293,7 @@ app.post('/api/profile', (req, res) => {
 
 // Fetch messages
 app.post('/api/fetch-messages', async (req, res) => {
+  const { date } = req.body;
   const jobId = `job_${jobIdCounter++}`;
 
   // Create job entry
@@ -301,11 +302,12 @@ app.post('/api/fetch-messages', async (req, res) => {
     status: 'processing',
     results: [],
     progress: null,
+    date: date || null,
     startTime: new Date()
   });
 
   // Start fetch messages process in background
-  processFetchMessages(jobId);
+  processFetchMessages(jobId, date);
 
   res.json({ jobId, status: 'started' });
 });
@@ -513,7 +515,7 @@ async function processFetchPO(jobId, poNumbers) {
 }
 
 // Background fetch messages processor
-async function processFetchMessages(jobId) {
+async function processFetchMessages(jobId, customDate = null) {
   const job = jobs.get(jobId);
   const downloader = new EBrandIDDownloader();
 
@@ -531,7 +533,7 @@ async function processFetchMessages(jobId) {
 
     // Extract messages from the page
     job.progress = 'Extracting messages...';
-    const messagesData = await downloader.extractMessages();
+    const messagesData = await downloader.extractMessages(customDate);
 
     // Add debug info to progress
     if (messagesData.debug && messagesData.debug.length > 0) {

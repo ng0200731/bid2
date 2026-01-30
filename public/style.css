@@ -94,6 +94,7 @@ label {
 
 input[type="text"],
 input[type="password"],
+input[type="date"],
 textarea {
     width: 100%;
     padding: 10px;
@@ -101,6 +102,13 @@ textarea {
     font-family: monospace;
     font-size: 14px;
     margin-bottom: 15px;
+}
+
+/* Date picker specific styling */
+.date-picker {
+    width: auto;
+    min-width: 200px;
+    cursor: pointer;
 }
 
 /* Password input wrapper */
@@ -522,6 +530,75 @@ tbody tr:hover {
 #message-detail-body table th {
     background-color: #f2f2f2;
 }
+
+/* Reply Modal (Overlay Popup) */
+.reply-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 10001;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.reply-modal-content {
+    background-color: white;
+    border: 2px solid black;
+    width: 95%;
+    max-width: 1400px;
+    height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.reply-modal-header {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    border-bottom: 2px solid black;
+    padding: 10px 20px;
+    z-index: 10002;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.reply-modal-title {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.reply-modal-close-btn {
+    width: 30px;
+    height: 30px;
+    border: 1px solid black;
+    background-color: white;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.reply-modal-close-btn:hover {
+    background-color: #f0f0f0;
+}
+
+.reply-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    flex: 1;
+}
+
     transition: background-color 0.2s;
 }
 

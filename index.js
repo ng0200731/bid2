@@ -193,9 +193,10 @@ class EBrandIDDownloader {
   }
 
   /**
-   * Extract messages from the Messages page (only 1/26/26)
+   * Extract messages from the Messages page
+   * @param {string} customDate - Optional date in YYYY-MM-DD format (e.g., "2026-01-30")
    */
-  async extractMessages() {
+  async extractMessages(customDate = null) {
     console.log('\nExtracting messages from Messages page...');
 
     try {
@@ -206,8 +207,26 @@ class EBrandIDDownloader {
         throw new Error('Could not find space frame');
       }
 
-      // Extract all messages from the table, filtering by date 1/26/26
-      const messages = await spaceFrame.evaluate(() => {
+      // Parse the date - either from customDate parameter or use today
+      let targetDate;
+      if (customDate) {
+        // customDate is in YYYY-MM-DD format (e.g., "2026-01-30")
+        targetDate = new Date(customDate);
+      } else {
+        targetDate = new Date();
+      }
+
+      // Format date in M/D/YY format (e.g., "1/30/26")
+      const month = targetDate.getMonth() + 1; // 0-indexed
+      const day = targetDate.getDate();
+      const year = String(targetDate.getFullYear()).slice(-2); // Last 2 digits
+      const todayStr = `${month}/${day}/${year}`;
+      const todayStrPadded = `${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}/${year}`;
+
+      console.log(`Filtering messages for date: ${todayStr}`);
+
+      // Extract all messages from the table, filtering by the target date
+      const messages = await spaceFrame.evaluate(({ dateStr, dateStrPadded }) => {
         const rows = Array.from(document.querySelectorAll('table tr'));
         const messageData = [];
         const debugInfo = [];
@@ -247,10 +266,10 @@ class EBrandIDDownloader {
             const subject = subjectCell.textContent.trim();
             const comment = cells[7].textContent.trim();
 
-            // Only include messages from 1/26/26 (any time from 00:00 to 23:59)
-            // The Received column format is like "1/26/26 22:25"
-            // Check if the date starts with "1/26/26"
-            if (receivedDate.startsWith('1/26/26') || receivedDate.startsWith('01/26/26')) {
+            // Only include messages from the target date (any time from 00:00 to 23:59)
+            // The Received column format is like "1/30/26 22:25"
+            // Check if the date starts with the target date
+            if (receivedDate.startsWith(dateStr) || receivedDate.startsWith(dateStrPadded)) {
               // Check if Subject cell has a link
               const subjectLink = subjectCell.querySelector('a');
               const hasSubjectLink = subjectLink !== null;
@@ -269,9 +288,9 @@ class EBrandIDDownloader {
         }
 
         return { messages: messageData, debug: debugInfo };
-      });
+      }, { dateStr: todayStr, dateStrPadded: todayStrPadded });
 
-      console.log(`✓ Found ${messages.messages.length} messages from 1/26/26`);
+      console.log(`✓ Found ${messages.messages.length} messages from ${todayStr}`);
       console.log('Debug info (first 5 rows):', JSON.stringify(messages.debug.slice(0, 5), null, 2));
 
       // Limit to first 10 messages

@@ -720,10 +720,25 @@ function displayPODetail(data) {
 
 // Message functionality
 const fetchMsgBtn = document.getElementById('fetch-msg-btn');
+const messageDatePicker = document.getElementById('message-date-picker');
 const messageProgressSection = document.getElementById('message-progress-section');
 const messageProgressLog = document.getElementById('message-progress-log');
 const messagesListSection = document.getElementById('messages-list-section');
 const messagesBody = document.getElementById('messages-body');
+
+// Set date picker to today's date when Message view is activated
+document.querySelectorAll('.nav-button').forEach(button => {
+    button.addEventListener('click', () => {
+        if (button.getAttribute('data-view') === 'message') {
+            // Set date picker to today
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            messageDatePicker.value = `${year}-${month}-${day}`;
+        }
+    });
+});
 
 function addMessageProgressLog(message, type = 'info') {
     const logEntry = document.createElement('div');
@@ -864,7 +879,6 @@ document.getElementById('message-close-btn').addEventListener('click', () => {
 // Reply button functionality
 document.getElementById('message-reply-btn').addEventListener('click', () => {
     // Get the current message from the modal
-    const modal = document.getElementById('message-detail-modal');
     const messageLink = document.getElementById('message-link');
 
     // Extract CommentId from the link
@@ -877,14 +891,34 @@ document.getElementById('message-reply-btn').addEventListener('click', () => {
     }
 
     if (commentId) {
-        // Construct the reply URL
-        const replyUrl = `https://app.e-brandid.com/Bidnet/bidnet2/CommentsNewMessage.aspx?Type=RA&CommentId=${commentId}`;
-        console.log('Opening reply URL:', replyUrl);
+        // Open the message URL directly in a new tab
+        const messageUrl = `https://app.e-brandid.com/Bidnet/bidnet2/CommentsMessage.aspx?CommentId=${commentId}`;
+        console.log('Opening message URL in new tab:', messageUrl);
 
-        // Open in new window
-        window.open(replyUrl, '_blank');
+        // Open in new tab
+        window.open(messageUrl, '_blank');
     } else {
         alert('Could not determine CommentId for reply');
+    }
+});
+
+// Close reply modal when clicking the X button
+document.getElementById('reply-modal-close-btn').addEventListener('click', () => {
+    const replyModal = document.getElementById('reply-modal');
+    const replyIframe = document.getElementById('reply-iframe');
+
+    replyModal.style.display = 'none';
+    replyIframe.src = ''; // Clear iframe to stop loading
+});
+
+// Close reply modal when clicking outside the content
+document.getElementById('reply-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'reply-modal') {
+        const replyModal = document.getElementById('reply-modal');
+        const replyIframe = document.getElementById('reply-iframe');
+
+        replyModal.style.display = 'none';
+        replyIframe.src = ''; // Clear iframe to stop loading
     }
 });
 
@@ -943,20 +977,29 @@ window.deleteMessageById = async function(messageId) {
 };
 
 fetchMsgBtn.addEventListener('click', async () => {
+    // Get selected date from date picker
+    const selectedDate = messageDatePicker.value;
+
+    if (!selectedDate) {
+        await showAlert('Please select a date');
+        return;
+    }
+
     messageProgressLog.innerHTML = '';
     messagesBody.innerHTML = '';
     messageProgressSection.style.display = 'block';
     messagesListSection.style.display = 'none';
     fetchMsgBtn.disabled = true;
 
-    addMessageProgressLog('Starting message fetch...', 'info');
+    addMessageProgressLog(`Starting message fetch for ${selectedDate}...`, 'info');
 
     try {
         const response = await fetch('/api/fetch-messages', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify({ date: selectedDate })
         });
 
         if (!response.ok) {
