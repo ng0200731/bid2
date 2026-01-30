@@ -1,0 +1,240 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-BrandID System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Left Sidebar (20%) -->
+        <div class="sidebar">
+            <h2>E-BrandID</h2>
+            <button class="nav-button active" data-view="download-artwork">Download</button>
+            <button class="nav-button" data-view="order-status">Order Status</button>
+            <button class="nav-button" data-view="message">Message</button>
+            <button class="nav-button" data-view="profile">Profile</button>
+        </div>
+
+        <!-- Right Panel (80%) -->
+        <div class="main-panel">
+            <!-- Download Artwork View -->
+            <div id="download-artwork" class="view active">
+                <h1>Download</h1>
+
+                <div class="split-container">
+                    <!-- Left Side: Form -->
+                    <div class="split-left">
+                        <div class="form-section">
+                            <label for="po-input">Enter PO Number(s):</label>
+                            <textarea id="po-input" rows="5" placeholder="Enter PO numbers (one per line)
+Example:
+1303061
+1307938" style=""></textarea>
+
+                            <button id="fetch-po-btn" class="submit-btn">Fetch PO Information</button>
+                            <button id="download-btn" class="submit-btn">Fetch Artwork</button>
+                        </div>
+                    </div>
+
+                    <!-- Right Side: Progress -->
+                    <div class="split-right">
+                        <div id="progress-section" class="progress-section">
+                            <h2>Progress</h2>
+                            <div id="progress-log"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="results-section" class="results-section" style="display: none;">
+                    <h2>Results</h2>
+                    <table id="results-table">
+                        <thead>
+                            <tr>
+                                <th>PO Number</th>
+                                <th>Status</th>
+                                <th>Items Processed</th>
+                                <th>Files Downloaded</th>
+                                <th>Total Size</th>
+                                <th>Errors</th>
+                            </tr>
+                        </thead>
+                        <tbody id="results-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Profile View -->
+            <div id="profile" class="view">
+                <h1>Profile Settings</h1>
+
+                <div class="form-section">
+                    <h3>Update Login Credentials</h3>
+                    <p>Update your E-BrandID login credentials below.</p>
+
+                    <label for="profile-username">Username:</label>
+                    <input type="text" id="profile-username" placeholder="Enter username" style="">
+
+                    <label for="profile-password">Password:</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="profile-password" placeholder="Enter password" style="">
+                        <span class="password-toggle-icon" id="password-toggle">👁️</span>
+                    </div>
+
+                    <button id="save-profile-btn" class="submit-btn">Save Changes</button>
+                </div>
+
+                <div id="profile-message" style="display: none; margin-top: 20px; padding: 10px; border-radius: 4px;"></div>
+            </div>
+
+            <!-- Message View -->
+            <div id="message" class="view">
+                <h1>Message</h1>
+                <div class="form-section">
+                    <label for="message-date-picker">Select Date:</label>
+                    <input type="date" id="message-date-picker" class="date-picker" style="">
+                    <button id="fetch-msg-btn" class="submit-btn">Fetch Messages</button>
+                    <button id="load-all-msg-btn" class="submit-btn">Load All Messages from Database</button>
+                    <button id="delete-all-msg-btn" class="submit-btn" style="background-color: #d32f2f;">Delete All Messages</button>
+                </div>
+
+                <div id="message-progress-section" class="progress-section" style="display: none;">
+                    <h2>Progress</h2>
+                    <div id="message-progress-log"></div>
+                </div>
+
+                <div id="messages-list-section" class="results-section" style="display: none;">
+                    <h2 id="messages-title">Messages</h2>
+                    <div class="table-wrapper">
+                        <table id="messages-table" class="messages-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 80px;">Ref#</th>
+                                    <th style="width: 120px;">Author</th>
+                                    <th style="width: 140px;">Received</th>
+                                    <th style="width: 250px;">Subject</th>
+                                    <th style="width: 300px;">Comment</th>
+                                    <th style="width: 100px;">Full Details</th>
+                                    <th style="width: 80px;">Delete</th>
+                                </tr>
+                            </thead>
+                            <tbody id="messages-body">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Status View -->
+            <div id="order-status" class="view">
+                <h1>Order Status</h1>
+
+                <div class="form-section">
+                    <label for="status-search">Search PO Number:</label>
+                    <input type="text" id="status-search" placeholder="Enter PO number or vendor name" style="">
+                    <button id="search-btn" class="submit-btn">Search</button>
+                    <button id="load-more-btn" class="submit-btn">More (10 more)</button>
+                    <button id="show-all-btn" class="submit-btn">All</button>
+                    <button id="delete-all-btn" class="submit-btn" style="background-color: #dc3545; margin-left: 10px;">Delete All</button>
+                </div>
+
+                <div id="orders-list-section" class="results-section" style="display: none;">
+                    <h2>Purchase Orders</h2>
+                    <table id="orders-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>PO Number</th>
+                                <th>PO Date</th>
+                                <th>Ship By</th>
+                                <th>Ship Via</th>
+                                <th>Order Type</th>
+                                <th>Status</th>
+                                <th>Loc</th>
+                                <th>Prod Rep</th>
+                                <th>Company</th>
+                                <th>Vendor</th>
+                                <th># of Line Items</th>
+                                <th>Quantity</th>
+                                <th>Amount</th>
+                                <th>Currency</th>
+                                <th>Created</th>
+                                <th>Action</th>
+                                <th>QC</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-body">
+                        </tbody>
+                        <tfoot id="orders-footer">
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div id="po-detail-section" class="results-section" style="display: none;">
+                    <h2>PO Details</h2>
+                    <button id="back-to-list-btn" class="submit-btn">← Back to List</button>
+
+                    <div id="po-header-info"></div>
+
+                    <h3>Line Items</h3>
+                    <table id="po-items-table">
+                        <thead>
+                            <tr>
+                                <th>Item #</th>
+                                <th>Description</th>
+                                <th>Color</th>
+                                <th>Ship To</th>
+                                <th>Need By</th>
+                                <th>Qty</th>
+                                <th>Bundle Qty</th>
+                                <th>$ Unit Price</th>
+                                <th>Extension</th>
+                            </tr>
+                        </thead>
+                        <tbody id="po-items-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Modal -->
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <div id="modal-message" class="modal-message"></div>
+            <div id="modal-buttons" class="modal-buttons"></div>
+        </div>
+    </div>
+
+    <!-- Message Detail Modal -->
+    <div id="message-detail-modal" class="message-detail-modal" style="display: none;">
+        <div class="message-detail-content">
+            <div class="message-detail-header">
+                <div class="message-link-container">
+                    <span class="message-link-label">Link:</span>
+                    <a id="message-link" class="message-link" href="#" target="_blank"></a>
+                </div>
+                <button class="message-reply-btn" id="message-reply-btn">Reply</button>
+                <button class="message-close-btn" id="message-close-btn">✕</button>
+            </div>
+            <div id="message-detail-body"></div>
+        </div>
+    </div>
+
+    <!-- Reply Modal (Overlay Popup) -->
+    <div id="reply-modal" class="reply-modal" style="display: none;">
+        <div class="reply-modal-content">
+            <div class="reply-modal-header">
+                <span class="reply-modal-title">Reply to Message</span>
+                <button class="reply-modal-close-btn" id="reply-modal-close-btn">✕</button>
+            </div>
+            <iframe id="reply-iframe" class="reply-iframe"></iframe>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+
+
+</body></html>

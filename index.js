@@ -7,8 +7,10 @@ import { initDatabase, savePOHeader, savePOItem, saveDownloadHistory, saveMessag
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load configuration
-const config = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf-8'));
+// Helper function to load fresh configuration
+function loadConfig() {
+  return JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf-8'));
+}
 
 class EBrandIDDownloader {
   constructor() {
@@ -16,16 +18,20 @@ class EBrandIDDownloader {
     this.page = null;
     this.context = null;
     this.downloadResults = [];
+    this.config = null;
   }
 
   /**
    * Initialize browser and create new page
    */
   async initialize() {
+    // Load fresh config
+    this.config = loadConfig();
+
     console.log('Initializing browser...');
     this.browser = await chromium.launch({
-      headless: config.headless,
-      timeout: config.timeout_seconds * 1000,
+      headless: this.config.headless,
+      timeout: this.config.timeout_seconds * 1000,
       args: [
         '--disable-features=NetworkService',
         '--disable-features=VizDisplayCompositor',
@@ -43,29 +49,32 @@ class EBrandIDDownloader {
    * Login to e-brandid system
    */
   async login() {
+    // Reload config to get latest credentials
+    this.config = loadConfig();
+
     console.log('Navigating to login page...');
-    await this.page.goto(config.login_url, {
+    await this.page.goto(this.config.login_url, {
       waitUntil: 'networkidle',
-      timeout: config.timeout_seconds * 1000
+      timeout: this.config.timeout_seconds * 1000
     });
 
     console.log('Attempting to login...');
 
     // Wait for login form to be visible
     await this.page.waitForSelector('input[name="txtUserName"]', {
-      timeout: config.timeout_seconds * 1000
+      timeout: this.config.timeout_seconds * 1000
     });
 
     // Fill username and password
-    await this.page.fill('input[name="txtUserName"]', config.username);
-    await this.page.fill('input[name="txtPassword"]', config.password);
+    await this.page.fill('input[name="txtUserName"]', this.config.username);
+    await this.page.fill('input[name="txtPassword"]', this.config.password);
 
     // Click the login image button
     await this.page.click('img[onclick*="Login"]');
 
     // Wait for navigation after login
     await this.page.waitForLoadState('networkidle', {
-      timeout: config.timeout_seconds * 1000
+      timeout: this.config.timeout_seconds * 1000
     });
 
     // Verify login success
@@ -88,7 +97,7 @@ class EBrandIDDownloader {
       // Wait for the page to fully load
       console.log('Waiting for page to load completely...');
       await this.page.waitForLoadState('networkidle', {
-        timeout: config.timeout_seconds * 1000
+        timeout: this.config.timeout_seconds * 1000
       });
       await this.page.waitForTimeout(2000);
 
@@ -160,7 +169,7 @@ class EBrandIDDownloader {
       // Wait for the page to fully load
       console.log('Waiting for page to load completely...');
       await this.page.waitForLoadState('networkidle', {
-        timeout: config.timeout_seconds * 1000
+        timeout: this.config.timeout_seconds * 1000
       });
       await this.page.waitForTimeout(2000);
 
@@ -465,12 +474,12 @@ class EBrandIDDownloader {
    * @param {string} poNumber - Purchase Order number
    */
   async navigateToPODetailPage(poNumber) {
-    const poUrl = `${config.po_detail_url}?po_id=${poNumber}`;
+    const poUrl = `${this.config.po_detail_url}?po_id=${poNumber}`;
     console.log(`\nNavigating to PO detail page ${poNumber}...`);
 
     await this.page.goto(poUrl, {
       waitUntil: 'networkidle',
-      timeout: config.timeout_seconds * 1000
+      timeout: this.config.timeout_seconds * 1000
     });
 
     // Verify page loaded successfully
@@ -494,7 +503,7 @@ class EBrandIDDownloader {
 
     await this.page.goto(indexPageUrl, {
       waitUntil: 'networkidle',
-      timeout: config.timeout_seconds * 1000
+      timeout: this.config.timeout_seconds * 1000
     });
 
     await this.page.waitForTimeout(2000);
@@ -696,7 +705,7 @@ class EBrandIDDownloader {
       console.log(`  Found artwork: ${path.basename(artworkUrl)}`);
 
       // Create download directory
-      const downloadDir = path.join(__dirname, config.download_directory, poNumber);
+      const downloadDir = path.join(__dirname, this.config.download_directory, poNumber);
       if (!fs.existsSync(downloadDir)) {
         fs.mkdirSync(downloadDir, { recursive: true });
       }
@@ -955,7 +964,7 @@ class EBrandIDDownloader {
     }
 
     // Save detailed report to file
-    const reportPath = path.join(__dirname, config.download_directory, 'download-report.json');
+    const reportPath = path.join(__dirname, this.config.download_directory, 'download-report.json');
     fs.writeFileSync(reportPath, JSON.stringify(results, null, 2));
     console.log(`\nDetailed report saved to: ${reportPath}`);
     console.log('='.repeat(60));
