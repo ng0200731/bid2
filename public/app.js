@@ -726,7 +726,41 @@ const messageProgressLog = document.getElementById('message-progress-log');
 const messagesListSection = document.getElementById('messages-list-section');
 const messagesBody = document.getElementById('messages-body');
 
-// Set date picker to today's date when Message view is activated
+// Function to load all messages from database
+async function loadAllMessagesFromDatabase() {
+    try {
+        messagesBody.innerHTML = '';
+        messageProgressSection.style.display = 'none';
+        messagesListSection.style.display = 'block';
+
+        const response = await fetch('/api/messages');
+        const data = await response.json();
+
+        if (data.messages && data.messages.length > 0) {
+            messagesTitle.textContent = `All Messages from Database (${data.messages.length} total)`;
+            displayMessages(data.messages.map(msg => ({
+                id: msg.id,
+                refNumber: msg.ref_number,
+                author: msg.author,
+                receivedDate: msg.received_date,
+                subject: msg.subject,
+                comment: msg.comment,
+                fullDetails: msg.full_details,
+                messageLink: msg.message_link,
+                commentId: msg.comment_id
+            })));
+        } else {
+            messagesTitle.textContent = 'No Messages Found';
+            messagesBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No messages in database</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading messages:', error);
+        messagesTitle.textContent = 'Error Loading Messages';
+        messagesBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Error loading messages</td></tr>';
+    }
+}
+
+// Set date picker to today's date and auto-load messages when Message view is activated
 document.querySelectorAll('.nav-button').forEach(button => {
     button.addEventListener('click', () => {
         if (button.getAttribute('data-view') === 'message') {
@@ -736,6 +770,9 @@ document.querySelectorAll('.nav-button').forEach(button => {
             const month = String(today.getMonth() + 1).padStart(2, '0');
             const day = String(today.getDate()).padStart(2, '0');
             messageDatePicker.value = `${year}-${month}-${day}`;
+
+            // Automatically load all messages from database
+            loadAllMessagesFromDatabase();
         }
     });
 });

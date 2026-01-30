@@ -476,7 +476,7 @@ async function processDownload(jobId, poNumbers) {
   }
 }
 
-// Background fetch PO information processor
+// Background fetch PO information processor (optimized)
 async function processFetchPO(jobId, poNumbers) {
   const job = jobs.get(jobId);
   const downloader = new EBrandIDDownloader();
@@ -489,12 +489,17 @@ async function processFetchPO(jobId, poNumbers) {
     job.progress = 'Logging in...';
     await downloader.login();
 
-    // Process each PO
-    for (const poNumber of poNumbers) {
-      job.currentPO = poNumber;
-      job.progress = `Fetching PO ${poNumber} information...`;
+    // Navigate to PO list page ONCE at the beginning
+    job.progress = 'Navigating to PO list page...';
+    await downloader.navigateToPOListPage();
 
-      const result = await downloader.fetchPOInformation(poNumber);
+    // Process each PO (staying on list page between POs)
+    for (let i = 0; i < poNumbers.length; i++) {
+      const poNumber = poNumbers[i];
+      job.currentPO = poNumber;
+      job.progress = `Fetching PO ${poNumber} information (${i + 1}/${poNumbers.length})...`;
+
+      const result = await downloader.fetchPOInformationOptimized(poNumber);
       job.results.push(result);
     }
 
@@ -502,7 +507,7 @@ async function processFetchPO(jobId, poNumbers) {
     job.status = 'completed';
     job.completedTime = new Date();
     job.currentPO = null;
-    job.progress = 'All PO information fetched';
+    job.progress = `All PO information fetched (${poNumbers.length} POs processed)`;
 
   } catch (error) {
     console.error('Fetch PO error:', error);

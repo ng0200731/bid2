@@ -741,7 +741,190 @@ class EBrandIDDownloader {
   }
 
   /**
-   * Fetch PO information without downloading artwork
+   * Fetch PO information without downloading artwork (optimized for batch processing)
+   * Assumes we're already on the PO list page
+   * @param {string} poNumber - Purchase Order number
+   */
+  async fetchPOInformationOptimized(poNumber) {
+    console.log(`\n${'='.repeat(60)}`);
+    console.log(`Fetching PO Information: ${poNumber}`);
+    console.log('='.repeat(60));
+
+    const result = {
+      poNumber: poNumber,
+      status: 'success',
+      itemsFound: 0,
+      error: null
+    };
+
+    try {
+      // Find the space frame
+      const spaceFrame = this.page.frames().find(f => f.name() === 'space');
+      if (!spaceFrame) {
+        throw new Error('Could not find space frame');
+      }
+
+      // Step 1: Clear search box and enter PO number
+      console.log(`Searching for PO ${poNumber}...`);
+      await spaceFrame.fill('#txtWONum', '');
+      await this.page.waitForTimeout(300);
+      await spaceFrame.fill('#txtWONum', poNumber);
+      await this.page.waitForTimeout(500);
+
+      // Step 2: Submit search
+      console.log('Submitting search...');
+      await spaceFrame.press('#txtWONum', 'Enter');
+      await this.page.waitForTimeout(3000);
+
+      // Step 3: Extract list data from table
+      const listData = await spaceFrame.evaluate((po) => {
+        const rows = Array.from(document.querySelectorAll('table tr'));
+        for (const row of rows) {
+          const cells = row.querySelectorAll('td');
+          if (cells.length >= 9) {
+            const firstCellText = cells[0].textContent.trim();
+            const linkText = cells[0].querySelector('a')?.textContent.trim();
+            if (firstCellText === po || linkText === po) {
+              return {
+                poNumber: firstCellText || linkText,
+                vendorName: cells[1]?.textContent.trim() || '',
+                poDate: cells[2]?.textContent.trim() || '',
+                shipBy: cells[3]?.textContent.trim() || '',
+                shipVia: cells[4]?.textContent.trim() || '',
+                orderType: cells[5]?.textContent.trim() || '',
+                status: cells[6]?.textContent.trim() || '',
+                loc: cells[7]?.textContent.trim() || '',
+                prodRep: cells[8]?.textContent.trim() || ''
+              };
+            }
+          }
+        }
+        return null;
+      }, poNumber);
+
+      if (listData) {
+        console.log('✓ Found PO in list');
+      } else {
+        console.log('⚠ PO not found in list table');
+      }
+
+      // Step 4: Open detail page in new page (not popup, direct navigation)
+      const detailUrl = `${this.config.po_detail_url}?po_id=${poNumber}`;
+      console.log('Opening detail page...');
+      const detailPage = await this.context.newPage();
+      await detailPage.goto(detailUrl, {
+        waitUntil: 'networkidle',
+        timeout: this.config.timeout_seconds * 1000
+      });
+
+      // Step 5: Extract PO header from detail page
+      const poHeader = await detailPage.evaluate(() => {
+        const getText = (selector) => {
+          const el = document.querySelector(selector);
+          return el ? el.textContent.trim() : '';
+        };
+        return {
+          poNumber: getText('#lblBidPOid'),
+          status: getText('#lblStatus').replace(/<[^>]*>/g, '').replace(/\*+/g, '').trim(),
+          company: getText('#lblCompany'),
+          currency: getText('#lblCurrency'),
+          terms: getText('#lblTerms'),
+          vendorName: getText('#lblVendorName'),
+          vendorAddress1: getText('#lblVendAddr1'),
+          vendorAddress2: getText('#lblVendAddr2'),
+          vendorAddress3: getText('#lblVendAddr3'),
+          shipToName: getText('#lblBIDName'),
+          shipToAddress1: getText('#lblBIDAddr1'),
+          shipToAddress2: getText('#lblBIDAddr2'),
+          shipToAddress3: getText('#lblBIDAddr3'),
+          cancelDate: getText('#lblCancelDate'),
+          totalAmount: null
+        };
+      });
+
+      // Merge with list data
+      poHeader.poNumber = poNumber;
+      if (listData) {
+        poHeader.poDate = listData.poDate || null;
+        poHeader.shipBy = listData.shipBy || null;
+        poHeader.shipVia = listData.shipVia || null;
+        poHeader.orderType = listData.orderType || null;
+        poHeader.loc = listData.loc || null;
+        poHeader.prodRep = listData.prodRep || null;
+        if (!poHeader.status && listData.status) {
+          poHeader.status = listData.status;
+        }
+        if (!poHeader.vendorName && listData.vendorName) {
+          poHeader.vendorName = listData.vendorName;
+        }
+      }
+
+      // Save PO header
+      savePOHeader(poHeader);
+      console.log('✓ PO header saved to database');
+
+      // Step 6: Extract PO line items from detail page
+      const poItems = await detailPage.evaluate(() => {
+        const rows = Array.from(document.querySelectorAll('#tblItems tbody tr, table[id*="tblItems"] tbody tr'));
+        const itemRows = rows.filter(row => {
+          const cells = row.querySelectorAll('td');
+          return cells.length >= 9 && !row.classList.contains('tableHeaderText');
+        });
+
+        return itemRows.map(row => {
+          const cells = Array.from(row.querySelectorAll('td'));
+          if (cells.length < 9) return null;
+
+          const parsePrice = (str) => {
+            const cleaned = str.replace(/[$,]/g, '').trim();
+            return cleaned ? parseFloat(cleaned) : 0;
+          };
+
+          const parseInt = (str) => {
+            const cleaned = str.replace(/[,]/g, '').trim();
+            return cleaned && cleaned !== 'NA' ? Number(cleaned) : 0;
+          };
+
+          return {
+            itemNumber: cells[0].textContent.trim(),
+            description: cells[1].textContent.trim(),
+            color: cells[2].textContent.trim(),
+            shipTo: cells[3].textContent.trim(),
+            needBy: cells[4].textContent.trim(),
+            qty: parseInt(cells[5].textContent),
+            bundleQty: cells[6].textContent.trim(),
+            unitPrice: parsePrice(cells[7].textContent),
+            extension: parsePrice(cells[8].textContent)
+          };
+        }).filter(item => item !== null && item.itemNumber && !item.itemNumber.includes('Total'));
+      });
+
+      // Add PO number to each item and save
+      const itemsWithPO = poItems.map(item => ({ ...item, poNumber }));
+      itemsWithPO.forEach(item => savePOItem(item));
+      result.itemsFound = itemsWithPO.length;
+      console.log(`✓ ${itemsWithPO.length} line items saved to database`);
+
+      // Step 7: Close detail page and return to list page
+      await detailPage.close();
+      console.log('✓ Detail page closed, back on list page');
+
+      console.log(`\n${'='.repeat(60)}`);
+      console.log(`PO ${poNumber} Information Fetched Successfully`);
+      console.log(`  Items found: ${result.itemsFound}`);
+      console.log('='.repeat(60));
+
+    } catch (error) {
+      console.error(`Error fetching PO ${poNumber}:`, error);
+      result.status = 'failed';
+      result.error = error.message;
+    }
+
+    return result;
+  }
+
+  /**
+   * Fetch PO information without downloading artwork (legacy method for single PO)
    * @param {string} poNumber - Purchase Order number
    */
   async fetchPOInformation(poNumber) {
