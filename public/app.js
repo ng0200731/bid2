@@ -891,12 +891,12 @@ document.getElementById('message-reply-btn').addEventListener('click', () => {
     }
 
     if (commentId) {
-        // Open the message URL directly in a new tab
-        const messageUrl = `https://app.e-brandid.com/Bidnet/bidnet2/CommentsMessage.aspx?CommentId=${commentId}`;
-        console.log('Opening message URL in new tab:', messageUrl);
+        // Open the reply form URL in a new tab
+        const replyUrl = `https://app.e-brandid.com/Bidnet/bidnet2/CommentsNewMessage.aspx?Type=RA&CommentId=${commentId}`;
+        console.log('Opening reply URL in new tab:', replyUrl);
 
         // Open in new tab
-        window.open(messageUrl, '_blank');
+        window.open(replyUrl, '_blank');
     } else {
         alert('Could not determine CommentId for reply');
     }
