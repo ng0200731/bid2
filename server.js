@@ -5,7 +5,7 @@ import xlsx from 'xlsx';
 import fs from 'fs';
 import os from 'os';
 import EBrandIDDownloader from './index.js';
-import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs, deletePO, deleteAllPOs, saveMessage, getAllMessages, deleteMessage, deleteAllMessages, getAllItems, rebuildItemsTable } from './database.js';
+import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs, deletePO, deleteAllPOs, saveMessage, getAllMessages, deleteMessage, deleteAllMessages, getAllItems, rebuildItemsTable, saveItemDetails, getItemDetails } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -367,6 +367,31 @@ app.post('/api/items/rebuild', (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Error rebuilding items table:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get item details
+app.get('/api/items/:item_1/:suffix/details', (req, res) => {
+  try {
+    const { item_1, suffix } = req.params;
+    // Convert empty string or 'null' to null
+    const suffixValue = (!suffix || suffix === '' || suffix === 'null') ? null : suffix;
+    const details = getItemDetails(item_1, suffixValue);
+    res.json({ details });
+  } catch (error) {
+    console.error('Error fetching item details:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Save item details
+app.post('/api/items/details', (req, res) => {
+  try {
+    const result = saveItemDetails(req.body);
+    res.json(result);
+  } catch (error) {
+    console.error('Error saving item details:', error);
     res.status(500).json({ error: error.message });
   }
 });

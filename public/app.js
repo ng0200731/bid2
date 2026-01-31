@@ -1320,10 +1320,167 @@ function displayItems(items) {
             <td>${item.item_1}</td>
             <td>${item.suffix || ''}</td>
             <td>${formattedDate}</td>
+            <td><button class="submit-btn view-item-detail-btn" data-item1="${item.item_1}" data-suffix="${item.suffix || ''}">View Detail</button></td>
         `;
 
         itemsBody.appendChild(row);
     });
+
+    // Add click handlers to view detail buttons
+    document.querySelectorAll('.view-item-detail-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const item1 = e.target.getAttribute('data-item1');
+            const suffix = e.target.getAttribute('data-suffix');
+            await openItemDetailModal(item1, suffix);
+        });
+    });
 }
+
+// Item Detail Modal functionality
+async function openItemDetailModal(item1, suffix) {
+    const modal = document.getElementById('item-detail-modal');
+    const form = document.getElementById('item-detail-form');
+
+    // Set hidden fields
+    document.getElementById('detail-item-1').value = item1;
+    document.getElementById('detail-suffix').value = suffix || '';
+
+    // Clear all form fields first
+    form.querySelectorAll('input[type="text"]').forEach(input => {
+        input.value = '';
+    });
+
+    // Try to load existing details
+    try {
+        const suffixParam = suffix ? suffix : '';
+        const response = await fetch(`/api/items/${encodeURIComponent(item1)}/${encodeURIComponent(suffixParam)}/details`);
+
+        if (response.ok) {
+            const data = await response.json();
+
+            // Populate form fields if data exists
+            if (data.details) {
+                const details = data.details;
+                document.getElementById('detail-brand-name').value = details.brand_name || '';
+                document.getElementById('detail-machine-number').value = details.machine_number || '';
+                document.getElementById('detail-machine-opening').value = details.machine_opening || '';
+                document.getElementById('detail-pattern-name').value = details.pattern_name || '';
+                document.getElementById('detail-pattern-writer').value = details.pattern_writer || '';
+                document.getElementById('detail-dragon-head').value = details.dragon_head || '';
+                document.getElementById('detail-machine-density').value = details.machine_density || '';
+                document.getElementById('detail-pattern-density').value = details.pattern_density || '';
+                document.getElementById('detail-total-length-mm').value = details.total_length_mm || '';
+                document.getElementById('detail-skirt-opening').value = details.skirt_opening || '';
+                document.getElementById('detail-actual-length').value = details.actual_length || '';
+                document.getElementById('detail-width-mm').value = details.width_mm || '';
+                document.getElementById('detail-x-coordinate').value = details.x_coordinate || '';
+                document.getElementById('detail-y-coordinate').value = details.y_coordinate || '';
+                document.getElementById('detail-picks').value = details.picks || '';
+                document.getElementById('detail-cut-per-group').value = details.cut_per_group || '';
+                document.getElementById('detail-total-cut').value = details.total_cut || '';
+                document.getElementById('detail-total-assembly').value = details.total_assembly || '';
+                document.getElementById('detail-schedule-progress').value = details.schedule_progress || '';
+                document.getElementById('detail-actual-cut').value = details.actual_cut || '';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading item details:', error);
+    }
+
+    // Show modal
+    modal.style.display = 'flex';
+}
+
+// Close item detail modal
+document.getElementById('item-detail-close-btn').addEventListener('click', () => {
+    document.getElementById('item-detail-modal').style.display = 'none';
+});
+
+document.getElementById('cancel-detail-btn').addEventListener('click', () => {
+    document.getElementById('item-detail-modal').style.display = 'none';
+});
+
+// Close modal when clicking outside
+document.getElementById('item-detail-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'item-detail-modal') {
+        document.getElementById('item-detail-modal').style.display = 'none';
+    }
+});
+
+// Fill dummy data
+document.getElementById('fill-dummy-btn').addEventListener('click', () => {
+    document.getElementById('detail-brand-name').value = 'Sample Brand';
+    document.getElementById('detail-machine-number').value = 'M-001';
+    document.getElementById('detail-machine-opening').value = '48';
+    document.getElementById('detail-pattern-name').value = 'Floral Pattern A';
+    document.getElementById('detail-pattern-writer').value = 'John Doe';
+    document.getElementById('detail-dragon-head').value = 'DH-123';
+    document.getElementById('detail-machine-density').value = '25.5';
+    document.getElementById('detail-pattern-density').value = '26.0';
+    document.getElementById('detail-total-length-mm').value = '1200';
+    document.getElementById('detail-skirt-opening').value = '300';
+    document.getElementById('detail-actual-length').value = '1180';
+    document.getElementById('detail-width-mm').value = '150';
+    document.getElementById('detail-x-coordinate').value = '100';
+    document.getElementById('detail-y-coordinate').value = '200';
+    document.getElementById('detail-picks').value = '3000';
+    document.getElementById('detail-cut-per-group').value = '10';
+    document.getElementById('detail-total-cut').value = '100';
+    document.getElementById('detail-total-assembly').value = '95';
+    document.getElementById('detail-schedule-progress').value = 'In Progress';
+    document.getElementById('detail-actual-cut').value = '98';
+});
+
+// Save item details
+document.getElementById('item-detail-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = {
+        item_1: document.getElementById('detail-item-1').value,
+        suffix: document.getElementById('detail-suffix').value || null,
+        brand_name: document.getElementById('detail-brand-name').value,
+        machine_number: document.getElementById('detail-machine-number').value,
+        machine_opening: document.getElementById('detail-machine-opening').value,
+        pattern_name: document.getElementById('detail-pattern-name').value,
+        pattern_writer: document.getElementById('detail-pattern-writer').value,
+        dragon_head: document.getElementById('detail-dragon-head').value,
+        machine_density: document.getElementById('detail-machine-density').value,
+        pattern_density: document.getElementById('detail-pattern-density').value,
+        total_length_mm: document.getElementById('detail-total-length-mm').value,
+        skirt_opening: document.getElementById('detail-skirt-opening').value,
+        actual_length: document.getElementById('detail-actual-length').value,
+        width_mm: document.getElementById('detail-width-mm').value,
+        x_coordinate: document.getElementById('detail-x-coordinate').value,
+        y_coordinate: document.getElementById('detail-y-coordinate').value,
+        picks: document.getElementById('detail-picks').value,
+        cut_per_group: document.getElementById('detail-cut-per-group').value,
+        total_cut: document.getElementById('detail-total-cut').value,
+        total_assembly: document.getElementById('detail-total-assembly').value,
+        schedule_progress: document.getElementById('detail-schedule-progress').value,
+        actual_cut: document.getElementById('detail-actual-cut').value
+    };
+
+    try {
+        const response = await fetch('/api/items/details', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to save item details: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        await showAlert('Item details saved successfully!');
+
+        // Close modal
+        document.getElementById('item-detail-modal').style.display = 'none';
+    } catch (error) {
+        await showAlert('Error saving item details: ' + error.message);
+    }
+});
 
 

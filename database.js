@@ -125,6 +125,38 @@ function createTables() {
       UNIQUE(item_1, suffix)
     )
   `);
+
+  // Item details table for textile manufacturing data
+  db.run(`
+    CREATE TABLE IF NOT EXISTS item_details (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      item_1 TEXT NOT NULL,
+      suffix TEXT,
+      brand_name TEXT,
+      machine_number TEXT,
+      machine_opening TEXT,
+      pattern_name TEXT,
+      pattern_writer TEXT,
+      dragon_head TEXT,
+      machine_density TEXT,
+      pattern_density TEXT,
+      total_length_mm TEXT,
+      skirt_opening TEXT,
+      actual_length TEXT,
+      width_mm TEXT,
+      x_coordinate TEXT,
+      y_coordinate TEXT,
+      picks TEXT,
+      cut_per_group TEXT,
+      total_cut TEXT,
+      total_assembly TEXT,
+      schedule_progress TEXT,
+      actual_cut TEXT,
+      created_at TEXT,
+      updated_at TEXT,
+      UNIQUE(item_1, suffix)
+    )
+  `);
 }
 
 /**
@@ -199,6 +231,44 @@ function migrateDatabase() {
           item_1 TEXT NOT NULL,
           suffix TEXT,
           created_at TEXT,
+          UNIQUE(item_1, suffix)
+        )
+      `);
+    }
+
+    // Check if item_details table exists, if not create it
+    try {
+      db.exec(`SELECT 1 FROM item_details LIMIT 1`);
+    } catch (error) {
+      // Item details table doesn't exist, create it
+      console.log('Creating item_details table...');
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS item_details (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          item_1 TEXT NOT NULL,
+          suffix TEXT,
+          brand_name TEXT,
+          machine_number TEXT,
+          machine_opening TEXT,
+          pattern_name TEXT,
+          pattern_writer TEXT,
+          dragon_head TEXT,
+          machine_density TEXT,
+          pattern_density TEXT,
+          total_length_mm TEXT,
+          skirt_opening TEXT,
+          actual_length TEXT,
+          width_mm TEXT,
+          x_coordinate TEXT,
+          y_coordinate TEXT,
+          picks TEXT,
+          cut_per_group TEXT,
+          total_cut TEXT,
+          total_assembly TEXT,
+          schedule_progress TEXT,
+          actual_cut TEXT,
+          created_at TEXT,
+          updated_at TEXT,
           UNIQUE(item_1, suffix)
         )
       `);
@@ -664,5 +734,88 @@ export function rebuildItemsTable() {
   } catch (error) {
     console.error('Error rebuilding items table:', error);
     throw new Error(`Failed to rebuild items table: ${error.message}`);
+  }
+}
+
+/**
+ * Save or update item details
+ */
+export function saveItemDetails(detailsData) {
+  try {
+    const now = new Date().toISOString();
+
+    const stmt = db.prepare(`
+      INSERT OR REPLACE INTO item_details (
+        item_1, suffix, brand_name, machine_number, machine_opening,
+        pattern_name, pattern_writer, dragon_head, machine_density,
+        pattern_density, total_length_mm, skirt_opening, actual_length,
+        width_mm, x_coordinate, y_coordinate, picks, cut_per_group,
+        total_cut, total_assembly, schedule_progress, actual_cut,
+        created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                COALESCE((SELECT created_at FROM item_details WHERE item_1 = ? AND suffix IS ?), ?), ?)
+    `);
+
+    stmt.run([
+      detailsData.item_1,
+      detailsData.suffix || null,
+      detailsData.brand_name || '',
+      detailsData.machine_number || '',
+      detailsData.machine_opening || '',
+      detailsData.pattern_name || '',
+      detailsData.pattern_writer || '',
+      detailsData.dragon_head || '',
+      detailsData.machine_density || '',
+      detailsData.pattern_density || '',
+      detailsData.total_length_mm || '',
+      detailsData.skirt_opening || '',
+      detailsData.actual_length || '',
+      detailsData.width_mm || '',
+      detailsData.x_coordinate || '',
+      detailsData.y_coordinate || '',
+      detailsData.picks || '',
+      detailsData.cut_per_group || '',
+      detailsData.total_cut || '',
+      detailsData.total_assembly || '',
+      detailsData.schedule_progress || '',
+      detailsData.actual_cut || '',
+      detailsData.item_1,
+      detailsData.suffix || null,
+      now,
+      now
+    ]);
+
+    stmt.free();
+    saveDatabase();
+
+    return { success: true, message: 'Item details saved successfully' };
+  } catch (error) {
+    console.error('Error saving item details:', error);
+    throw new Error(`Failed to save item details: ${error.message}`);
+  }
+}
+
+/**
+ * Get item details by item_1 and suffix
+ */
+export function getItemDetails(item_1, suffix) {
+  try {
+    const stmt = db.prepare(`
+      SELECT * FROM item_details
+      WHERE item_1 = ? AND suffix IS ?
+    `);
+
+    stmt.bind([item_1, suffix || null]);
+
+    let result = null;
+    if (stmt.step()) {
+      result = stmt.getAsObject();
+    }
+
+    stmt.free();
+    return result;
+  } catch (error) {
+    console.error('Error getting item details:', error);
+    return null;
   }
 }

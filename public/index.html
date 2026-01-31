@@ -107,6 +107,7 @@
                                 <th>Item_1 (Prefix)</th>
                                 <th>Suffix</th>
                                 <th>Created At</th>
+                                <th>Action</th>
                             </tr>
                             <tr class="filter-row">
                                 <th></th>
@@ -114,6 +115,7 @@
                                 <th><input type="text" class="table-filter" data-column="2"></th>
                                 <th><input type="text" class="table-filter" data-column="3"></th>
                                 <th><input type="text" class="table-filter" data-column="4"></th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody id="items-body">
@@ -316,6 +318,111 @@
                 <button class="reply-modal-close-btn" id="reply-modal-close-btn">✕</button>
             </div>
             <iframe id="reply-iframe" class="reply-iframe"></iframe>
+        </div>
+    </div>
+
+    <!-- Item Detail Modal -->
+    <div id="item-detail-modal" class="message-detail-modal" style="display: none;">
+        <div class="message-detail-content" style="max-width: 800px;">
+            <div class="message-detail-header">
+                <h2 style="margin: 0;">Item Details</h2>
+                <button class="message-close-btn" id="item-detail-close-btn">✕</button>
+            </div>
+            <div id="item-detail-body" style="padding: 20px; max-height: 70vh; overflow-y: auto;">
+                <form id="item-detail-form">
+                    <input type="hidden" id="detail-item-1" name="item_1">
+                    <input type="hidden" id="detail-suffix" name="suffix">
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label>Brand Name (商標名稱):</label>
+                            <input type="text" id="detail-brand-name" name="brand_name" class="form-input">
+                        </div>
+                        <div>
+                            <label>Machine Number (織機編號):</label>
+                            <input type="text" id="detail-machine-number" name="machine_number" class="form-input">
+                        </div>
+                        <div>
+                            <label>Machine Opening (開數):</label>
+                            <input type="text" id="detail-machine-opening" name="machine_opening" class="form-input">
+                        </div>
+                        <div>
+                            <label>Pattern Name (花名):</label>
+                            <input type="text" id="detail-pattern-name" name="pattern_name" class="form-input">
+                        </div>
+                        <div>
+                            <label>Pattern Writer (寫花員):</label>
+                            <input type="text" id="detail-pattern-writer" name="pattern_writer" class="form-input">
+                        </div>
+                        <div>
+                            <label>Dragon Head (龍頭):</label>
+                            <input type="text" id="detail-dragon-head" name="dragon_head" class="form-input">
+                        </div>
+                        <div>
+                            <label>Machine Density (織機密度) picks/cm:</label>
+                            <input type="text" id="detail-machine-density" name="machine_density" class="form-input">
+                        </div>
+                        <div>
+                            <label>Pattern Density (寫花密度) picks/cm:</label>
+                            <input type="text" id="detail-pattern-density" name="pattern_density" class="form-input">
+                        </div>
+                        <div>
+                            <label>Total Length mm (全長mm):</label>
+                            <input type="text" id="detail-total-length-mm" name="total_length_mm" class="form-input">
+                        </div>
+                        <div>
+                            <label>Skirt Opening (裙口):</label>
+                            <input type="text" id="detail-skirt-opening" name="skirt_opening" class="form-input">
+                        </div>
+                        <div>
+                            <label>Actual Length (實長):</label>
+                            <input type="text" id="detail-actual-length" name="actual_length" class="form-input">
+                        </div>
+                        <div>
+                            <label>Width mm (寬度mm):</label>
+                            <input type="text" id="detail-width-mm" name="width_mm" class="form-input">
+                        </div>
+                        <div>
+                            <label>X Coordinate:</label>
+                            <input type="text" id="detail-x-coordinate" name="x_coordinate" class="form-input">
+                        </div>
+                        <div>
+                            <label>Y Coordinate:</label>
+                            <input type="text" id="detail-y-coordinate" name="y_coordinate" class="form-input">
+                        </div>
+                        <div>
+                            <label>Picks:</label>
+                            <input type="text" id="detail-picks" name="picks" class="form-input">
+                        </div>
+                        <div>
+                            <label>Cut per Group (每組切開):</label>
+                            <input type="text" id="detail-cut-per-group" name="cut_per_group" class="form-input">
+                        </div>
+                        <div>
+                            <label>Total Cut (共切):</label>
+                            <input type="text" id="detail-total-cut" name="total_cut" class="form-input">
+                        </div>
+                        <div>
+                            <label>Total Assembly (總裝數):</label>
+                            <input type="text" id="detail-total-assembly" name="total_assembly" class="form-input">
+                        </div>
+                        <div>
+                            <label>Schedule Progress (排單進度):</label>
+                            <input type="text" id="detail-schedule-progress" name="schedule_progress" class="form-input">
+                        </div>
+                        <div>
+                            <label>Actual Cut (實切):</label>
+                            <input type="text" id="detail-actual-cut" name="actual_cut" class="form-input">
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" id="fill-dummy-btn" class="submit-btn" style="background-color: #ff9800;">Fill Dummy Data</button>
+                        <button type="submit" class="submit-btn">Save</button>
+                        <button type="button" id="cancel-detail-btn" class="submit-btn" style="background-color: #666;">Cancel</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
