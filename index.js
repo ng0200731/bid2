@@ -23,14 +23,18 @@ class EBrandIDDownloader {
 
   /**
    * Initialize browser and create new page
+   * @param {boolean} headless - Optional headless mode override (defaults to config value)
    */
-  async initialize() {
+  async initialize(headless) {
     // Load fresh config
     this.config = loadConfig();
 
+    // Use provided headless parameter, or fall back to config value
+    const useHeadless = headless !== undefined ? headless : this.config.headless;
+
     console.log('Initializing browser...');
     this.browser = await chromium.launch({
-      headless: this.config.headless,
+      headless: useHeadless,
       timeout: this.config.timeout_seconds * 1000,
       args: [
         '--disable-features=NetworkService',

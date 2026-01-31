@@ -30,6 +30,13 @@
                             <label for="po-input">Enter PO Number(s):</label>
                             <textarea id="po-input" rows="5" placeholder="Enter PO numbers (one per line)&#10;Example:&#10;1303061&#10;1307938"></textarea>
 
+                            <div style="margin: 10px 0;">
+                                <label style="display: flex; align-items: center; cursor: pointer;">
+                                    <input type="checkbox" id="download-headless-toggle" style="margin-right: 8px;">
+                                    <span>Show browser window (visible mode)</span>
+                                </label>
+                            </div>
+
                             <button id="fetch-po-btn" class="submit-btn">Fetch PO Information</button>
                             <button id="download-btn" class="submit-btn">Fetch Artwork</button>
                         </div>
@@ -92,6 +99,14 @@
                 <div class="form-section">
                     <label for="message-date-picker">Select Date:</label>
                     <input type="date" id="message-date-picker" class="date-picker">
+
+                    <div style="margin: 10px 0;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="message-headless-toggle" style="margin-right: 8px;">
+                            <span>Show browser window (visible mode)</span>
+                        </label>
+                    </div>
+
                     <button id="fetch-msg-btn" class="submit-btn">Fetch Messages</button>
                     <button id="load-all-msg-btn" class="submit-btn">Load All Messages from Database</button>
                     <button id="delete-all-msg-btn" class="submit-btn" style="background-color: #d32f2f;">Delete All Messages</button>

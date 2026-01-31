@@ -47,7 +47,7 @@ function getSampleQuantity(orderQty) {
 
 // Start download job
 app.post('/api/download', async (req, res) => {
-  const { poNumbers } = req.body;
+  const { poNumbers, headless } = req.body;
 
   if (!poNumbers || !Array.isArray(poNumbers) || poNumbers.length === 0) {
     return res.status(400).json({ error: 'Invalid PO numbers' });
@@ -63,18 +63,19 @@ app.post('/api/download', async (req, res) => {
     results: [],
     currentPO: null,
     progress: null,
+    headless: headless !== undefined ? headless : false,
     startTime: new Date()
   });
 
   // Start download process in background
-  processDownload(jobId, poNumbers);
+  processDownload(jobId, poNumbers, headless);
 
   res.json({ jobId, status: 'started' });
 });
 
 // Fetch PO information (without downloading artwork)
 app.post('/api/fetch-po', async (req, res) => {
-  const { poNumbers } = req.body;
+  const { poNumbers, headless } = req.body;
 
   if (!poNumbers || !Array.isArray(poNumbers) || poNumbers.length === 0) {
     return res.status(400).json({ error: 'Invalid PO numbers' });
@@ -90,11 +91,12 @@ app.post('/api/fetch-po', async (req, res) => {
     results: [],
     currentPO: null,
     progress: null,
+    headless: headless !== undefined ? headless : false,
     startTime: new Date()
   });
 
   // Start fetch process in background
-  processFetchPO(jobId, poNumbers);
+  processFetchPO(jobId, poNumbers, headless);
 
   res.json({ jobId, status: 'started' });
 });
@@ -293,7 +295,7 @@ app.post('/api/profile', (req, res) => {
 
 // Fetch messages
 app.post('/api/fetch-messages', async (req, res) => {
-  const { date } = req.body;
+  const { date, headless } = req.body;
   const jobId = `job_${jobIdCounter++}`;
 
   // Create job entry
@@ -303,11 +305,12 @@ app.post('/api/fetch-messages', async (req, res) => {
     results: [],
     progress: null,
     date: date || null,
+    headless: headless !== undefined ? headless : false,
     startTime: new Date()
   });
 
   // Start fetch messages process in background
-  processFetchMessages(jobId, date);
+  processFetchMessages(jobId, date, headless);
 
   res.json({ jobId, status: 'started' });
 });
@@ -562,14 +565,14 @@ app.get('/api/qc-report/:poNumber', (req, res) => {
 });
 
 // Background download processor
-async function processDownload(jobId, poNumbers) {
+async function processDownload(jobId, poNumbers, headless = false) {
   const job = jobs.get(jobId);
   const downloader = new EBrandIDDownloader();
 
   try {
     // Initialize and login
     job.progress = 'Initializing browser...';
-    await downloader.initialize();
+    await downloader.initialize(headless);
 
     job.progress = 'Logging in...';
     await downloader.login();
@@ -600,14 +603,14 @@ async function processDownload(jobId, poNumbers) {
 }
 
 // Background fetch PO information processor (optimized)
-async function processFetchPO(jobId, poNumbers) {
+async function processFetchPO(jobId, poNumbers, headless = false) {
   const job = jobs.get(jobId);
   const downloader = new EBrandIDDownloader();
 
   try {
     // Initialize and login
     job.progress = 'Initializing browser...';
-    await downloader.initialize();
+    await downloader.initialize(headless);
 
     job.progress = 'Logging in...';
     await downloader.login();
@@ -643,14 +646,14 @@ async function processFetchPO(jobId, poNumbers) {
 }
 
 // Background fetch messages processor
-async function processFetchMessages(jobId, customDate = null) {
+async function processFetchMessages(jobId, customDate = null, headless = false) {
   const job = jobs.get(jobId);
   const downloader = new EBrandIDDownloader();
 
   try {
     // Initialize and login
     job.progress = 'Initializing browser...';
-    await downloader.initialize();
+    await downloader.initialize(headless);
 
     job.progress = 'Logging in...';
     await downloader.login();

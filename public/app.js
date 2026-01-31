@@ -131,6 +131,9 @@ fetchPOBtn.addEventListener('click', async () => {
         return;
     }
 
+    // Get headless mode preference (inverted: checked = visible, unchecked = headless)
+    const headless = !document.getElementById('download-headless-toggle').checked;
+
     // Reset UI
     progressLog.innerHTML = '';
     resultsBody.innerHTML = '';
@@ -146,7 +149,7 @@ fetchPOBtn.addEventListener('click', async () => {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ poNumbers })
+            body: JSON.stringify({ poNumbers, headless })
         });
 
         if (!response.ok) {
@@ -177,6 +180,9 @@ downloadBtn.addEventListener('click', async () => {
         return;
     }
 
+    // Get headless mode preference (inverted: checked = visible, unchecked = headless)
+    const headless = !document.getElementById('download-headless-toggle').checked;
+
     // Reset UI
     progressLog.innerHTML = '';
     resultsBody.innerHTML = '';
@@ -192,7 +198,7 @@ downloadBtn.addEventListener('click', async () => {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ poNumbers })
+            body: JSON.stringify({ poNumbers, headless })
         });
 
         if (!response.ok) {
@@ -272,17 +278,44 @@ function displayResults(results) {
             ? 'Partial'
             : 'No Files';
 
+        const errorCount = result.errors ? result.errors.length : 0;
+        const errorCell = errorCount > 0
+            ? `<a href="#" class="error-link" style="color: #d32f2f; text-decoration: underline; cursor: pointer;">${errorCount}</a>`
+            : '0';
+
         row.innerHTML = `
             <td>${result.poNumber}</td>
             <td class="${statusClass}">${statusText}</td>
             <td>${result.itemsProcessed || 0}</td>
             <td>${result.filesDownloaded || 0}</td>
             <td>${formatBytes(result.totalSize || 0)}</td>
-            <td>${result.errors ? result.errors.length : 0}</td>
+            <td>${errorCell}</td>
         `;
 
         resultsBody.appendChild(row);
+
+        // Add click handler for error link
+        if (errorCount > 0) {
+            const errorLink = row.querySelector('.error-link');
+            errorLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                showErrorDetails(result.poNumber, result.errors);
+            });
+        }
     });
+}
+
+function showErrorDetails(poNumber, errors) {
+    let errorMessage = `Errors for PO ${poNumber}:\n\n`;
+
+    errors.forEach((error, index) => {
+        errorMessage += `Error ${index + 1}:\n`;
+        errorMessage += `Item: ${error.itemNumber || 'Unknown'}\n`;
+        errorMessage += `Reason: ${error.reason || error.message || error}\n`;
+        errorMessage += '\n';
+    });
+
+    showAlert(errorMessage);
 }
 
 function formatBytes(bytes) {
@@ -1115,6 +1148,9 @@ fetchMsgBtn.addEventListener('click', async () => {
         return;
     }
 
+    // Get headless mode preference (inverted: checked = visible, unchecked = headless)
+    const headless = !document.getElementById('message-headless-toggle').checked;
+
     messageProgressLog.innerHTML = '';
     messagesBody.innerHTML = '';
     messageProgressSection.style.display = 'block';
@@ -1129,7 +1165,7 @@ fetchMsgBtn.addEventListener('click', async () => {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ date: selectedDate })
+            body: JSON.stringify({ date: selectedDate, headless })
         });
 
         if (!response.ok) {
