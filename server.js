@@ -346,6 +346,129 @@ app.delete('/api/messages/:id', (req, res) => {
   }
 });
 
+// Export all POs with items to Excel
+app.get('/api/export-excel', (req, res) => {
+  try {
+    // Get all POs from database
+    const orders = getAllPOs();
+
+    if (!orders || orders.length === 0) {
+      return res.status(404).json({ error: 'No orders found to export' });
+    }
+
+    // Create workbook
+    const wb = xlsx.utils.book_new();
+
+    // Prepare data for Excel - all POs with their items in one sheet
+    const data = [
+      ['PO Number', 'PO Date', 'Ship By', 'Ship Via', 'Order Type', 'Status', 'Loc', 'Prod Rep', 'Company', 'Vendor',
+       'Item #', 'Description', 'Color', 'Ship To', 'Need By', 'Qty', 'Bundle Qty', 'Unit Price', 'Extension']
+    ];
+
+    // Add each PO with its items
+    orders.forEach(order => {
+      const items = getPOItems(order.po_number);
+
+      if (items && items.length > 0) {
+        items.forEach(item => {
+          data.push([
+            order.po_number,
+            order.po_date || '',
+            order.ship_by || '',
+            order.ship_via || '',
+            order.order_type || '',
+            order.status || '',
+            order.loc || '',
+            order.prod_rep || '',
+            order.company || '',
+            order.vendor_name || '',
+            item.item_number || '',
+            item.description || '',
+            item.color || '',
+            item.ship_to || '',
+            item.need_by || '',
+            item.qty || 0,
+            item.bundle_qty || '',
+            item.unit_price || 0,
+            item.extension || 0
+          ]);
+        });
+      } else {
+        // PO with no items - still include the header info
+        data.push([
+          order.po_number,
+          order.po_date || '',
+          order.ship_by || '',
+          order.ship_via || '',
+          order.order_type || '',
+          order.status || '',
+          order.loc || '',
+          order.prod_rep || '',
+          order.company || '',
+          order.vendor_name || '',
+          '', '', '', '', '', 0, '', 0, 0
+        ]);
+      }
+    });
+
+    // Create worksheet
+    const ws = xlsx.utils.aoa_to_sheet(data);
+
+    // Set column widths
+    const colWidths = [
+      { wch: 12 },  // PO Number
+      { wch: 12 },  // PO Date
+      { wch: 12 },  // Ship By
+      { wch: 15 },  // Ship Via
+      { wch: 12 },  // Order Type
+      { wch: 12 },  // Status
+      { wch: 8 },   // Loc
+      { wch: 15 },  // Prod Rep
+      { wch: 20 },  // Company
+      { wch: 25 },  // Vendor
+      { wch: 15 },  // Item #
+      { wch: 30 },  // Description
+      { wch: 15 },  // Color
+      { wch: 20 },  // Ship To
+      { wch: 12 },  // Need By
+      { wch: 10 },  // Qty
+      { wch: 12 },  // Bundle Qty
+      { wch: 12 },  // Unit Price
+      { wch: 12 }   // Extension
+    ];
+    ws['!cols'] = colWidths;
+
+    // Add worksheet to workbook
+    xlsx.utils.book_append_sheet(wb, ws, 'All Orders');
+
+    // Generate filename with current date
+    const currentDate = new Date().toISOString().split('T')[0];
+    const filename = `${currentDate}-all-orders-export.xlsx`;
+
+    // Create export directory if it doesn't exist
+    const exportDir = path.join(__dirname, 'report', 'exports');
+    if (!fs.existsSync(exportDir)) {
+      fs.mkdirSync(exportDir, { recursive: true });
+    }
+
+    // Write file
+    const filepath = path.join(exportDir, filename);
+    xlsx.writeFile(wb, filepath);
+
+    // Send file to client
+    res.download(filepath, filename, (err) => {
+      if (err) {
+        console.error('Error sending file:', err);
+        res.status(500).json({ error: 'Failed to send file' });
+      }
+    });
+
+  } catch (error) {
+    console.error('Error exporting to Excel:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Generate QC report
 app.get('/api/qc-report/:poNumber', (req, res) => {
   try {

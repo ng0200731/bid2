@@ -377,6 +377,7 @@ function showProfileMessage(message, type) {
 const searchBtn = document.getElementById('search-btn');
 const loadMoreBtn = document.getElementById('load-more-btn');
 const showAllBtn = document.getElementById('show-all-btn');
+const exportExcelBtn = document.getElementById('export-excel-btn');
 const deleteAllBtn = document.getElementById('delete-all-btn');
 const statusSearch = document.getElementById('status-search');
 const ordersListSection = document.getElementById('orders-list-section');
@@ -424,6 +425,38 @@ searchBtn.addEventListener('click', async () => {
 statusSearch.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         searchBtn.click();
+    }
+});
+
+// Export Excel
+exportExcelBtn.addEventListener('click', async () => {
+    try {
+        exportExcelBtn.disabled = true;
+
+        const response = await fetch('/api/export-excel');
+
+        if (!response.ok) {
+            throw new Error(`Failed to export Excel: ${response.statusText}`);
+        }
+
+        // Get the blob from the response
+        const blob = await response.blob();
+
+        // Create a download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${new Date().toISOString().split('T')[0]}-all-orders-export.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        await showAlert('Excel file exported successfully');
+        exportExcelBtn.disabled = false;
+    } catch (error) {
+        await showAlert('Error exporting Excel: ' + error.message);
+        exportExcelBtn.disabled = false;
     }
 });
 
