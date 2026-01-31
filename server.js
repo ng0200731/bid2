@@ -5,7 +5,7 @@ import xlsx from 'xlsx';
 import fs from 'fs';
 import os from 'os';
 import EBrandIDDownloader from './index.js';
-import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs, deletePO, deleteAllPOs, saveMessage, getAllMessages, deleteMessage, deleteAllMessages } from './database.js';
+import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs, deletePO, deleteAllPOs, saveMessage, getAllMessages, deleteMessage, deleteAllMessages, getAllItems, rebuildItemsTable } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -345,6 +345,28 @@ app.delete('/api/messages/:id', (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Error deleting message:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get all items
+app.get('/api/items', (req, res) => {
+  try {
+    const items = getAllItems();
+    res.json({ items });
+  } catch (error) {
+    console.error('Error fetching items:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Rebuild items table from po_items
+app.post('/api/items/rebuild', (req, res) => {
+  try {
+    const result = rebuildItemsTable();
+    res.json(result);
+  } catch (error) {
+    console.error('Error rebuilding items table:', error);
     res.status(500).json({ error: error.message });
   }
 });

@@ -13,6 +13,7 @@
             <h2>E-BrandID</h2>
             <button class="nav-button active" data-view="download-artwork">Download</button>
             <button class="nav-button" data-view="order-status">Order Status</button>
+            <button class="nav-button" data-view="item">Item</button>
             <button class="nav-button" data-view="message">Message</button>
             <button class="nav-button" data-view="profile">Profile</button>
         </div>
@@ -91,6 +92,34 @@
                 </div>
 
                 <div id="profile-message" style="display: none; margin-top: 20px; padding: 10px; border-radius: 4px;"></div>
+            </div>
+
+            <!-- Item View -->
+            <div id="item" class="view">
+                <h1>Item Tracking</h1>
+
+                <div id="items-list-section" style="margin-top: 20px;">
+                    <table id="items-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Item #</th>
+                                <th>Item_1 (Prefix)</th>
+                                <th>Suffix</th>
+                                <th>Created At</th>
+                            </tr>
+                            <tr class="filter-row">
+                                <th></th>
+                                <th><input type="text" class="table-filter" data-column="1"></th>
+                                <th><input type="text" class="table-filter" data-column="2"></th>
+                                <th><input type="text" class="table-filter" data-column="3"></th>
+                                <th><input type="text" class="table-filter" data-column="4"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="items-body">
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Message View -->

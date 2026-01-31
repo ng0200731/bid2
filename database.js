@@ -114,6 +114,17 @@ function createTables() {
       updated_at TEXT
     )
   `);
+
+  // Items tracking table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      item_1 TEXT NOT NULL,
+      suffix TEXT,
+      created_at TEXT,
+      UNIQUE(item_1, suffix)
+    )
+  `);
 }
 
 /**
@@ -174,6 +185,23 @@ function migrateDatabase() {
       // Column doesn't exist, add it
       console.log('Adding column comment_id to messages table');
       db.run(`ALTER TABLE messages ADD COLUMN comment_id TEXT`);
+    }
+
+    // Check if items table exists, if not create it
+    try {
+      db.exec(`SELECT 1 FROM items LIMIT 1`);
+    } catch (error) {
+      // Items table doesn't exist, create it
+      console.log('Creating items table...');
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS items (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          item_1 TEXT NOT NULL,
+          suffix TEXT,
+          created_at TEXT,
+          UNIQUE(item_1, suffix)
+        )
+      `);
     }
 
     saveDatabase();
@@ -270,6 +298,10 @@ export function savePOItem(itemData) {
   ]);
 
   stmt.free();
+
+  // Automatically track the item
+  trackItem(itemData.itemNumber);
+
   saveDatabase();
 }
 
@@ -535,5 +567,102 @@ export function deleteAllMessages() {
   } catch (error) {
     console.error('Error deleting all messages:', error);
     throw new Error(`Failed to delete messages: ${error.message}`);
+  }
+}
+
+/**
+ * Track item in items table
+ * Splits item number by "-" into prefix (item_1) and suffix
+ */
+export function trackItem(itemNumber) {
+  try {
+    if (!itemNumber || itemNumber.trim() === '') {
+      return;
+    }
+
+    const now = new Date().toISOString();
+    let item_1, suffix;
+
+    // Split by "-" to get prefix and suffix
+    const parts = itemNumber.split('-');
+    if (parts.length > 1) {
+      item_1 = parts[0];
+      suffix = parts.slice(1).join('-'); // Join remaining parts in case there are multiple "-"
+    } else {
+      item_1 = itemNumber;
+      suffix = null;
+    }
+
+    // Insert or ignore if already exists (UNIQUE constraint)
+    const stmt = db.prepare(`
+      INSERT OR IGNORE INTO items (item_1, suffix, created_at)
+      VALUES (?, ?, ?)
+    `);
+
+    stmt.run([item_1, suffix, now]);
+    stmt.free();
+    saveDatabase();
+  } catch (error) {
+    console.error('Error tracking item:', error);
+  }
+}
+
+/**
+ * Get all items from items table
+ */
+export function getAllItems() {
+  try {
+    const stmt = db.prepare(`
+      SELECT item_1, suffix, created_at
+      FROM items
+      ORDER BY created_at DESC
+    `);
+
+    const results = [];
+    while (stmt.step()) {
+      results.push(stmt.getAsObject());
+    }
+
+    stmt.free();
+    return results;
+  } catch (error) {
+    console.error('Error getting items:', error);
+    return [];
+  }
+}
+
+/**
+ * Rebuild items table from existing po_items
+ * This is a one-time operation to populate items from existing data
+ */
+export function rebuildItemsTable() {
+  try {
+    // Clear existing items
+    db.run('DELETE FROM items');
+
+    // Get all unique item numbers from po_items
+    const stmt = db.prepare(`
+      SELECT DISTINCT item_number
+      FROM po_items
+      WHERE item_number IS NOT NULL AND item_number != ''
+      ORDER BY item_number
+    `);
+
+    const items = [];
+    while (stmt.step()) {
+      const row = stmt.getAsObject();
+      items.push(row.item_number);
+    }
+    stmt.free();
+
+    // Track each item
+    items.forEach(itemNumber => {
+      trackItem(itemNumber);
+    });
+
+    return { success: true, message: `Rebuilt items table with ${items.length} items` };
+  } catch (error) {
+    console.error('Error rebuilding items table:', error);
+    throw new Error(`Failed to rebuild items table: ${error.message}`);
   }
 }

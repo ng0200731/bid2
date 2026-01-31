@@ -1259,3 +1259,71 @@ deleteAllMsgBtn.addEventListener('click', async () => {
     }
 });
 
+// Item functionality
+const itemsBody = document.getElementById('items-body');
+
+// Auto-load items when Item view is activated
+document.querySelectorAll('.nav-button').forEach(button => {
+    button.addEventListener('click', () => {
+        if (button.getAttribute('data-view') === 'item') {
+            loadAllItems();
+        }
+    });
+});
+
+async function loadAllItems() {
+    try {
+        itemsBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Loading...</td></tr>';
+
+        const response = await fetch('/api/items');
+        const data = await response.json();
+
+        if (data.items && data.items.length > 0) {
+            displayItems(data.items);
+        } else {
+            itemsBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No items found</td></tr>';
+        }
+
+        // Initialize filters for items table
+        initializeTableFilters('items-table');
+    } catch (error) {
+        itemsBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Error loading items</td></tr>';
+        console.error('Error loading items:', error);
+    }
+}
+
+function displayItems(items) {
+    itemsBody.innerHTML = '';
+
+    items.forEach((item, index) => {
+        const row = document.createElement('tr');
+
+        // Format created_at date
+        let formattedDate = 'N/A';
+        if (item.created_at) {
+            const date = new Date(item.created_at);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            formattedDate = `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        // Construct full item number
+        const fullItemNumber = item.suffix ? `${item.item_1}-${item.suffix}` : item.item_1;
+
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${fullItemNumber}</td>
+            <td>${item.item_1}</td>
+            <td>${item.suffix || ''}</td>
+            <td>${formattedDate}</td>
+        `;
+
+        itemsBody.appendChild(row);
+    });
+}
+
+
