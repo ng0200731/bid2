@@ -377,7 +377,9 @@ app.get('/api/items/:item_1/:suffix/details', (req, res) => {
     const { item_1, suffix } = req.params;
     // Convert empty string or 'null' to null
     const suffixValue = (!suffix || suffix === '' || suffix === 'null') ? null : suffix;
+    console.log(`[GET DETAILS] item_1="${item_1}", suffix="${suffix}", suffixValue=${suffixValue}`);
     const details = getItemDetails(item_1, suffixValue);
+    console.log(`[GET DETAILS] Found details:`, details ? 'YES' : 'NO', details);
     res.json({ details });
   } catch (error) {
     console.error('Error fetching item details:', error);

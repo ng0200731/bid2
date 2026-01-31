@@ -1352,7 +1352,8 @@ async function openItemDetailModal(item1, suffix) {
 
     // Try to load existing details
     try {
-        const suffixParam = suffix ? suffix : '';
+        // If suffix is empty, use 'null' as a placeholder in the URL
+        const suffixParam = (suffix && suffix !== '') ? suffix : 'null';
         const response = await fetch(`/api/items/${encodeURIComponent(item1)}/${encodeURIComponent(suffixParam)}/details`);
 
         if (response.ok) {
