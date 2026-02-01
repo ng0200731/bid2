@@ -5,7 +5,7 @@ import xlsx from 'xlsx';
 import fs from 'fs';
 import os from 'os';
 import EBrandIDDownloader from './index.js';
-import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs, deletePO, deleteAllPOs, saveMessage, getAllMessages, deleteMessage, deleteAllMessages, getAllItems, rebuildItemsTable, saveItemDetails, getItemDetails } from './database.js';
+import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs, deletePO, deleteAllPOs, saveMessage, getAllMessages, deleteMessage, deleteAllMessages, getAllItems, rebuildItemsTable, saveItemDetails, getItemDetails, updatePOStatus } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -269,6 +269,24 @@ app.delete('/api/orders/:poNumber', (req, res) => {
     res.json({ success: true, message: `PO ${poNumber} deleted successfully` });
   } catch (error) {
     console.error('Error deleting PO:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update PO status
+app.patch('/api/orders/:poNumber/status', (req, res) => {
+  try {
+    const { poNumber } = req.params;
+    const { po_status } = req.body;
+
+    if (!po_status) {
+      return res.status(400).json({ error: 'po_status is required' });
+    }
+
+    const result = updatePOStatus(poNumber, po_status);
+    res.json(result);
+  } catch (error) {
+    console.error('Error updating PO status:', error);
     res.status(500).json({ error: error.message });
   }
 });

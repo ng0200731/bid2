@@ -62,6 +62,7 @@ function createTables() {
       order_type TEXT,
       loc TEXT,
       prod_rep TEXT,
+      po_status TEXT DEFAULT 'pending',
       created_at TEXT,
       updated_at TEXT
     )
@@ -189,7 +190,7 @@ function migrateDatabase() {
     }
 
     // Check if new columns exist, if not add them
-    const columns = ['po_date', 'ship_by', 'ship_via', 'order_type', 'loc', 'prod_rep'];
+    const columns = ['po_date', 'ship_by', 'ship_via', 'order_type', 'loc', 'prod_rep', 'po_status'];
 
     columns.forEach(column => {
       try {
@@ -198,7 +199,11 @@ function migrateDatabase() {
       } catch (error) {
         // Column doesn't exist, add it
         console.log(`Adding column ${column} to po_headers table`);
-        db.run(`ALTER TABLE po_headers ADD COLUMN ${column} TEXT`);
+        if (column === 'po_status') {
+          db.run(`ALTER TABLE po_headers ADD COLUMN ${column} TEXT DEFAULT 'pending'`);
+        } else {
+          db.run(`ALTER TABLE po_headers ADD COLUMN ${column} TEXT`);
+        }
       }
     });
 
@@ -541,6 +546,30 @@ export function deletePO(poNumber) {
   } catch (error) {
     console.error('Error deleting PO:', error);
     throw new Error(`Failed to delete PO: ${error.message}`);
+  }
+}
+
+/**
+ * Update PO status
+ */
+export function updatePOStatus(poNumber, poStatus) {
+  try {
+    const now = new Date().toISOString();
+
+    const stmt = db.prepare(`
+      UPDATE po_headers
+      SET po_status = ?, updated_at = ?
+      WHERE po_number = ?
+    `);
+
+    stmt.run([poStatus, now, poNumber]);
+    stmt.free();
+    saveDatabase();
+
+    return { success: true, message: 'PO status updated successfully' };
+  } catch (error) {
+    console.error('Error updating PO status:', error);
+    throw new Error(`Failed to update PO status: ${error.message}`);
   }
 }
 

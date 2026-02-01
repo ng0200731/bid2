@@ -612,6 +612,12 @@ function displayOrdersList(orders) {
         const amount = order.total_amount || 0;
         const formattedAmount = amount.toFixed(2);
 
+        // Get current PO status or default to 'created PO'
+        const currentStatus = order.po_status || 'created PO';
+
+        // Format status display
+        const statusDisplay = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
+
         row.innerHTML = `
             <td>${index + 1}</td>
             <td>${order.po_number}</td>
@@ -631,7 +637,7 @@ function displayOrdersList(orders) {
             <td>${formattedDate}</td>
             <td><button class="view-detail-btn" data-po="${order.po_number}">View Details</button></td>
             <td><button class="qc-report-btn" data-po="${order.po_number}">QC report</button></td>
-            <td><button class="create-po-btn" data-po="${order.po_number}">Create PO</button></td>
+            <td><button class="po-status-btn" data-po="${order.po_number}" data-status="${currentStatus}" style="padding: 8px 16px; background-color: #2196F3; color: white; border: none; cursor: pointer; font-size: 13px;">${statusDisplay}</button></td>
             <td><button class="delete-btn" data-po="${order.po_number}">Delete</button></td>
         `;
         ordersBody.appendChild(row);
@@ -661,11 +667,12 @@ function displayOrdersList(orders) {
         });
     });
 
-    // Add click handlers to create PO buttons
-    document.querySelectorAll('.create-po-btn').forEach(btn => {
+    // Add click handlers to PO status buttons
+    document.querySelectorAll('.po-status-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const poNumber = e.target.getAttribute('data-po');
-            await openPODisplayModal(poNumber);
+            const currentStatus = e.target.getAttribute('data-status');
+            await openPODisplayModal(poNumber, currentStatus);
         });
     });
 }
@@ -731,6 +738,29 @@ async function deletePO(poNumber) {
         await loadLatestOrders(10);
     } catch (error) {
         await showAlert('Error deleting PO: ' + error.message);
+    }
+}
+
+async function updatePOStatus(poNumber, newStatus) {
+    try {
+        const response = await fetch(`/api/orders/${poNumber}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ po_status: newStatus })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to update PO status: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log(`PO ${poNumber} status updated to: ${newStatus}`);
+    } catch (error) {
+        await showAlert('Error updating PO status: ' + error.message);
+        // Reload the orders list to revert the dropdown to the previous value
+        await loadLatestOrders(10);
     }
 }
 
@@ -1546,8 +1576,38 @@ document.getElementById('item-detail-form').addEventListener('submit', async (e)
     }
 });
 
+// Helper function to get next status in progression
+function getNextStatus(currentStatus) {
+    const statusProgression = {
+        'pending': 'created PO',
+        'created PO': 'preparation',
+        'preparation': 'processing',
+        'processing': 'cutting',
+        'cutting': 'packaging',
+        'packaging': 'stock',
+        'stock': 'shipped out',
+        'shipped out': null // Final status
+    };
+    return statusProgression[currentStatus] || null;
+}
+
+// Helper function to get action button text
+function getActionButtonText(currentStatus) {
+    const buttonText = {
+        'pending': 'Create PO',
+        'created PO': 'Start Preparation',
+        'preparation': 'Start Processing',
+        'processing': 'Start Cutting',
+        'cutting': 'Start Packaging',
+        'packaging': 'Move to Stock',
+        'stock': 'Ship Out',
+        'shipped out': null // No action for final status
+    };
+    return buttonText[currentStatus] || null;
+}
+
 // PO Display Modal functionality
-async function openPODisplayModal(poNumber) {
+async function openPODisplayModal(poNumber, currentStatus) {
     const modal = document.getElementById('po-display-modal');
     const poDisplayNumber = document.getElementById('po-display-number');
     const poDisplayDate = document.getElementById('po-display-date');
@@ -1595,6 +1655,32 @@ async function openPODisplayModal(poNumber) {
             correctLevel: QRCode.CorrectLevel.H
         });
 
+        // Add or update action button
+        const actionButtonContainer = document.getElementById('po-action-btn-container');
+
+        // Clear existing button if present
+        actionButtonContainer.innerHTML = '';
+
+        // Add action button if not in final status
+        const nextStatus = getNextStatus(currentStatus);
+        const buttonText = getActionButtonText(currentStatus);
+
+        if (nextStatus && buttonText) {
+            const actionButton = document.createElement('button');
+            actionButton.id = 'po-action-btn';
+            actionButton.className = 'submit-btn';
+            actionButton.textContent = buttonText;
+            actionButton.style.backgroundColor = '#4CAF50';
+            actionButton.style.padding = '8px 16px';
+            actionButton.style.fontSize = '14px';
+
+            actionButton.addEventListener('click', async () => {
+                await advancePOStatus(poNumber, nextStatus);
+            });
+
+            actionButtonContainer.appendChild(actionButton);
+        }
+
         // Show modal
         modal.style.display = 'block';
     } catch (error) {
@@ -1608,4 +1694,32 @@ document.getElementById('po-display-close-btn').addEventListener('click', () => 
     document.getElementById('po-display-modal').style.display = 'none';
 });
 
+// Advance PO status to next step
+async function advancePOStatus(poNumber, nextStatus) {
+    try {
+        const response = await fetch(`/api/orders/${poNumber}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ po_status: nextStatus })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to update PO status: ${response.statusText}`);
+        }
+
+        // Close modal
+        document.getElementById('po-display-modal').style.display = 'none';
+
+        // Show success message
+        const statusDisplay = nextStatus.charAt(0).toUpperCase() + nextStatus.slice(1);
+        await showAlert(`PO status updated to: ${statusDisplay}`);
+
+        // Reload the orders list to show updated status
+        await loadLatestOrders(10);
+    } catch (error) {
+        await showAlert('Error updating PO status: ' + error.message);
+    }
+}
 
