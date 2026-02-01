@@ -635,20 +635,12 @@ function displayOrdersList(orders) {
             <td style="text-align: right;">$${formattedAmount}</td>
             <td>${order.currency || 'N/A'}</td>
             <td>${formattedDate}</td>
-            <td><button class="view-detail-btn" data-po="${order.po_number}">View Details</button></td>
             <td><button class="qc-report-btn" data-po="${order.po_number}">QC report</button></td>
+            <td><button class="view-po-btn" data-po="${order.po_number}" data-status="${currentStatus}">View PO#</button></td>
             <td><button class="po-status-btn" data-po="${order.po_number}" data-status="${currentStatus}" style="padding: 8px 16px; background-color: #2196F3; color: white; border: none; cursor: pointer; font-size: 13px;">${statusDisplay}</button></td>
             <td><button class="delete-btn" data-po="${order.po_number}">Delete</button></td>
         `;
         ordersBody.appendChild(row);
-    });
-
-    // Add click handlers to view detail buttons
-    document.querySelectorAll('.view-detail-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            const poNumber = e.target.getAttribute('data-po');
-            await loadPODetail(poNumber);
-        });
     });
 
     // Add click handlers to QC report buttons
@@ -656,6 +648,15 @@ function displayOrdersList(orders) {
         btn.addEventListener('click', async (e) => {
             const poNumber = e.target.getAttribute('data-po');
             await generateQCReport(poNumber);
+        });
+    });
+
+    // Add click handlers to View PO# buttons (opens modal without action button)
+    document.querySelectorAll('.view-po-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const poNumber = e.target.getAttribute('data-po');
+            const currentStatus = e.target.getAttribute('data-status');
+            await openPODisplayModal(poNumber, currentStatus, false);
         });
     });
 
@@ -667,12 +668,16 @@ function displayOrdersList(orders) {
         });
     });
 
-    // Add click handlers to PO status buttons
+    // Add click handlers to PO status buttons (only for pending status)
     document.querySelectorAll('.po-status-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             const poNumber = e.target.getAttribute('data-po');
             const currentStatus = e.target.getAttribute('data-status');
-            await openPODisplayModal(poNumber, currentStatus);
+
+            // Only open modal for pending status
+            if (currentStatus === 'pending') {
+                await openPODisplayModal(poNumber, currentStatus);
+            }
         });
     });
 }
@@ -1607,7 +1612,7 @@ function getActionButtonText(currentStatus) {
 }
 
 // PO Display Modal functionality
-async function openPODisplayModal(poNumber, currentStatus) {
+async function openPODisplayModal(poNumber, currentStatus, showActionButton = true) {
     const modal = document.getElementById('po-display-modal');
     const poDisplayNumber = document.getElementById('po-display-number');
     const poDisplayDate = document.getElementById('po-display-date');
@@ -1661,24 +1666,26 @@ async function openPODisplayModal(poNumber, currentStatus) {
         // Clear existing button if present
         actionButtonContainer.innerHTML = '';
 
-        // Add action button if not in final status
-        const nextStatus = getNextStatus(currentStatus);
-        const buttonText = getActionButtonText(currentStatus);
+        // Add action button if not in final status and showActionButton is true
+        if (showActionButton) {
+            const nextStatus = getNextStatus(currentStatus);
+            const buttonText = getActionButtonText(currentStatus);
 
-        if (nextStatus && buttonText) {
-            const actionButton = document.createElement('button');
-            actionButton.id = 'po-action-btn';
-            actionButton.className = 'submit-btn';
-            actionButton.textContent = buttonText;
-            actionButton.style.backgroundColor = '#4CAF50';
-            actionButton.style.padding = '8px 16px';
-            actionButton.style.fontSize = '14px';
+            if (nextStatus && buttonText) {
+                const actionButton = document.createElement('button');
+                actionButton.id = 'po-action-btn';
+                actionButton.className = 'submit-btn';
+                actionButton.textContent = buttonText;
+                actionButton.style.backgroundColor = '#4CAF50';
+                actionButton.style.padding = '8px 16px';
+                actionButton.style.fontSize = '14px';
 
-            actionButton.addEventListener('click', async () => {
-                await advancePOStatus(poNumber, nextStatus);
-            });
+                actionButton.addEventListener('click', async () => {
+                    await advancePOStatus(poNumber, nextStatus);
+                });
 
-            actionButtonContainer.appendChild(actionButton);
+                actionButtonContainer.appendChild(actionButton);
+            }
         }
 
         // Show modal
