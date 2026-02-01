@@ -147,7 +147,7 @@ textarea {
     padding: 12px 30px;
     background-color: black;
     color: white;
-    border: 1px solid black;
+    border: none;
     cursor: pointer;
     font-size: 14px;
     transition: background-color 0.2s;
@@ -230,6 +230,8 @@ textarea {
     border: 1px solid black;
     padding: 20px;
     margin-top: 20px;
+    max-height: 70vh;
+    overflow: auto;
 }
 
 .results-section h2 {
@@ -400,7 +402,7 @@ tbody tr:hover {
 
 .modal-btn {
     padding: 10px 20px;
-    border: 1px solid black;
+    border: none;
     background-color: white;
     cursor: pointer;
     font-size: 14px;
@@ -476,7 +478,7 @@ tbody tr:hover {
 
 .message-reply-btn {
     padding: 5px 15px;
-    border: 1px solid black;
+    border: none;
     background-color: white;
     cursor: pointer;
     font-size: 14px;
@@ -492,7 +494,7 @@ tbody tr:hover {
 .message-close-btn {
     width: 30px;
     height: 30px;
-    border: 1px solid black;
+    border: none;
     background-color: white;
     cursor: pointer;
     font-size: 18px;
@@ -577,7 +579,7 @@ tbody tr:hover {
 .reply-modal-close-btn {
     width: 30px;
     height: 30px;
-    border: 1px solid black;
+    border: none;
     background-color: white;
     cursor: pointer;
     font-size: 18px;
@@ -645,4 +647,23 @@ tbody tr:hover {
 /* Hide filtered rows */
 tr.filtered-out {
     display: none;
+}
+
+/* Order status table buttons */
+.view-detail-btn,
+.qc-report-btn,
+.delete-btn {
+    padding: 8px 16px;
+    background-color: black;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background-color 0.2s;
+}
+
+.view-detail-btn:hover,
+.qc-report-btn:hover,
+.delete-btn:hover {
+    background-color: #333;
 }
