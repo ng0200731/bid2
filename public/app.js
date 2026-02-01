@@ -1350,6 +1350,8 @@ async function openItemDetailModal(item1, suffix) {
         input.value = '';
     });
 
+    let hasExistingData = false;
+
     // Try to load existing details
     try {
         // If suffix is empty, use 'null' as a placeholder in the URL
@@ -1361,6 +1363,7 @@ async function openItemDetailModal(item1, suffix) {
 
             // Populate form fields if data exists
             if (data.details) {
+                hasExistingData = true;
                 const details = data.details;
                 document.getElementById('detail-brand-name').value = details.brand_name || '';
                 document.getElementById('detail-machine-number').value = details.machine_number || '';
@@ -1388,8 +1391,41 @@ async function openItemDetailModal(item1, suffix) {
         console.error('Error loading item details:', error);
     }
 
+    // Set form to read-only mode if data exists
+    if (hasExistingData) {
+        setFormReadOnlyMode(true);
+    } else {
+        setFormReadOnlyMode(false);
+    }
+
     // Show modal
     modal.style.display = 'flex';
+}
+
+// Function to toggle form read-only mode
+function setFormReadOnlyMode(isReadOnly) {
+    const form = document.getElementById('item-detail-form');
+    const saveBtn = form.querySelector('button[type="submit"]');
+    const editBtn = document.getElementById('edit-detail-btn');
+    const cancelBtn = document.getElementById('cancel-detail-btn');
+    const fillDummyBtn = document.getElementById('fill-dummy-btn');
+
+    // Disable/enable all text inputs
+    form.querySelectorAll('input[type="text"]').forEach(input => {
+        input.disabled = isReadOnly;
+    });
+
+    if (isReadOnly) {
+        // Read-only mode: show Edit button, hide Save and Fill Dummy buttons
+        saveBtn.style.display = 'none';
+        fillDummyBtn.style.display = 'none';
+        editBtn.style.display = 'inline-block';
+    } else {
+        // Edit mode: show Save and Fill Dummy buttons, hide Edit button
+        saveBtn.style.display = 'inline-block';
+        fillDummyBtn.style.display = 'inline-block';
+        editBtn.style.display = 'none';
+    }
 }
 
 // Close item detail modal
@@ -1399,6 +1435,11 @@ document.getElementById('item-detail-close-btn').addEventListener('click', () =>
 
 document.getElementById('cancel-detail-btn').addEventListener('click', () => {
     document.getElementById('item-detail-modal').style.display = 'none';
+});
+
+// Edit button - switch from read-only to edit mode
+document.getElementById('edit-detail-btn').addEventListener('click', () => {
+    setFormReadOnlyMode(false);
 });
 
 // Close modal when clicking outside
@@ -1461,6 +1502,8 @@ document.getElementById('item-detail-form').addEventListener('submit', async (e)
         actual_cut: document.getElementById('detail-actual-cut').value
     };
 
+    console.log('Saving item details:', formData);
+
     try {
         const response = await fetch('/api/items/details', {
             method: 'POST',
@@ -1470,16 +1513,25 @@ document.getElementById('item-detail-form').addEventListener('submit', async (e)
             body: JSON.stringify(formData)
         });
 
+        console.log('Save response status:', response.status);
+
         if (!response.ok) {
             throw new Error(`Failed to save item details: ${response.statusText}`);
         }
 
         const result = await response.json();
-        await showAlert('Item details saved successfully!');
+        console.log('Save result:', result);
 
-        // Close modal
-        document.getElementById('item-detail-modal').style.display = 'none';
+        // Close modal first
+        const modal = document.getElementById('item-detail-modal');
+        modal.style.display = 'none';
+        console.log('Modal closed');
+
+        // Then show success alert
+        await showAlert('Item details saved successfully!');
+        console.log('Alert dismissed');
     } catch (error) {
+        console.error('Error saving item details:', error);
         await showAlert('Error saving item details: ' + error.message);
     }
 });
