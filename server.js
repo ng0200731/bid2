@@ -225,6 +225,42 @@ app.get('/api/orders/:poNumber', (req, res) => {
   }
 });
 
+// Get PO details with internal sequence numbers for display
+app.get('/api/orders/:poNumber/display', (req, res) => {
+  try {
+    const { poNumber } = req.params;
+    const po = getPOByNumber(poNumber);
+
+    if (!po) {
+      return res.status(404).json({ error: 'PO not found' });
+    }
+
+    const items = getPOItems(poNumber);
+    const allItems = getAllItems();
+
+    // Create a map of item_1+suffix to internal_seq for quick lookup
+    const itemSeqMap = new Map();
+    allItems.forEach(item => {
+      const key = item.suffix ? `${item.item_1}-${item.suffix}` : item.item_1;
+      itemSeqMap.set(key, item.internal_seq);
+    });
+
+    // Add internal_seq to each PO item
+    const itemsWithSeq = items.map(item => {
+      const internal_seq = itemSeqMap.get(item.item_number) || 'N/A';
+      return { ...item, internal_seq };
+    });
+
+    res.json({
+      po_number: po.po_number,
+      po_date: po.po_date,
+      items: itemsWithSeq
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Delete PO
 app.delete('/api/orders/:poNumber', (req, res) => {
   try {

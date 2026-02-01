@@ -584,7 +584,7 @@ function displayOrdersList(orders) {
     poDetailSection.style.display = 'none';
 
     if (orders.length === 0) {
-        ordersBody.innerHTML = '<tr><td colspan="19" style="text-align: center;">No orders found</td></tr>';
+        ordersBody.innerHTML = '<tr><td colspan="20" style="text-align: center;">No orders found</td></tr>';
         return;
     }
 
@@ -631,6 +631,7 @@ function displayOrdersList(orders) {
             <td>${formattedDate}</td>
             <td><button class="view-detail-btn" data-po="${order.po_number}">View Details</button></td>
             <td><button class="qc-report-btn" data-po="${order.po_number}">QC report</button></td>
+            <td><button class="create-po-btn" data-po="${order.po_number}">Create PO</button></td>
             <td><button class="delete-btn" data-po="${order.po_number}">Delete</button></td>
         `;
         ordersBody.appendChild(row);
@@ -657,6 +658,14 @@ function displayOrdersList(orders) {
         btn.addEventListener('click', async (e) => {
             const poNumber = e.target.getAttribute('data-po');
             await deletePO(poNumber);
+        });
+    });
+
+    // Add click handlers to create PO buttons
+    document.querySelectorAll('.create-po-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const poNumber = e.target.getAttribute('data-po');
+            await openPODisplayModal(poNumber);
         });
     });
 }
@@ -1535,6 +1544,68 @@ document.getElementById('item-detail-form').addEventListener('submit', async (e)
         console.error('Error saving item details:', error);
         await showAlert('Error saving item details: ' + error.message);
     }
+});
+
+// PO Display Modal functionality
+async function openPODisplayModal(poNumber) {
+    const modal = document.getElementById('po-display-modal');
+    const poDisplayNumber = document.getElementById('po-display-number');
+    const poDisplayDate = document.getElementById('po-display-date');
+    const poDisplayItems = document.getElementById('po-display-items');
+    const poQrCode = document.getElementById('po-qr-code');
+
+    try {
+        // Fetch PO details with internal sequence numbers
+        const response = await fetch(`/api/orders/${encodeURIComponent(poNumber)}/display`);
+
+        if (!response.ok) {
+            throw new Error(`Failed to load PO details: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        // Set PO number and date
+        poDisplayNumber.textContent = data.po_number;
+        poDisplayDate.textContent = data.po_date || 'N/A';
+
+        // Clear and populate items table
+        poDisplayItems.innerHTML = '';
+        data.items.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td style="padding: 10px; border: 1px solid #ddd;">${item.item_number}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${item.description || 'N/A'}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${item.color || 'N/A'}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; text-align: right;">${item.qty || 0}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${item.internal_seq || 'N/A'}</td>
+            `;
+            poDisplayItems.appendChild(row);
+        });
+
+        // Clear previous QR code
+        poQrCode.innerHTML = '';
+
+        // Generate QR code with PO number
+        new QRCode(poQrCode, {
+            text: data.po_number,
+            width: 150,
+            height: 150,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        // Show modal
+        modal.style.display = 'block';
+    } catch (error) {
+        console.error('Error opening PO display modal:', error);
+        await showAlert('Error loading PO details: ' + error.message);
+    }
+}
+
+// Close PO display modal
+document.getElementById('po-display-close-btn').addEventListener('click', () => {
+    document.getElementById('po-display-modal').style.display = 'none';
 });
 
 
