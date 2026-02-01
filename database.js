@@ -121,6 +121,7 @@ function createTables() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       item_1 TEXT NOT NULL,
       suffix TEXT,
+      internal_seq TEXT UNIQUE,
       created_at TEXT,
       UNIQUE(item_1, suffix)
     )
@@ -230,10 +231,20 @@ function migrateDatabase() {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           item_1 TEXT NOT NULL,
           suffix TEXT,
+          internal_seq TEXT UNIQUE,
           created_at TEXT,
           UNIQUE(item_1, suffix)
         )
       `);
+    }
+
+    // Check if internal_seq column exists in items table
+    try {
+      db.exec(`SELECT internal_seq FROM items LIMIT 1`);
+    } catch (error) {
+      // Column doesn't exist, add it
+      console.log('Adding column internal_seq to items table');
+      db.run(`ALTER TABLE items ADD COLUMN internal_seq TEXT`);
     }
 
     // Check if item_details table exists, if not create it
@@ -663,13 +674,35 @@ export function trackItem(itemNumber) {
       suffix = null;
     }
 
-    // Insert or ignore if already exists (UNIQUE constraint)
-    const stmt = db.prepare(`
-      INSERT OR IGNORE INTO items (item_1, suffix, created_at)
-      VALUES (?, ?, ?)
+    // Get the next internal_seq number
+    const maxSeqStmt = db.prepare(`
+      SELECT internal_seq FROM items
+      WHERE internal_seq IS NOT NULL
+      ORDER BY internal_seq DESC
+      LIMIT 1
     `);
 
-    stmt.run([item_1, suffix, now]);
+    let nextSeqNum = 1;
+    if (maxSeqStmt.step()) {
+      const maxSeq = maxSeqStmt.getAsObject().internal_seq;
+      if (maxSeq) {
+        // Extract number from ITEM0000001 format
+        const currentNum = parseInt(maxSeq.replace('ITEM', ''), 10);
+        nextSeqNum = currentNum + 1;
+      }
+    }
+    maxSeqStmt.free();
+
+    // Format as ITEM0000001
+    const internal_seq = `ITEM${String(nextSeqNum).padStart(7, '0')}`;
+
+    // Insert or ignore if already exists (UNIQUE constraint)
+    const stmt = db.prepare(`
+      INSERT OR IGNORE INTO items (item_1, suffix, internal_seq, created_at)
+      VALUES (?, ?, ?, ?)
+    `);
+
+    stmt.run([item_1, suffix, internal_seq, now]);
     stmt.free();
     saveDatabase();
   } catch (error) {
@@ -683,7 +716,7 @@ export function trackItem(itemNumber) {
 export function getAllItems() {
   try {
     const stmt = db.prepare(`
-      SELECT item_1, suffix, created_at
+      SELECT item_1, suffix, internal_seq, created_at
       FROM items
       ORDER BY created_at DESC
     `);

@@ -1273,7 +1273,7 @@ document.querySelectorAll('.nav-button').forEach(button => {
 
 async function loadAllItems() {
     try {
-        itemsBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Loading...</td></tr>';
+        itemsBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Loading...</td></tr>';
 
         const response = await fetch('/api/items');
         const data = await response.json();
@@ -1281,13 +1281,13 @@ async function loadAllItems() {
         if (data.items && data.items.length > 0) {
             displayItems(data.items);
         } else {
-            itemsBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No items found</td></tr>';
+            itemsBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No items found</td></tr>';
         }
 
         // Initialize filters for items table
         initializeTableFilters('items-table');
     } catch (error) {
-        itemsBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Error loading items</td></tr>';
+        itemsBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Error loading items</td></tr>';
         console.error('Error loading items:', error);
     }
 }
@@ -1316,6 +1316,7 @@ function displayItems(items) {
 
         row.innerHTML = `
             <td>${index + 1}</td>
+            <td>${item.internal_seq || 'N/A'}</td>
             <td>${fullItemNumber}</td>
             <td>${item.item_1}</td>
             <td>${item.suffix || ''}</td>
