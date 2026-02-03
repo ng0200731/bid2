@@ -1730,3 +1730,91 @@ async function advancePOStatus(poNumber, nextStatus) {
     }
 }
 
+// Download PO as PDF
+document.getElementById('download-po-pdf-btn').addEventListener('click', async () => {
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        // Get PO details from the modal
+        const poNumber = document.getElementById('po-display-number').textContent;
+        const poDate = document.getElementById('po-display-date').textContent;
+
+        // Set font
+        doc.setFontSize(20);
+        doc.text('Purchase Order', 105, 20, { align: 'center' });
+
+        // PO Number and Date
+        doc.setFontSize(12);
+        doc.text(`PO Number: ${poNumber}`, 20, 40);
+        doc.text(`PO Date: ${poDate}`, 20, 50);
+
+        // Add QR Code
+        const qrCodeCanvas = document.querySelector('#po-qr-code canvas');
+        if (qrCodeCanvas) {
+            const qrCodeImage = qrCodeCanvas.toDataURL('image/png');
+            doc.addImage(qrCodeImage, 'PNG', 150, 30, 40, 40);
+        }
+
+        // Line Items Table
+        doc.setFontSize(14);
+        doc.text('Line Items', 20, 80);
+
+        // Get table data
+        const itemsTable = document.getElementById('po-display-items');
+        const rows = itemsTable.querySelectorAll('tr');
+
+        let yPosition = 90;
+        doc.setFontSize(10);
+
+        // Table headers
+        doc.setFont(undefined, 'bold');
+        doc.text('Item #', 20, yPosition);
+        doc.text('Description', 50, yPosition);
+        doc.text('Color', 110, yPosition);
+        doc.text('Qty', 150, yPosition);
+        doc.text('Internal Seq#', 170, yPosition);
+
+        yPosition += 7;
+        doc.setFont(undefined, 'normal');
+
+        // Table rows
+        rows.forEach((row) => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length > 0) {
+                const itemNum = cells[0].textContent.trim();
+                const description = cells[1].textContent.trim();
+                const color = cells[2].textContent.trim();
+                const qty = cells[3].textContent.trim();
+                const internalSeq = cells[4].textContent.trim();
+
+                // Check if we need a new page
+                if (yPosition > 270) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+
+                doc.text(itemNum, 20, yPosition);
+                doc.text(description.substring(0, 30), 50, yPosition);
+                doc.text(color, 110, yPosition);
+                doc.text(qty, 150, yPosition);
+                doc.text(internalSeq, 170, yPosition);
+
+                yPosition += 7;
+            }
+        });
+
+        // Save the PDF
+        doc.save(`PO_${poNumber}.pdf`);
+
+        await showAlert('PDF downloaded successfully!');
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        await showAlert('Error generating PDF: ' + error.message);
+    }
+});
+
