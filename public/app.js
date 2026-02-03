@@ -1744,45 +1744,79 @@ document.getElementById('download-po-pdf-btn').addEventListener('click', async (
         const poNumber = document.getElementById('po-display-number').textContent;
         const poDate = document.getElementById('po-display-date').textContent;
 
-        // Set font
-        doc.setFontSize(20);
-        doc.text('Purchase Order', 105, 20, { align: 'center' });
+        // Function to add header to each page
+        const addHeader = () => {
+            // Header: Purchase Order title
+            doc.setFontSize(20);
+            doc.setFont(undefined, 'bold');
+            doc.text('Purchase Order', 105, 20, { align: 'center' });
 
-        // PO Number and Date
-        doc.setFontSize(12);
-        doc.text(`PO Number: ${poNumber}`, 20, 40);
-        doc.text(`PO Date: ${poDate}`, 20, 50);
+            // PO Number and Date
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            doc.text(`PO Number: ${poNumber}`, 20, 35);
+            doc.text(`PO Date: ${poDate}`, 20, 42);
 
-        // Add QR Code
-        const qrCodeCanvas = document.querySelector('#po-qr-code canvas');
-        if (qrCodeCanvas) {
-            const qrCodeImage = qrCodeCanvas.toDataURL('image/png');
-            doc.addImage(qrCodeImage, 'PNG', 150, 30, 40, 40);
-        }
+            // Add QR Code
+            const qrCodeCanvas = document.querySelector('#po-qr-code canvas');
+            if (qrCodeCanvas) {
+                const qrCodeImage = qrCodeCanvas.toDataURL('image/png');
+                doc.addImage(qrCodeImage, 'PNG', 155, 25, 35, 35);
+            }
+        };
+
+        // Function to add footer with page number
+        const addFooter = (pageNum, totalPages) => {
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Page ${pageNum} of ${totalPages}`, 105, 287, { align: 'center' });
+        };
+
+        // Add header to first page
+        addHeader();
 
         // Line Items Table
         doc.setFontSize(14);
-        doc.text('Line Items', 20, 80);
+        doc.setFont(undefined, 'bold');
+        doc.text('Line Items', 20, 70);
 
         // Get table data
         const itemsTable = document.getElementById('po-display-items');
         const rows = itemsTable.querySelectorAll('tr');
 
-        let yPosition = 90;
-        doc.setFontSize(10);
+        // Table configuration
+        const tableStartY = 78;
+        const rowHeight = 8;
+        const colWidths = [40, 45, 25, 15, 35]; // Item#, Description, Color, Qty, Internal Seq#
+        const colX = [20, 60, 105, 130, 145];
 
-        // Table headers
+        let yPosition = tableStartY;
+        doc.setFontSize(8);
+
+        // Draw table header with borders
         doc.setFont(undefined, 'bold');
-        doc.text('Item #', 20, yPosition);
-        doc.text('Description', 50, yPosition);
-        doc.text('Color', 110, yPosition);
-        doc.text('Qty', 150, yPosition);
-        doc.text('Internal Seq#', 170, yPosition);
+        doc.setDrawColor(0, 0, 0); // Black color
+        doc.setLineWidth(0.3); // 1px border
 
-        yPosition += 7;
+        // Header background
+        doc.setFillColor(240, 240, 240);
+        doc.rect(colX[0], yPosition - 6, colWidths[0], rowHeight, 'FD');
+        doc.rect(colX[1], yPosition - 6, colWidths[1], rowHeight, 'FD');
+        doc.rect(colX[2], yPosition - 6, colWidths[2], rowHeight, 'FD');
+        doc.rect(colX[3], yPosition - 6, colWidths[3], rowHeight, 'FD');
+        doc.rect(colX[4], yPosition - 6, colWidths[4], rowHeight, 'FD');
+
+        // Header text
+        doc.text('Item #', colX[0] + 2, yPosition);
+        doc.text('Description', colX[1] + 2, yPosition);
+        doc.text('Color', colX[2] + 2, yPosition);
+        doc.text('Qty', colX[3] + 2, yPosition);
+        doc.text('Internal Seq#', colX[4] + 2, yPosition);
+
+        yPosition += rowHeight;
         doc.setFont(undefined, 'normal');
 
-        // Table rows
+        // Table rows with borders
         rows.forEach((row) => {
             const cells = row.querySelectorAll('td');
             if (cells.length > 0) {
@@ -1793,20 +1827,55 @@ document.getElementById('download-po-pdf-btn').addEventListener('click', async (
                 const internalSeq = cells[4].textContent.trim();
 
                 // Check if we need a new page
-                if (yPosition > 270) {
+                if (yPosition > 260) {
                     doc.addPage();
-                    yPosition = 20;
+                    addHeader();
+                    yPosition = tableStartY;
+
+                    // Redraw table header on new page
+                    doc.setFontSize(8);
+                    doc.setFont(undefined, 'bold');
+                    doc.setFillColor(240, 240, 240);
+                    doc.rect(colX[0], yPosition - 6, colWidths[0], rowHeight, 'FD');
+                    doc.rect(colX[1], yPosition - 6, colWidths[1], rowHeight, 'FD');
+                    doc.rect(colX[2], yPosition - 6, colWidths[2], rowHeight, 'FD');
+                    doc.rect(colX[3], yPosition - 6, colWidths[3], rowHeight, 'FD');
+                    doc.rect(colX[4], yPosition - 6, colWidths[4], rowHeight, 'FD');
+
+                    doc.text('Item #', colX[0] + 2, yPosition);
+                    doc.text('Description', colX[1] + 2, yPosition);
+                    doc.text('Color', colX[2] + 2, yPosition);
+                    doc.text('Qty', colX[3] + 2, yPosition);
+                    doc.text('Internal Seq#', colX[4] + 2, yPosition);
+
+                    yPosition += rowHeight;
+                    doc.setFont(undefined, 'normal');
                 }
 
-                doc.text(itemNum, 20, yPosition);
-                doc.text(description.substring(0, 30), 50, yPosition);
-                doc.text(color, 110, yPosition);
-                doc.text(qty, 150, yPosition);
-                doc.text(internalSeq, 170, yPosition);
+                // Draw cell borders
+                doc.rect(colX[0], yPosition - 6, colWidths[0], rowHeight);
+                doc.rect(colX[1], yPosition - 6, colWidths[1], rowHeight);
+                doc.rect(colX[2], yPosition - 6, colWidths[2], rowHeight);
+                doc.rect(colX[3], yPosition - 6, colWidths[3], rowHeight);
+                doc.rect(colX[4], yPosition - 6, colWidths[4], rowHeight);
 
-                yPosition += 7;
+                // Cell text
+                doc.text(itemNum, colX[0] + 2, yPosition);
+                doc.text(description.substring(0, 25), colX[1] + 2, yPosition);
+                doc.text(color, colX[2] + 2, yPosition);
+                doc.text(qty, colX[3] + 2, yPosition);
+                doc.text(internalSeq, colX[4] + 2, yPosition);
+
+                yPosition += rowHeight;
             }
         });
+
+        // Add footers with page numbers to all pages
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            addFooter(i, totalPages);
+        }
 
         // Save the PDF
         doc.save(`PO_${poNumber}.pdf`);
