@@ -637,6 +637,7 @@ function displayOrdersList(orders) {
             <td>${formattedDate}</td>
             <td><button class="qc-report-btn" data-po="${order.po_number}">QC report</button></td>
             <td><button class="view-po-btn" data-po="${order.po_number}" data-status="${currentStatus}">View PO#</button></td>
+            <td><button class="view-details-btn" data-po="${order.po_number}">View Details</button></td>
             <td><button class="po-status-btn" data-po="${order.po_number}" data-status="${currentStatus}" style="padding: 8px 16px; background-color: #2196F3; color: white; border: none; cursor: pointer; font-size: 13px;">${statusDisplay}</button></td>
             <td><button class="delete-btn" data-po="${order.po_number}">Delete</button></td>
         `;
@@ -665,6 +666,14 @@ function displayOrdersList(orders) {
         btn.addEventListener('click', async (e) => {
             const poNumber = e.target.getAttribute('data-po');
             await deletePO(poNumber);
+        });
+    });
+
+    // Add click handlers to View Details buttons
+    document.querySelectorAll('.view-details-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const poNumber = e.target.getAttribute('data-po');
+            await openPOFullDetailsModal(poNumber);
         });
     });
 
@@ -1700,6 +1709,122 @@ async function openPODisplayModal(poNumber, currentStatus, showActionButton = tr
 document.getElementById('po-display-close-btn').addEventListener('click', () => {
     document.getElementById('po-display-modal').style.display = 'none';
 });
+
+// Close PO full details modal
+document.getElementById('po-full-details-close-btn').addEventListener('click', () => {
+    document.getElementById('po-full-details-modal').style.display = 'none';
+});
+
+// Open PO Full Details Modal
+async function openPOFullDetailsModal(poNumber) {
+    const modal = document.getElementById('po-full-details-modal');
+    const modalBody = document.getElementById('po-full-details-body');
+
+    try {
+        const response = await fetch(`/api/orders/${encodeURIComponent(poNumber)}`);
+        if (!response.ok) {
+            throw new Error(`Failed to load PO details: ${response.statusText}`);
+        }
+        const data = await response.json();
+
+        let totalQty = 0;
+        let totalAmount = 0;
+        let itemsHtml = '';
+
+        if (data.items && data.items.length > 0) {
+            data.items.forEach(item => {
+                const qty = item.qty || 0;
+                const ext = item.extension || 0;
+                totalQty += qty;
+                totalAmount += ext;
+                itemsHtml += `
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${item.item_number || ''}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${item.description || ''}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${item.color || ''}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${item.ship_to || ''}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${item.need_by || ''}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${qty.toLocaleString()}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">${item.bundle_qty || 'NA'}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${item.unit_price ? item.unit_price.toFixed(5) : '0.00000'}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">$${ext.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        modalBody.innerHTML = `
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #ddd; width: 50%; vertical-align: top;">
+                        <strong>Purchased From:</strong><br>
+                        ${data.vendor_name || 'N/A'}<br>
+                        ${data.vendor_address1 || ''}<br>
+                        ${data.vendor_address2 || ''}<br>
+                        ${data.vendor_address3 || ''}
+                    </td>
+                    <td style="padding: 10px; border: 1px solid #ddd; width: 25%; vertical-align: top;">
+                        <strong>Ship To:</strong><br>
+                        ${data.ship_to_name || 'N/A'}<br>
+                        ${data.ship_to_address1 || ''}<br>
+                        ${data.ship_to_address2 || ''}<br>
+                        ${data.ship_to_address3 || ''}
+                    </td>
+                    <td style="padding: 10px; border: 1px solid #ddd; width: 25%; vertical-align: top;">
+                        <strong>Company:</strong> ${data.company || 'N/A'}<br>
+                        <strong>Currency:</strong> ${data.currency || 'N/A'}<br>
+                        <strong>Cancel Date:</strong> ${data.cancel_date || 'N/A'}<br>
+                        <strong>Terms:</strong> ${data.terms || 'N/A'}
+                    </td>
+                </tr>
+            </table>
+
+            <h3 style="margin: 15px 0 10px 0;">Items</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background-color: #f5f5f5;">
+                        <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Item #</th>
+                        <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Description</th>
+                        <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Color</th>
+                        <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Ship To</th>
+                        <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Need By</th>
+                        <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">Qty</th>
+                        <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Bundle Qty</th>
+                        <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">$ Unit Price</th>
+                        <th style="padding: 8px; border: 1px solid #ddd; text-align: right;">Extension</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemsHtml}
+                </tbody>
+                <tfoot>
+                    <tr style="background-color: #f5f5f5; font-weight: bold;">
+                        <td colspan="5" style="padding: 8px; border: 1px solid #ddd; text-align: right;">Total:</td>
+                        <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">${totalQty.toLocaleString()}</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;"></td>
+                        <td style="padding: 8px; border: 1px solid #ddd;"></td>
+                        <td style="padding: 8px; border: 1px solid #ddd; text-align: right;">$${totalAmount.toFixed(2)}</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <h3 style="margin: 15px 0 10px 0;">Comments</h3>
+            <div style="padding: 10px; border: 1px solid #ddd; background: #fafafa; min-height: 30px;">
+                ${data.comments || ''}
+            </div>
+
+            <h3 style="margin: 15px 0 10px 0;">Note</h3>
+            <div style="padding: 10px; border: 1px solid #ddd; background: #fafafa; min-height: 30px;">
+                All invoices must be received within ten days of the shipment. If invoices are not received within the ten days, Brand ID will pay net from the date of the invoice receipt. If Brand ID does not receive an invoice within 20 days of the ship date, Brand ID will consider the shipment NO charge.
+            </div>
+        `;
+
+        modal.style.display = 'block';
+    } catch (error) {
+        console.error('Error opening PO full details modal:', error);
+        await showAlert('Error loading PO details: ' + error.message);
+    }
+}
 
 // Advance PO status to next step
 async function advancePOStatus(poNumber, nextStatus) {
