@@ -11,6 +11,9 @@ const DB_PATH = path.join(__dirname, 'ebrandid.db');
 let SQL;
 let db;
 
+// Export db for cleanup scripts
+export { db };
+
 /**
  * Initialize the database
  */
@@ -25,6 +28,8 @@ export async function initDatabase() {
     db = new SQL.Database(buffer);
     // Run migrations for existing databases
     migrateDatabase();
+    // Clean up any duplicate PO records
+    removeDuplicatePOs();
   } else {
     db = new SQL.Database();
     createTables();
@@ -314,8 +319,18 @@ export function savePOHeader(poData) {
   try {
     const now = new Date().toISOString();
 
+    console.log(`[savePOHeader] Deleting existing PO: ${poData.poNumber}`);
+
+    // Simple solution: Delete existing PO if it exists, then insert fresh data
+    const deleteStmt = db.prepare('DELETE FROM po_headers WHERE po_number = ?');
+    deleteStmt.run([poData.poNumber]);
+    deleteStmt.free();
+
+    console.log(`[savePOHeader] Inserting fresh PO: ${poData.poNumber}`);
+
+    // Insert new PO
     const stmt = db.prepare(`
-      INSERT OR REPLACE INTO po_headers (
+      INSERT INTO po_headers (
         po_number, status, company, currency, terms,
         vendor_name, vendor_address1, vendor_address2, vendor_address3,
         ship_to_name, ship_to_address1, ship_to_address2, ship_to_address3,
@@ -349,13 +364,103 @@ export function savePOHeader(poData) {
       now,
       now
     ]);
-
     stmt.free();
+
+    console.log(`[savePOHeader] Successfully saved PO: ${poData.poNumber}`);
+
     saveDatabase();
   } catch (error) {
     console.error('Error in savePOHeader:', error);
     console.error('PO Data:', JSON.stringify(poData, null, 2));
     throw new Error(`Failed to save PO header: ${error.message || error.toString()}`);
+  }
+}
+
+/**
+ * Delete all items for a specific PO
+ */
+export function deletePOItems(poNumber) {
+  console.log(`[deletePOItems] Deleting items for PO: ${poNumber}`);
+  const stmt = db.prepare('DELETE FROM po_items WHERE po_number = ?');
+  stmt.run([poNumber]);  // sql.js requires parameters as array
+  stmt.free();
+
+  // Verify deletion
+  const countStmt = db.prepare('SELECT COUNT(*) as cnt FROM po_items WHERE po_number = ?');
+  countStmt.bind([poNumber]);
+  countStmt.step();
+  const count = countStmt.getAsObject();
+  countStmt.free();
+  console.log(`[deletePOItems] Remaining items for PO ${poNumber}: ${count.cnt}`);
+
+  saveDatabase();
+}
+
+/**
+ * Remove duplicate PO records, keeping only the newest one for each PO number
+ */
+export function removeDuplicatePOs() {
+  try {
+    console.log('[CLEANUP] Starting duplicate PO cleanup...');
+
+    if (!db) {
+      console.log('[CLEANUP] ERROR: db is not initialized');
+      return;
+    }
+
+    // Find all PO numbers with duplicates
+    const duplicatesQuery = db.prepare(`
+      SELECT po_number, COUNT(*) as cnt
+      FROM po_headers
+      GROUP BY po_number
+      HAVING cnt > 1
+    `);
+
+    const duplicates = [];
+    while (duplicatesQuery.step()) {
+      duplicates.push(duplicatesQuery.getAsObject());
+    }
+    duplicatesQuery.free();
+
+    console.log(`[CLEANUP] Found ${duplicates.length} PO numbers with duplicates`);
+
+    if (duplicates.length > 0) {
+      duplicates.forEach(dup => {
+        console.log(`[CLEANUP] Processing PO ${dup.po_number} (${dup.cnt} records)`);
+
+        // Get all records for this PO, ordered by created_at DESC (newest first)
+        const recordsQuery = db.prepare(`
+          SELECT rowid, created_at
+          FROM po_headers
+          WHERE po_number = ?
+          ORDER BY created_at DESC
+        `);
+        recordsQuery.bind([dup.po_number]);
+
+        const records = [];
+        while (recordsQuery.step()) {
+          records.push(recordsQuery.getAsObject());
+        }
+        recordsQuery.free();
+
+        // Keep the first (newest) record, delete the rest
+        const toDelete = records.slice(1);
+        toDelete.forEach(record => {
+          const deleteStmt = db.prepare('DELETE FROM po_headers WHERE rowid = ?');
+          deleteStmt.run([record.rowid]);
+          deleteStmt.free();
+        });
+
+        console.log(`[CLEANUP] ✓ PO ${dup.po_number}: kept newest, deleted ${toDelete.length} old records`);
+      });
+
+      saveDatabase();
+      console.log('[CLEANUP] ✓ Duplicate cleanup complete\n');
+    } else {
+      console.log('[CLEANUP] No duplicates found\n');
+    }
+  } catch (error) {
+    console.error('[CLEANUP] ERROR:', error);
   }
 }
 

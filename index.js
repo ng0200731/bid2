@@ -2,7 +2,7 @@ import { chromium } from 'playwright';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { initDatabase, savePOHeader, savePOItem, saveDownloadHistory, saveMessage } from './database.js';
+import { initDatabase, savePOHeader, savePOItem, deletePOItems, saveDownloadHistory, saveMessage } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -905,6 +905,10 @@ class EBrandIDDownloader {
 
       // Add PO number to each item and save
       const itemsWithPO = poItems.map(item => ({ ...item, poNumber }));
+
+      // Delete existing items for this PO to avoid duplicates when re-fetching
+      deletePOItems(poNumber);
+
       itemsWithPO.forEach(item => savePOItem(item));
       result.itemsFound = itemsWithPO.length;
       console.log(`✓ ${itemsWithPO.length} line items saved to database`);
