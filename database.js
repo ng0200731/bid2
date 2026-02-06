@@ -711,8 +711,18 @@ export function saveMessage(messageData) {
   try {
     const now = new Date().toISOString();
 
+    console.log(`[saveMessage] Deleting existing message with ref#: ${messageData.refNumber}`);
+
+    // Simple solution: Delete existing message if it exists, then insert fresh data
+    const deleteStmt = db.prepare('DELETE FROM messages WHERE ref_number = ?');
+    deleteStmt.run([messageData.refNumber]);
+    deleteStmt.free();
+
+    console.log(`[saveMessage] Inserting fresh message with ref#: ${messageData.refNumber}`);
+
+    // Insert new message
     const stmt = db.prepare(`
-      INSERT OR REPLACE INTO messages (
+      INSERT INTO messages (
         ref_number, author, received_date, subject, comment, full_details, message_link, comment_id,
         created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -732,6 +742,9 @@ export function saveMessage(messageData) {
     ]);
 
     stmt.free();
+
+    console.log(`[saveMessage] Successfully saved message with ref#: ${messageData.refNumber}`);
+
     saveDatabase();
   } catch (error) {
     console.error('Error in saveMessage:', error);

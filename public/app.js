@@ -926,11 +926,12 @@ async function loadAllMessagesFromDatabase() {
                 comment: msg.comment,
                 fullDetails: msg.full_details,
                 messageLink: msg.message_link,
-                commentId: msg.comment_id
+                commentId: msg.comment_id,
+                created_at: msg.created_at
             })));
         } else {
             messagesTitle.textContent = 'No Messages Found';
-            messagesBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No messages in database</td></tr>';
+            messagesBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No messages in database</td></tr>';
         }
     } catch (error) {
         console.error('Error loading messages:', error);
@@ -978,10 +979,11 @@ function pollMessageJobStatus(jobId) {
                 clearInterval(interval);
                 addMessageProgressLog('All messages extracted and saved!', 'success');
 
-                // Display messages in the table
-                if (data.results && data.results.length > 0) {
-                    displayMessages(data.results);
-                }
+                // Wait a moment for database to finish saving, then reload messages from database
+                setTimeout(async () => {
+                    addMessageProgressLog('Loading messages from database...', 'info');
+                    await loadAllMessagesFromDatabase();
+                }, 500);
 
                 fetchMsgBtn.disabled = false;
             } else if (data.status === 'failed') {
@@ -1005,6 +1007,19 @@ function displayMessages(messages) {
     window.currentMessages = messages;
 
     messages.forEach(message => {
+        // Format created_at timestamp
+        let formattedCreatedTime = 'N/A';
+        if (message.created_at) {
+            const date = new Date(message.created_at);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            formattedCreatedTime = `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+        }
+
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${message.refNumber}</td>
@@ -1012,6 +1027,7 @@ function displayMessages(messages) {
             <td>${message.receivedDate}</td>
             <td>${message.subject}</td>
             <td>${message.comment}</td>
+            <td>${formattedCreatedTime}</td>
             <td><button class="submit-btn" onclick="showMessageDetails('${message.refNumber}')">View</button></td>
             <td><button class="submit-btn" onclick="deleteMessageById(${message.id})" style="background-color: #d32f2f;">Delete</button></td>
         `;
@@ -1262,11 +1278,13 @@ loadAllMsgBtn.addEventListener('click', async () => {
                 subject: msg.subject,
                 comment: msg.comment,
                 fullDetails: msg.full_details,
-                messageLink: msg.message_link
+                messageLink: msg.message_link,
+                commentId: msg.comment_id,
+                created_at: msg.created_at
             })));
         } else {
             messagesTitle.textContent = 'No Messages Found';
-            messagesBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No messages in database</td></tr>';
+            messagesBody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No messages in database</td></tr>';
         }
 
         loadAllMsgBtn.disabled = false;
