@@ -235,6 +235,11 @@ textarea {
     overflow: auto;
 }
 
+#items-list-section {
+    max-height: 60vh;
+    overflow: auto;
+}
+
 .results-section h2 {
     margin-bottom: 15px;
     font-size: 18px;
