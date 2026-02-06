@@ -55,8 +55,6 @@ body {
 .main-panel {
     width: 80%;
     padding: 30px;
-    overflow-y: auto;
-    height: 100vh;
 }
 
 .view {
@@ -230,7 +228,10 @@ textarea {
     border: 1px solid black;
     padding: 20px;
     margin-top: 20px;
-    max-height: 70vh;
+}
+
+#orders-list-section {
+    max-height: 60vh;
     overflow: auto;
 }
 
