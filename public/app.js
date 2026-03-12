@@ -233,7 +233,15 @@ downloadBtn.addEventListener('click', async () => {
     }
 });
 
+let lastLogMessage = null;
+
 function addProgressLog(message, type = 'info') {
+    // Prevent duplicate consecutive messages
+    if (lastLogMessage === message) {
+        return;
+    }
+    lastLogMessage = message;
+
     const item = document.createElement('div');
     item.className = `progress-item ${type}`;
     item.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
@@ -254,6 +262,10 @@ async function pollJobStatus(jobId) {
                     addProgressLog(data.progress, 'info');
                 }
             } else if (data.status === 'completed') {
+                // Show any final progress messages (like email notification)
+                if (data.progress) {
+                    addProgressLog(data.progress, 'info');
+                }
                 clearInterval(pollInterval);
                 addProgressLog('Process completed!', 'success');
                 displayResults(data.results);

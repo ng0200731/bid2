@@ -819,17 +819,13 @@ async function processDownload(jobId, poNumbers, headless = false) {
       job.results.push(result);
     }
 
-    // Mark as completed
-    job.status = 'completed';
-    job.completedTime = new Date();
-    job.currentPO = null;
-    job.progress = 'All downloads completed';
-
-    // Send email notification
+    // Send email notification before marking as completed
     console.log('[DEBUG] About to send email notification for download...');
     const successCount = job.results.filter(r => r.status === 'success').length;
     const totalFiles = job.results.reduce((sum, r) => sum + (r.filesDownloaded || 0), 0);
     console.log(`[DEBUG] Success count: ${successCount}, Total files: ${totalFiles}`);
+
+    job.progress = 'Sending email notification...';
     await sendNotificationEmail(
       `Artwork Download Completed - ${successCount}/${poNumbers.length} POs`,
       `
@@ -850,6 +846,12 @@ async function processDownload(jobId, poNumbers, headless = false) {
         </ul>
       `
     );
+    job.progress = 'Email notification sent';
+
+    // Mark as completed
+    job.status = 'completed';
+    job.completedTime = new Date();
+    job.currentPO = null;
 
   } catch (error) {
     console.error('Download error:', error);
@@ -888,17 +890,13 @@ async function processFetchPO(jobId, poNumbers, headless = false) {
       job.results.push(result);
     }
 
-    // Mark as completed
-    job.status = 'completed';
-    job.completedTime = new Date();
-    job.currentPO = null;
-    job.progress = `All PO information fetched (${poNumbers.length} POs processed)`;
-
-    // Send email notification
+    // Send email notification before marking as completed
     console.log('[DEBUG] About to send email notification...');
     const successCount = job.results.filter(r => r.status === 'success').length;
     const totalItems = job.results.reduce((sum, r) => sum + (r.itemsFound || 0), 0);
     console.log(`[DEBUG] Success count: ${successCount}, Total items: ${totalItems}`);
+
+    job.progress = 'Sending email notification...';
     await sendNotificationEmail(
       `PO Information Fetch Completed - ${successCount}/${poNumbers.length} POs`,
       `
@@ -919,6 +917,12 @@ async function processFetchPO(jobId, poNumbers, headless = false) {
         </ul>
       `
     );
+    job.progress = 'Email notification sent';
+
+    // Mark as completed
+    job.status = 'completed';
+    job.completedTime = new Date();
+    job.currentPO = null;
 
   } catch (error) {
     console.error('Fetch PO error:', error);
