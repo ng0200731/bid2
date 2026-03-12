@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import xlsx from 'xlsx';
 import fs from 'fs';
 import os from 'os';
+import nodemailer from 'nodemailer';
 import EBrandIDDownloader from './index.js';
 import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs, deletePO, deleteAllPOs, saveMessage, getAllMessages, deleteMessage, deleteAllMessages, getAllItems, rebuildItemsTable, saveItemDetails, getItemDetails, updatePOStatus } from './database.js';
 
@@ -25,6 +26,53 @@ app.use('/downloads', express.static('downloads')); // Serve downloaded files
 // Store active jobs
 const jobs = new Map();
 let jobIdCounter = 1;
+
+// Email notification helper
+async function sendNotificationEmail(subject, body) {
+  try {
+    const configPath = path.join(__dirname, 'config.json');
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+
+    const informedParties = config.informed_parties || [];
+    console.log(`[EMAIL] Informed parties found: ${JSON.stringify(informedParties)}`);
+
+    if (informedParties.length === 0) {
+      console.log('[EMAIL] No informed parties configured, skipping email notification');
+      return;
+    }
+
+    if (!config.email_user || !config.email_password) {
+      console.log('[EMAIL] Email credentials not configured, skipping email notification');
+      return;
+    }
+
+    console.log(`[EMAIL] Sending email via ${config.email_host}:${config.email_port} to ${informedParties.join(', ')}`);
+
+    // Configure email transporter with 163.com SMTP
+    const transporter = nodemailer.createTransport({
+      host: config.email_host || 'smtp.163.com',
+      port: config.email_port || 465,
+      secure: config.email_secure !== false, // true for 465, false for other ports
+      auth: {
+        user: config.email_user,
+        pass: config.email_password
+      }
+    });
+
+    const mailOptions = {
+      from: config.email_user,
+      to: informedParties.join(', '),
+      subject: subject,
+      html: body
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`[EMAIL] ✓ Email notification sent to notified party: ${informedParties.join(', ')}`);
+  } catch (error) {
+    console.error('[EMAIL] ✗ Error sending email notification:', error.message);
+    console.error('[EMAIL] Full error:', error);
+  }
+}
 
 // Sample quantity calculation based on order quantity
 function getSampleQuantity(orderQty) {
@@ -343,6 +391,88 @@ app.post('/api/profile', (req, res) => {
     });
   } catch (error) {
     console.error('Error saving profile:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get informed parties
+app.get('/api/informed-parties', (req, res) => {
+  try {
+    const configPath = path.join(__dirname, 'config.json');
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+
+    res.json({
+      emails: config.informed_parties || []
+    });
+  } catch (error) {
+    console.error('Error loading informed parties:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Add informed party
+app.post('/api/informed-parties', (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const configPath = path.join(__dirname, 'config.json');
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+
+    if (!config.informed_parties) {
+      config.informed_parties = [];
+    }
+
+    if (config.informed_parties.includes(email)) {
+      return res.status(400).json({ error: 'Email already exists' });
+    }
+
+    config.informed_parties.push(email);
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+    res.json({
+      success: true,
+      message: 'Email added successfully'
+    });
+  } catch (error) {
+    console.error('Error adding informed party:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Remove informed party
+app.delete('/api/informed-parties', (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const configPath = path.join(__dirname, 'config.json');
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+
+    if (!config.informed_parties) {
+      config.informed_parties = [];
+    }
+
+    const index = config.informed_parties.indexOf(email);
+    if (index === -1) {
+      return res.status(404).json({ error: 'Email not found' });
+    }
+
+    config.informed_parties.splice(index, 1);
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
+    res.json({
+      success: true,
+      message: 'Email removed successfully'
+    });
+  } catch (error) {
+    console.error('Error removing informed party:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -695,6 +825,32 @@ async function processDownload(jobId, poNumbers, headless = false) {
     job.currentPO = null;
     job.progress = 'All downloads completed';
 
+    // Send email notification
+    console.log('[DEBUG] About to send email notification for download...');
+    const successCount = job.results.filter(r => r.status === 'success').length;
+    const totalFiles = job.results.reduce((sum, r) => sum + (r.filesDownloaded || 0), 0);
+    console.log(`[DEBUG] Success count: ${successCount}, Total files: ${totalFiles}`);
+    await sendNotificationEmail(
+      `Artwork Download Completed - ${successCount}/${poNumbers.length} POs`,
+      `
+        <h2>Artwork Download Completed</h2>
+        <p><strong>Total POs Processed:</strong> ${poNumbers.length}</p>
+        <p><strong>Successful:</strong> ${successCount}</p>
+        <p><strong>Total Files Downloaded:</strong> ${totalFiles}</p>
+        <p><strong>Completed at:</strong> ${new Date().toLocaleString()}</p>
+        <hr>
+        <h3>Details:</h3>
+        <ul>
+          ${job.results.map(r => `
+            <li>
+              <strong>PO ${r.poNumber}:</strong> ${r.status}
+              ${r.filesDownloaded ? `(${r.filesDownloaded} files)` : ''}
+            </li>
+          `).join('')}
+        </ul>
+      `
+    );
+
   } catch (error) {
     console.error('Download error:', error);
     job.status = 'failed';
@@ -737,6 +893,32 @@ async function processFetchPO(jobId, poNumbers, headless = false) {
     job.completedTime = new Date();
     job.currentPO = null;
     job.progress = `All PO information fetched (${poNumbers.length} POs processed)`;
+
+    // Send email notification
+    console.log('[DEBUG] About to send email notification...');
+    const successCount = job.results.filter(r => r.status === 'success').length;
+    const totalItems = job.results.reduce((sum, r) => sum + (r.itemsFound || 0), 0);
+    console.log(`[DEBUG] Success count: ${successCount}, Total items: ${totalItems}`);
+    await sendNotificationEmail(
+      `PO Information Fetch Completed - ${successCount}/${poNumbers.length} POs`,
+      `
+        <h2>PO Information Fetch Completed</h2>
+        <p><strong>Total POs Processed:</strong> ${poNumbers.length}</p>
+        <p><strong>Successful:</strong> ${successCount}</p>
+        <p><strong>Total Items:</strong> ${totalItems}</p>
+        <p><strong>Completed at:</strong> ${new Date().toLocaleString()}</p>
+        <hr>
+        <h3>Details:</h3>
+        <ul>
+          ${job.results.map(r => `
+            <li>
+              <strong>PO ${r.poNumber}:</strong> ${r.status}
+              ${r.itemsFound ? ` - <strong>${r.itemsFound} items found</strong>` : ''}
+            </li>
+          `).join('')}
+        </ul>
+      `
+    );
 
   } catch (error) {
     console.error('Fetch PO error:', error);

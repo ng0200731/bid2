@@ -1,8 +1,8 @@
 // Navigation between views
-document.querySelectorAll('.nav-button').forEach(button => {
+document.querySelectorAll('.nav-button[data-view]').forEach(button => {
     button.addEventListener('click', () => {
         // Update active button
-        document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.nav-button[data-view]').forEach(btn => btn.classList.remove('active'));
         button.classList.add('active');
 
         // Show corresponding view
@@ -11,6 +11,22 @@ document.querySelectorAll('.nav-button').forEach(button => {
         document.getElementById(viewName).classList.add('active');
     });
 });
+
+// Theme Toggle (Cyber ↔ Minimal)
+const themeToggleBtn = document.getElementById('theme-toggle-btn');
+if (themeToggleBtn) {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'minimal') {
+        document.body.classList.add('theme-minimal');
+        themeToggleBtn.textContent = '[ CYBER ]';
+    }
+    themeToggleBtn.addEventListener('click', () => {
+        document.body.classList.toggle('theme-minimal');
+        const isMinimal = document.body.classList.contains('theme-minimal');
+        themeToggleBtn.textContent = isMinimal ? '[ CYBER ]' : '[ MINIMAL ]';
+        localStorage.setItem('theme', isMinimal ? 'minimal' : 'cyber');
+    });
+}
 
 // Universal Table Filter Function
 function initializeTableFilters(tableId) {
@@ -405,6 +421,108 @@ function showProfileMessage(message, type) {
     profileMessage.style.color = type === 'success' ? '#155724' : '#721c24';
     profileMessage.style.border = `1px solid ${type === 'success' ? '#c3e6cb' : '#f5c6cb'}`;
 }
+
+// Informed Parties functionality
+const informedPartyEmail = document.getElementById('informed-party-email');
+const addInformedPartyBtn = document.getElementById('add-informed-party-btn');
+const informedPartiesList = document.getElementById('informed-parties-list');
+
+let informedParties = [];
+
+// Load informed parties when profile loads
+async function loadInformedParties() {
+    try {
+        const response = await fetch('/api/informed-parties');
+        const data = await response.json();
+        informedParties = data.emails || [];
+        renderInformedParties();
+    } catch (error) {
+        console.error('Error loading informed parties:', error);
+    }
+}
+
+function renderInformedParties() {
+    if (informedParties.length === 0) {
+        informedPartiesList.innerHTML = '<p style="color: #888; font-size: 14px;">No informed parties added yet.</p>';
+        return;
+    }
+
+    informedPartiesList.innerHTML = informedParties.map((email, index) => `
+        <div style="display: flex; align-items: center; gap: 10px; padding: 8px; border: 1px solid #4db8a433; margin-bottom: 8px; background-color: #0d0d18;">
+            <span style="flex: 1; font-size: 14px;">${email}</span>
+            <button class="delete-btn" onclick="removeInformedParty(${index})" style="padding: 5px 10px; font-size: 12px;">Remove</button>
+        </div>
+    `).join('');
+}
+
+addInformedPartyBtn.addEventListener('click', async () => {
+    const email = informedPartyEmail.value.trim();
+
+    if (!email) {
+        showProfileMessage('Please enter an email address', 'error');
+        return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showProfileMessage('Please enter a valid email address', 'error');
+        return;
+    }
+
+    if (informedParties.includes(email)) {
+        showProfileMessage('This email is already in the list', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/informed-parties', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to add email: ${response.statusText}`);
+        }
+
+        informedParties.push(email);
+        informedPartyEmail.value = '';
+        renderInformedParties();
+        showProfileMessage('Email added successfully', 'success');
+    } catch (error) {
+        showProfileMessage('Error adding email: ' + error.message, 'error');
+    }
+});
+
+async function removeInformedParty(index) {
+    const email = informedParties[index];
+
+    try {
+        const response = await fetch('/api/informed-parties', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to remove email: ${response.statusText}`);
+        }
+
+        informedParties.splice(index, 1);
+        renderInformedParties();
+        showProfileMessage('Email removed successfully', 'success');
+    } catch (error) {
+        showProfileMessage('Error removing email: ' + error.message, 'error');
+    }
+}
+
+// Update loadProfile to also load informed parties
+const originalLoadProfile = loadProfile;
+loadProfile = async function() {
+    await originalLoadProfile();
+    await loadInformedParties();
+};
 
 // Order Status functionality
 const searchBtn = document.getElementById('search-btn');

@@ -718,7 +718,9 @@ class EBrandIDDownloader {
       const response = await itemPage.request.get(artworkUrl);
       const buffer = await response.body();
 
-      const filename = path.basename(artworkUrl);
+      const originalFilename = path.basename(artworkUrl);
+      const ext = path.extname(originalFilename);
+      const filename = `${poNumber}_${item.itemNumber}${ext}`;
       const filepath = path.join(downloadDir, filename);
 
       fs.writeFileSync(filepath, buffer);

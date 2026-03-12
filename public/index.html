@@ -18,6 +18,10 @@
             <button class="nav-button" data-view="item">Item</button>
             <button class="nav-button" data-view="message">Message</button>
             <button class="nav-button" data-view="profile">Profile</button>
+
+            <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid currentColor;">
+                <button id="theme-toggle-btn" class="nav-button" style="text-align: center;">[ MINIMAL ]</button>
+            </div>
         </div>
 
         <!-- Right Panel (80%) -->
@@ -91,6 +95,20 @@
                     </div>
 
                     <button id="save-profile-btn" class="submit-btn">Save Changes</button>
+                </div>
+
+                <div class="form-section">
+                    <h3>Informed Parties</h3>
+                    <p>Add email addresses to notify when downloads or PO fetches complete.</p>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <input type="email" id="informed-party-email" placeholder="Enter email address" style="flex: 1;">
+                        <button id="add-informed-party-btn" class="submit-btn" style="padding: 10px 20px;">+</button>
+                    </div>
+
+                    <div id="informed-parties-list" style="margin-top: 15px;">
+                        <!-- Email list will be populated here -->
+                    </div>
                 </div>
 
                 <div id="profile-message" style="display: none; margin-top: 20px; padding: 10px; border-radius: 4px;"></div>
