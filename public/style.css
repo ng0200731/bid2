@@ -995,3 +995,17 @@ body.theme-minimal #progress-history-table th {
     color: white;
 }
 
+
+/* Full screen pie chart container */
+.chart-container {
+    width: 100% !important;
+    height: calc(100vh - 150px) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#progress-pie-chart {
+    max-width: 100% !important;
+    max-height: 100% !important;
+}

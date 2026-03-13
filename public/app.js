@@ -2399,10 +2399,10 @@ function updateProgressPieChart(departmentCounts) {
                     labels: {
                         color: '#6ba3be',
                         font: {
-                            size: 12,
+                            size: 14,
                             family: "'Courier New', monospace"
                         },
-                        padding: 15
+                        padding: 20
                     }
                 },
                 tooltip: {
@@ -2423,10 +2423,261 @@ function updateProgressPieChart(departmentCounts) {
                         }
                     }
                 }
+            },
+            onClick: (event, elements) => {
+                if (elements.length > 0) {
+                    const index = elements[0].index;
+                    const department = departments[index];
+                    showDepartmentDetailSplit(department, index);
+                }
             }
         }
     });
 }
+
+// Show department detail modal
+async function showDepartmentDetail(department) {
+    try {
+        const response = await fetch('/api/progress');
+        const data = await response.json();
+
+        // Filter POs by department
+        const filteredPOs = data.progress.filter(po => po.latest_department === department);
+
+        const modal = document.getElementById('department-detail-modal');
+        const title = document.getElementById('department-detail-title');
+        const tbody = document.getElementById('department-detail-tbody');
+
+        title.textContent = `${department} - ${filteredPOs.length} POs`;
+        tbody.innerHTML = '';
+
+        filteredPOs.forEach(po => {
+            const row = document.createElement('tr');
+            const scanTime = po.last_scan_time ? new Date(po.last_scan_time).toLocaleString() : 'N/A';
+            row.innerHTML = `
+                <td style="padding: 10px; border: 1px solid #ddd;">${po.po_number}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${scanTime}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${po.scan_count || 0}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">
+                    <button onclick="viewProgressHistory('${po.po_number}')" style="padding: 5px 10px; background-color: #6ba3be; color: white; border: none; border-radius: 3px; cursor: pointer;">View History</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        // Setup fuzzy search
+        setupDepartmentFilters(filteredPOs);
+
+        // Setup close button
+        const closeBtn = document.getElementById('department-detail-close-btn');
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        };
+
+        // Setup click outside to close
+        modal.onclick = function(e) {
+            if (e.target.id === 'department-detail-modal') {
+                modal.style.display = 'none';
+            }
+        };
+
+        // Setup export button
+        const exportBtn = document.getElementById('export-department-excel');
+        exportBtn.onclick = function() {
+            exportDepartmentToExcel(department, filteredPOs);
+        };
+
+        modal.style.display = 'flex';
+    } catch (error) {
+        console.error('Error loading department details:', error);
+    }
+}
+
+// Show department detail in split view
+async function showDepartmentDetailSplit(department, index) {
+    try {
+        const response = await fetch('/api/progress');
+        const data = await response.json();
+
+        // Filter POs by department
+        const filteredPOs = data.progress.filter(po => po.latest_department === department);
+
+        // Update chart section to shrink
+        const chartSection = document.getElementById('chart-section');
+        const detailSection = document.getElementById('detail-section');
+
+        chartSection.style.flex = '0 0 40%';
+        detailSection.style.flex = '1';
+        detailSection.style.opacity = '1';
+
+        // Update detail section
+        const title = document.getElementById('detail-section-title');
+        const tbody = document.getElementById('detail-section-tbody');
+
+        title.textContent = `${department} - ${filteredPOs.length} POs`;
+        tbody.innerHTML = '';
+
+        filteredPOs.forEach(po => {
+            const row = document.createElement('tr');
+            const scanTime = po.last_scan_time ? new Date(po.last_scan_time).toLocaleString() : 'N/A';
+            row.style.backgroundColor = 'white';
+            row.innerHTML = `
+                <td style="padding: 10px; border: 1px solid #ddd; color: #333;">${po.po_number}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; color: #333;">${scanTime}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">
+                    <button onclick="viewProgressHistory('${po.po_number}')" style="padding: 5px 10px; background-color: #6ba3be; color: white; border: none; border-radius: 3px; cursor: pointer;">View History</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        // Setup fuzzy search
+        setupDetailSectionFilters(filteredPOs);
+
+        // Setup close button
+        const closeBtn = document.getElementById('close-detail-section');
+        closeBtn.onclick = function() {
+            closeDetailSection();
+        };
+
+        // Setup export button
+        const exportBtn = document.getElementById('export-detail-excel');
+        exportBtn.onclick = function() {
+            exportDepartmentToExcel(department, filteredPOs);
+        };
+
+    } catch (error) {
+        console.error('Error loading department details:', error);
+    }
+}
+
+// Close detail section and restore full chart
+function closeDetailSection() {
+    const chartSection = document.getElementById('chart-section');
+    const detailSection = document.getElementById('detail-section');
+
+    chartSection.style.flex = '1';
+    detailSection.style.flex = '0';
+    detailSection.style.opacity = '0';
+}
+
+// Setup fuzzy search filters for detail section
+function setupDetailSectionFilters(data) {
+    let filteredData = [...data];
+
+    const filterPO = document.getElementById('filter-detail-po');
+    const filterTime = document.getElementById('filter-detail-time');
+
+    function applyFilters() {
+        const poFilter = filterPO.value.toLowerCase();
+        const timeFilter = filterTime.value.toLowerCase();
+
+        filteredData = data.filter(po => {
+            const matchPO = po.po_number.toLowerCase().includes(poFilter);
+            const matchTime = po.last_scan_time ? new Date(po.last_scan_time).toLocaleString().toLowerCase().includes(timeFilter) : false;
+            return matchPO && matchTime;
+        });
+
+        renderDetailSectionTable(filteredData);
+    }
+
+    filterPO.oninput = applyFilters;
+    filterTime.oninput = applyFilters;
+}
+
+// Render detail section table
+function renderDetailSectionTable(data) {
+    const tbody = document.getElementById('detail-section-tbody');
+    tbody.innerHTML = '';
+
+    data.forEach(po => {
+        const row = document.createElement('tr');
+        const scanTime = po.last_scan_time ? new Date(po.last_scan_time).toLocaleString() : 'N/A';
+        row.style.backgroundColor = 'white';
+        row.innerHTML = `
+            <td style="padding: 10px; border: 1px solid #ddd; color: #333;">${po.po_number}</td>
+            <td style="padding: 10px; border: 1px solid #ddd; color: #333;">${scanTime}</td>
+            <td style="padding: 10px; border: 1px solid #ddd;">
+                <button onclick="viewProgressHistory('${po.po_number}')" style="padding: 5px 10px; background-color: #6ba3be; color: white; border: none; border-radius: 3px; cursor: pointer;">View History</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Setup fuzzy search filters for department modal
+function setupDepartmentFilters(data) {
+    let filteredData = [...data];
+
+    const filterPO = document.getElementById('filter-po');
+    const filterTime = document.getElementById('filter-time');
+    const filterCount = document.getElementById('filter-count');
+
+    function applyFilters() {
+        const poFilter = filterPO.value.toLowerCase();
+        const timeFilter = filterTime.value.toLowerCase();
+        const countFilter = filterCount.value.toLowerCase();
+
+        filteredData = data.filter(po => {
+            const matchPO = po.po_number.toLowerCase().includes(poFilter);
+            const matchTime = new Date(po.last_scan_time).toLocaleString().toLowerCase().includes(timeFilter);
+            const matchCount = po.scan_count.toString().includes(countFilter);
+            return matchPO && matchTime && matchCount;
+        });
+
+        renderDepartmentTable(filteredData);
+    }
+
+    filterPO.oninput = applyFilters;
+    filterTime.oninput = applyFilters;
+    filterCount.oninput = applyFilters;
+}
+
+// Render department table
+function renderDepartmentTable(data) {
+    const tbody = document.getElementById('department-detail-tbody');
+    tbody.innerHTML = '';
+
+    data.forEach(po => {
+        const row = document.createElement('tr');
+        const scanTime = po.last_scan_time ? new Date(po.last_scan_time).toLocaleString() : 'N/A';
+        row.innerHTML = `
+            <td style="padding: 10px; border: 1px solid #ddd;">${po.po_number}</td>
+            <td style="padding: 10px; border: 1px solid #ddd;">${scanTime}</td>
+            <td style="padding: 10px; border: 1px solid #ddd;">${po.scan_count || 0}</td>
+            <td style="padding: 10px; border: 1px solid #ddd;">
+                <button onclick="viewProgressHistory('${po.po_number}')" style="padding: 5px 10px; background-color: #6ba3be; color: white; border: none; border-radius: 3px; cursor: pointer;">View History</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Export department data to Excel
+function exportDepartmentToExcel(department, data) {
+    const headers = ['PO Number', 'Last Scan Time', 'Scan Count'];
+    const rows = data.map(po => [
+        po.po_number,
+        new Date(po.last_scan_time).toLocaleString(),
+        po.scan_count
+    ]);
+
+    let csv = headers.join(',') + '\n';
+    rows.forEach(row => {
+        csv += row.join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${department}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 
 // Get department badge color
 function getDepartmentColor(department) {
@@ -2456,26 +2707,51 @@ async function viewProgressHistory(poNumber) {
         // Update modal title
         document.querySelector('#progress-history-modal h2').textContent = `Progress History - PO ${poNumber}`;
 
+        // All departments in sequence
+        const allDepartments = [
+            'CS Team',
+            'PMC',
+            'Material',
+            'Production',
+            'Cut and Fold',
+            'QC',
+            'Shipment',
+            'Account'
+        ];
+
+        // Create a map of scanned departments
+        const scannedMap = {};
         if (data.progress && data.progress.length > 0) {
             data.progress.forEach(scan => {
-                const row = document.createElement('tr');
+                scannedMap[scan.department] = scan;
+            });
+        }
 
+        // Display all departments in order
+        allDepartments.forEach(dept => {
+            const row = document.createElement('tr');
+            const deptColor = getDepartmentColor(dept);
+
+            if (scannedMap[dept]) {
+                const scan = scannedMap[dept];
                 const scanDate = new Date(scan.scanned_at);
                 const formattedDate = scanDate.toLocaleString();
 
-                const deptColor = getDepartmentColor(scan.department);
-
                 row.innerHTML = `
-                    <td><span style="background-color: ${deptColor}; padding: 4px 8px; border-radius: 4px; color: white; font-size: 12px;">${scan.department}</span></td>
+                    <td><span style="background-color: ${deptColor}; padding: 4px 8px; border-radius: 4px; color: white; font-size: 12px;">${dept}</span></td>
                     <td>${formattedDate}</td>
                     <td>${scan.notes || '-'}</td>
                 `;
+            } else {
+                row.innerHTML = `
+                    <td><span style="background-color: #999; padding: 4px 8px; border-radius: 4px; color: white; font-size: 12px;">${dept}</span></td>
+                    <td>---</td>
+                    <td>---</td>
+                `;
+            }
 
-                tbody.appendChild(row);
-            });
-        } else {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">No scans found</td></tr>';
-        }
+            tbody.appendChild(row);
+        });
 
         // Setup close button handler
         const closeBtn = document.getElementById('progress-history-close-btn');
