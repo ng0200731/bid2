@@ -2423,8 +2423,7 @@ function updateProgressPieChart(departmentCounts) {
             datasets: [{
                 data: orderedCounts,
                 backgroundColor: orderedColors,
-                borderColor: '#0a0a12',
-                borderWidth: 2
+                borderWidth: 0
             }]
         },
         options: {
@@ -2460,8 +2459,8 @@ function updateProgressPieChart(departmentCounts) {
                                     return {
                                         text: label + (isHidden ? ' 👁️‍🗨️' : ' 👁️'),
                                         fillStyle: style.backgroundColor,
-                                        strokeStyle: style.borderColor,
-                                        lineWidth: style.borderWidth,
+                                        strokeStyle: 'transparent',
+                                        lineWidth: 0,
                                         hidden: isHidden,
                                         index: i
                                     };
@@ -2470,14 +2469,16 @@ function updateProgressPieChart(departmentCounts) {
                             return [];
                         }
                     },
-                    onClick: function(e, legendItem, legend) {
+                    onClick: function(_, legendItem, legend) {
                         const index = legendItem.index;
                         const chart = legend.chart;
                         const meta = chart.getDatasetMeta(0);
 
-                        // Toggle visibility
-                        meta.data[index].hidden = !meta.data[index].hidden;
-                        chart.update();
+                        // Check if the slice is visible
+                        if (!meta.data[index].hidden) {
+                            const department = orderedDepartments[index];
+                            showDepartmentDetailSplit(department, index);
+                        }
                     }
                 },
                 tooltip: {
@@ -2638,7 +2639,10 @@ async function showDepartmentDetailSplit(department, index) {
         const title = document.getElementById('detail-section-title');
         const tbody = document.getElementById('detail-section-tbody');
 
-        title.textContent = `${department} - ${filteredPOs.length} POs`;
+        // Calculate total quantity across all POs
+        const totalQuantity = enrichedPOs.reduce((sum, po) => sum + po.totalQty, 0);
+
+        title.textContent = `${department} - ${filteredPOs.length} POs (${totalQuantity.toLocaleString()} total qty)`;
         tbody.innerHTML = '';
 
         enrichedPOs.forEach(po => {
