@@ -12,7 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 8766;
+const PORT = 8767;
 
 // Initialize database
 await initDatabase();
@@ -652,6 +652,18 @@ app.get('/api/progress/:poNumber', (req, res) => {
     res.json({ progress: progress });
   } catch (error) {
     console.error('Error fetching PO progress:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get items for a specific PO
+app.get('/api/po/:poNumber/items', (req, res) => {
+  try {
+    const { poNumber } = req.params;
+    const items = getPOItems(poNumber);
+    res.json({ items: items });
+  } catch (error) {
+    console.error('Error fetching PO items:', error);
     res.status(500).json({ error: error.message });
   }
 });

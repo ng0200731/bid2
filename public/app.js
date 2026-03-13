@@ -2614,6 +2614,18 @@ async function showDepartmentDetailSplit(department, index) {
         // Filter POs by department
         const filteredPOs = data.progress.filter(po => po.latest_department === department);
 
+        // Fetch item counts and quantities for each PO
+        const poDataPromises = filteredPOs.map(async (po) => {
+            const itemsResponse = await fetch(`/api/po/${po.po_number}/items`);
+            const itemsData = await itemsResponse.json();
+            const items = itemsData.items || [];
+            const itemCount = items.length;
+            const totalQty = items.reduce((sum, item) => sum + (item.qty || 0), 0);
+            return { ...po, itemCount, totalQty };
+        });
+
+        const enrichedPOs = await Promise.all(poDataPromises);
+
         // Update chart section to shrink
         const chartSection = document.getElementById('chart-section');
         const detailSection = document.getElementById('detail-section');
@@ -2629,12 +2641,14 @@ async function showDepartmentDetailSplit(department, index) {
         title.textContent = `${department} - ${filteredPOs.length} POs`;
         tbody.innerHTML = '';
 
-        filteredPOs.forEach(po => {
+        enrichedPOs.forEach(po => {
             const row = document.createElement('tr');
             const scanTime = po.latest_scan_time ? new Date(po.latest_scan_time).toLocaleString() : 'N/A';
             row.style.backgroundColor = 'white';
             row.innerHTML = `
                 <td style="padding: 10px; border: 1px solid #ddd; color: #333;">${po.po_number}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; color: #333; text-align: center;">${po.itemCount}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; color: #333; text-align: right;">${po.totalQty.toLocaleString()}</td>
                 <td style="padding: 10px; border: 1px solid #ddd; color: #333;">${scanTime}</td>
                 <td style="padding: 10px; border: 1px solid #ddd;">
                     <button onclick="viewProgressHistory('${po.po_number}')" style="padding: 5px 10px; background-color: #6ba3be; color: white; border: none; border-radius: 3px; cursor: pointer;">View History</button>
@@ -2644,7 +2658,7 @@ async function showDepartmentDetailSplit(department, index) {
         });
 
         // Setup fuzzy search
-        setupDetailSectionFilters(filteredPOs);
+        setupDetailSectionFilters(enrichedPOs);
 
         // Setup close button
         const closeBtn = document.getElementById('close-detail-section');
@@ -2655,7 +2669,7 @@ async function showDepartmentDetailSplit(department, index) {
         // Setup export button
         const exportBtn = document.getElementById('export-detail-excel');
         exportBtn.onclick = function() {
-            exportDepartmentToExcel(department, filteredPOs);
+            exportDepartmentToExcel(department, enrichedPOs);
         };
 
     } catch (error) {
@@ -2678,22 +2692,30 @@ function setupDetailSectionFilters(data) {
     let filteredData = [...data];
 
     const filterPO = document.getElementById('filter-detail-po');
+    const filterItems = document.getElementById('filter-detail-items');
+    const filterQty = document.getElementById('filter-detail-qty');
     const filterTime = document.getElementById('filter-detail-time');
 
     function applyFilters() {
         const poFilter = filterPO.value.toLowerCase();
+        const itemsFilter = filterItems.value.toLowerCase();
+        const qtyFilter = filterQty.value.toLowerCase();
         const timeFilter = filterTime.value.toLowerCase();
 
         filteredData = data.filter(po => {
             const matchPO = po.po_number.toLowerCase().includes(poFilter);
+            const matchItems = (po.itemCount || 0).toString().includes(itemsFilter);
+            const matchQty = (po.totalQty || 0).toString().includes(qtyFilter);
             const matchTime = po.latest_scan_time ? new Date(po.latest_scan_time).toLocaleString().toLowerCase().includes(timeFilter) : false;
-            return matchPO && matchTime;
+            return matchPO && matchItems && matchQty && matchTime;
         });
 
         renderDetailSectionTable(filteredData);
     }
 
     filterPO.oninput = applyFilters;
+    filterItems.oninput = applyFilters;
+    filterQty.oninput = applyFilters;
     filterTime.oninput = applyFilters;
 }
 
@@ -2708,6 +2730,8 @@ function renderDetailSectionTable(data) {
         row.style.backgroundColor = 'white';
         row.innerHTML = `
             <td style="padding: 10px; border: 1px solid #ddd; color: #333;">${po.po_number}</td>
+            <td style="padding: 10px; border: 1px solid #ddd; color: #333; text-align: center;">${po.itemCount || 0}</td>
+            <td style="padding: 10px; border: 1px solid #ddd; color: #333; text-align: right;">${(po.totalQty || 0).toLocaleString()}</td>
             <td style="padding: 10px; border: 1px solid #ddd; color: #333;">${scanTime}</td>
             <td style="padding: 10px; border: 1px solid #ddd;">
                 <button onclick="viewProgressHistory('${po.po_number}')" style="padding: 5px 10px; background-color: #6ba3be; color: white; border: none; border-radius: 3px; cursor: pointer;">View History</button>
