@@ -2448,12 +2448,36 @@ function updateProgressPieChart(departmentCounts) {
                         },
                         padding: 10,
                         boxWidth: 20,
-                        boxHeight: 20
+                        boxHeight: 20,
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            if (data.labels.length && data.datasets.length) {
+                                return data.labels.map((label, i) => {
+                                    const meta = chart.getDatasetMeta(0);
+                                    const style = meta.controller.getStyle(i);
+                                    const isHidden = meta.data[i].hidden;
+
+                                    return {
+                                        text: label + (isHidden ? ' 👁️‍🗨️' : ' 👁️'),
+                                        fillStyle: style.backgroundColor,
+                                        strokeStyle: style.borderColor,
+                                        lineWidth: style.borderWidth,
+                                        hidden: isHidden,
+                                        index: i
+                                    };
+                                });
+                            }
+                            return [];
+                        }
                     },
                     onClick: function(e, legendItem, legend) {
                         const index = legendItem.index;
-                        const department = orderedDepartments[index];
-                        showDepartmentDetailSplit(department, index);
+                        const chart = legend.chart;
+                        const meta = chart.getDatasetMeta(0);
+
+                        // Toggle visibility
+                        meta.data[index].hidden = !meta.data[index].hidden;
+                        chart.update();
                     }
                 },
                 tooltip: {
@@ -2474,10 +2498,16 @@ function updateProgressPieChart(departmentCounts) {
                 }
             },
             onClick: (event, elements) => {
-                if (elements.length > 0) {
+                // Only open detail view when clicking on pie slice, not legend
+                if (elements.length > 0 && event.type === 'click') {
                     const index = elements[0].index;
-                    const department = orderedDepartments[index];
-                    showDepartmentDetailSplit(department, index);
+                    const meta = progressPieChart.getDatasetMeta(0);
+
+                    // Check if the slice is visible
+                    if (!meta.data[index].hidden) {
+                        const department = orderedDepartments[index];
+                        showDepartmentDetailSplit(department, index);
+                    }
                 }
             }
         }
