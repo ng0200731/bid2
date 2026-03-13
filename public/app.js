@@ -79,6 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeTableFilters('messages-table');
     initializeTableFilters('orders-table');
     initializeTableFilters('po-items-table');
+    initializeTableFilters('progress-table');
 });
 
 // Re-initialize filters when tables are populated
@@ -86,6 +87,7 @@ function reinitializeFilters() {
     initializeTableFilters('messages-table');
     initializeTableFilters('orders-table');
     initializeTableFilters('po-items-table');
+    initializeTableFilters('progress-table');
 }
 
 // Custom Modal Functions
@@ -714,7 +716,7 @@ function displayOrdersList(orders) {
     poDetailSection.style.display = 'none';
 
     if (orders.length === 0) {
-        ordersBody.innerHTML = '<tr><td colspan="20" style="text-align: center;">No orders found</td></tr>';
+        ordersBody.innerHTML = '<tr><td colspan="22" style="text-align: center;">No orders found</td></tr>';
         return;
     }
 
@@ -766,12 +768,35 @@ function displayOrdersList(orders) {
             <td>${order.currency || 'N/A'}</td>
             <td>${formattedDate}</td>
             <td><button class="qc-report-btn" data-po="${order.po_number}">QC report</button></td>
+            <td class="progress-status-cell" data-po="${order.po_number}">Loading...</td>
             <td><button class="view-po-btn" data-po="${order.po_number}" data-status="${currentStatus}">View PO#</button></td>
             <td><button class="view-details-btn" data-po="${order.po_number}">View Details</button></td>
             <td><button class="po-status-btn" data-po="${order.po_number}" data-status="${currentStatus}" style="padding: 8px 16px; background-color: #2196F3; color: white; border: none; cursor: pointer; font-size: 13px;">${statusDisplay}</button></td>
             <td><button class="delete-btn" data-po="${order.po_number}">Delete</button></td>
         `;
         ordersBody.appendChild(row);
+    });
+
+    // Fetch and populate progress status for each PO
+    orders.forEach(async (order) => {
+        try {
+            const response = await fetch(`/api/progress/${order.po_number}/latest`);
+            const progressData = await response.json();
+
+            const cell = document.querySelector(`.progress-status-cell[data-po="${order.po_number}"]`);
+            if (cell) {
+                if (progressData && progressData.department) {
+                    cell.textContent = progressData.department;
+                } else {
+                    cell.textContent = 'N/A';
+                }
+            }
+        } catch (error) {
+            const cell = document.querySelector(`.progress-status-cell[data-po="${order.po_number}"]`);
+            if (cell) {
+                cell.textContent = 'N/A';
+            }
+        }
     });
 
     // Add click handlers to QC report buttons
@@ -2159,4 +2184,318 @@ document.getElementById('download-po-pdf-btn').addEventListener('click', async (
         await showAlert('Error generating PDF: ' + error.message);
     }
 });
+
+// ========== PROGRESS TRACKING ==========
+
+let html5QrCode = null;
+let lastScannedPO = null;
+let progressPieChart = null;
+
+// Initialize QR scanner when progress view is activated
+document.querySelectorAll('.nav-button[data-view]').forEach(button => {
+    button.addEventListener('click', () => {
+        const viewName = button.getAttribute('data-view');
+
+        if (viewName === 'progress') {
+            // Load progress data
+            loadProgressData();
+
+            // Initialize QR scanner
+            if (!html5QrCode) {
+                initializeQRScanner();
+            }
+        } else {
+            // Stop QR scanner when leaving progress view
+            if (html5QrCode) {
+                html5QrCode.stop().catch(err => console.log('Scanner already stopped'));
+            }
+        }
+    });
+});
+
+// Initialize QR Scanner
+function initializeQRScanner() {
+    html5QrCode = new Html5Qrcode("qr-reader");
+
+    const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0
+    };
+
+    html5QrCode.start(
+        { facingMode: "environment" }, // Use rear camera on mobile
+        config,
+        (decodedText, decodedResult) => {
+            // QR code successfully scanned
+            if (decodedText !== lastScannedPO) {
+                lastScannedPO = decodedText;
+                document.getElementById('progress-manual-po').value = decodedText;
+
+                // Visual feedback
+                const qrReader = document.getElementById('qr-reader');
+                qrReader.style.border = '3px solid #4db8a4';
+                setTimeout(() => {
+                    qrReader.style.border = '';
+                }, 500);
+            }
+        },
+        (errorMessage) => {
+            // Scanning error (ignore, happens frequently)
+        }
+    ).catch(err => {
+        console.error('Error starting QR scanner:', err);
+        document.getElementById('qr-reader').innerHTML = '<p style="color: #c75070; padding: 20px;">Camera access denied or not available. Please use manual PO entry.</p>';
+    });
+}
+
+// Submit progress scan
+document.getElementById('submit-progress-btn').addEventListener('click', async () => {
+    const poNumber = document.getElementById('progress-manual-po').value.trim();
+    const department = document.getElementById('progress-department').value;
+    const notes = document.getElementById('progress-notes').value.trim();
+
+    if (!poNumber) {
+        await showAlert('Please scan a QR code or enter a PO number');
+        return;
+    }
+
+    if (!department) {
+        await showAlert('Please select a department');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/progress/scan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                poNumber: poNumber,
+                department: department,
+                notes: notes || null
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            await showAlert(`Scan recorded successfully!\nPO: ${poNumber}\nDepartment: ${department}`);
+
+            // Clear form
+            document.getElementById('progress-manual-po').value = '';
+            document.getElementById('progress-department').value = '';
+            document.getElementById('progress-notes').value = '';
+            lastScannedPO = null;
+
+            // Reload progress data
+            loadProgressData();
+        } else {
+            await showAlert('Error: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error submitting scan:', error);
+        await showAlert('Error submitting scan: ' + error.message);
+    }
+});
+
+// Load progress data
+async function loadProgressData() {
+    try {
+        const response = await fetch('/api/progress');
+        const data = await response.json();
+
+        const tbody = document.getElementById('progress-body');
+        tbody.innerHTML = '';
+
+        if (data.progress && data.progress.length > 0) {
+            // Count departments for pie chart
+            const departmentCounts = {};
+
+            data.progress.forEach((item, index) => {
+                const row = document.createElement('tr');
+
+                // Format date
+                const scanDate = new Date(item.latest_scan_time);
+                const formattedDate = scanDate.toLocaleString();
+
+                // Department badge color
+                const deptColor = getDepartmentColor(item.latest_department);
+
+                // Count departments
+                departmentCounts[item.latest_department] = (departmentCounts[item.latest_department] || 0) + 1;
+
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td style="font-weight: bold;">${item.po_number}</td>
+                    <td><span style="background-color: ${deptColor}; padding: 4px 8px; border-radius: 4px; color: white; font-size: 12px;">${item.latest_department}</span></td>
+                    <td>${formattedDate}</td>
+                    <td style="text-align: center;"><span style="background-color: #6ba3be; padding: 4px 8px; border-radius: 12px; color: white; font-size: 12px; font-weight: bold;">${item.scan_count}</span></td>
+                    <td><button class="view-history-btn" data-po="${item.po_number}">View History</button></td>
+                `;
+
+                tbody.appendChild(row);
+            });
+
+            // Add click handlers to View History buttons
+            document.querySelectorAll('.view-history-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const poNumber = e.target.getAttribute('data-po');
+                    await viewProgressHistory(poNumber);
+                });
+            });
+
+            // Update pie chart
+            updateProgressPieChart(departmentCounts);
+        } else {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #6ba3be;">No progress scans recorded yet</td></tr>';
+
+            // Clear pie chart
+            if (progressPieChart) {
+                progressPieChart.destroy();
+                progressPieChart = null;
+            }
+        }
+
+        // Reinitialize filters after loading data
+        initializeTableFilters('progress-table');
+    } catch (error) {
+        console.error('Error loading progress data:', error);
+    }
+}
+
+// Update pie chart with department distribution
+function updateProgressPieChart(departmentCounts) {
+    const ctx = document.getElementById('progress-pie-chart');
+
+    if (!ctx) return;
+
+    const departments = Object.keys(departmentCounts);
+    const counts = Object.values(departmentCounts);
+    const colors = departments.map(dept => getDepartmentColor(dept));
+
+    // Destroy existing chart if it exists
+    if (progressPieChart) {
+        progressPieChart.destroy();
+    }
+
+    // Create new chart
+    progressPieChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: departments,
+            datasets: [{
+                data: counts,
+                backgroundColor: colors,
+                borderColor: '#0a0a12',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: '#6ba3be',
+                        font: {
+                            size: 12,
+                            family: "'Courier New', monospace"
+                        },
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#0a0a12',
+                    titleColor: '#4db8a4',
+                    bodyColor: '#6ba3be',
+                    borderColor: '#4db8a444',
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: true,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${label}: ${value} POs (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Get department badge color
+function getDepartmentColor(department) {
+    const colors = {
+        'CS Team': '#2196F3',
+        'PMC': '#9C27B0',
+        'Material': '#FF9800',
+        'Production': '#4CAF50',
+        'Cut and Fold': '#009688',
+        'QC': '#F44336',
+        'Shipment': '#795548',
+        'Account': '#607D8B'
+    };
+    return colors[department] || '#666';
+}
+
+// View progress history for a PO
+async function viewProgressHistory(poNumber) {
+    try {
+        const response = await fetch(`/api/progress/${poNumber}`);
+        const data = await response.json();
+
+        const modal = document.getElementById('progress-history-modal');
+        const tbody = document.getElementById('progress-history-tbody');
+        tbody.innerHTML = '';
+
+        // Update modal title
+        document.querySelector('#progress-history-modal h2').textContent = `Progress History - PO ${poNumber}`;
+
+        if (data.progress && data.progress.length > 0) {
+            data.progress.forEach(scan => {
+                const row = document.createElement('tr');
+
+                const scanDate = new Date(scan.scanned_at);
+                const formattedDate = scanDate.toLocaleString();
+
+                const deptColor = getDepartmentColor(scan.department);
+
+                row.innerHTML = `
+                    <td><span style="background-color: ${deptColor}; padding: 4px 8px; border-radius: 4px; color: white; font-size: 12px;">${scan.department}</span></td>
+                    <td>${formattedDate}</td>
+                    <td>${scan.notes || '-'}</td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        } else {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">No scans found</td></tr>';
+        }
+
+        // Setup close button handler
+        const closeBtn = document.getElementById('progress-history-close-btn');
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        };
+
+        // Setup click outside to close
+        modal.onclick = function(e) {
+            if (e.target.id === 'progress-history-modal') {
+                modal.style.display = 'none';
+            }
+        };
+
+        modal.style.display = 'flex';
+    } catch (error) {
+        console.error('Error loading progress history:', error);
+        await showAlert('Error loading progress history: ' + error.message);
+    }
+}
+
+
 

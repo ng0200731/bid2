@@ -6,7 +6,7 @@ import fs from 'fs';
 import os from 'os';
 import nodemailer from 'nodemailer';
 import EBrandIDDownloader from './index.js';
-import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs, deletePO, deleteAllPOs, saveMessage, getAllMessages, deleteMessage, deleteAllMessages, getAllItems, rebuildItemsTable, saveItemDetails, getItemDetails, updatePOStatus } from './database.js';
+import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs, deletePO, deleteAllPOs, saveMessage, getAllMessages, deleteMessage, deleteAllMessages, getAllItems, rebuildItemsTable, saveItemDetails, getItemDetails, updatePOStatus, recordDepartmentScan, getProgressByPO, getAllProgressPOs } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -578,6 +578,98 @@ app.post('/api/items/details', (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Error saving item details:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Progress Tracking API Endpoints
+
+// Record a department scan
+app.post('/api/progress/scan', (req, res) => {
+  try {
+    const { poNumber, department, notes } = req.body;
+
+    if (!poNumber || !department) {
+      return res.status(400).json({ error: 'PO number and department are required' });
+    }
+
+    // Verify PO exists
+    const po = getPOByNumber(poNumber);
+    if (!po) {
+      return res.status(404).json({ error: 'PO not found' });
+    }
+
+    // Record the scan
+    const result = recordDepartmentScan(poNumber, department, notes || null);
+
+    // Update PO status based on department
+    const statusMapping = {
+      'CS Team': 'cs_team',
+      'PMC': 'pmc',
+      'Material': 'material',
+      'Production': 'production',
+      'Cut and Fold': 'cut_and_fold',
+      'QC': 'qc',
+      'Shipment': 'shipment',
+      'Account': 'account'
+    };
+
+    const newStatus = statusMapping[department] || department.toLowerCase().replace(/ /g, '_');
+
+    // Update the PO status in po_headers table
+    updatePOStatus(poNumber, newStatus);
+
+    // Get updated progress for this PO
+    const progress = getProgressByPO(poNumber);
+
+    res.json({
+      success: true,
+      message: 'Department scan recorded successfully',
+      progress: progress
+    });
+  } catch (error) {
+    console.error('Error recording department scan:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get all POs with progress scans
+app.get('/api/progress', (req, res) => {
+  try {
+    const progressPOs = getAllProgressPOs();
+    res.json({ progress: progressPOs });
+  } catch (error) {
+    console.error('Error fetching progress:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get progress history for a specific PO
+app.get('/api/progress/:poNumber', (req, res) => {
+  try {
+    const { poNumber } = req.params;
+    const progress = getProgressByPO(poNumber);
+    res.json({ progress: progress });
+  } catch (error) {
+    console.error('Error fetching PO progress:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get latest progress entry for a specific PO
+app.get('/api/progress/:poNumber/latest', (req, res) => {
+  try {
+    const { poNumber } = req.params;
+    const progress = getProgressByPO(poNumber);
+
+    if (progress && progress.length > 0) {
+      // Return the most recent entry (last in array)
+      res.json(progress[progress.length - 1]);
+    } else {
+      res.json(null);
+    }
+  } catch (error) {
+    console.error('Error fetching latest PO progress:', error);
     res.status(500).json({ error: error.message });
   }
 });

@@ -171,6 +171,24 @@ function createTables() {
  */
 function migrateDatabase() {
   try {
+    // Check if progress_tracking table exists, if not create it
+    try {
+      db.exec(`SELECT 1 FROM progress_tracking LIMIT 1`);
+    } catch (error) {
+      // Progress tracking table doesn't exist, create it
+      console.log('Creating progress_tracking table...');
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS progress_tracking (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          po_number TEXT NOT NULL,
+          department TEXT NOT NULL,
+          scanned_at TEXT NOT NULL,
+          notes TEXT,
+          FOREIGN KEY (po_number) REFERENCES po_headers(po_number)
+        )
+      `);
+    }
+
     // Check if messages table exists, if not create it
     try {
       db.exec(`SELECT 1 FROM messages LIMIT 1`);
@@ -999,3 +1017,112 @@ export function getItemDetails(item_1, suffix) {
     return null;
   }
 }
+
+/**
+ * Record a department scan for progress tracking
+ */
+export function recordDepartmentScan(poNumber, department, notes = null) {
+  try {
+    const now = new Date().toISOString();
+
+    // Insert progress tracking record
+    const stmt = db.prepare(`
+      INSERT INTO progress_tracking (po_number, department, scanned_at, notes)
+      VALUES (?, ?, ?, ?)
+    `);
+
+    stmt.run([poNumber, department, now, notes]);
+    stmt.free();
+
+    // Update PO status based on department
+    const departmentToStatus = {
+      'CS Team': 'CS Team',
+      'PMC': 'PMC',
+      'Material': 'Material',
+      'Production': 'Production',
+      'Cut and Fold': 'Cut and Fold',
+      'QC': 'QC',
+      'Shipment': 'Shipment',
+      'Account': 'Account'
+    };
+
+    const newStatus = departmentToStatus[department] || department;
+
+    const updateStmt = db.prepare(`
+      UPDATE po_headers
+      SET po_status = ?, updated_at = ?
+      WHERE po_number = ?
+    `);
+
+    updateStmt.run([newStatus, now, poNumber]);
+    updateStmt.free();
+
+    saveDatabase();
+
+    return { success: true, message: 'Department scan recorded and PO status updated successfully' };
+  } catch (error) {
+    console.error('Error recording department scan:', error);
+    throw new Error(`Failed to record department scan: ${error.message}`);
+  }
+}
+
+/**
+ * Get progress history for a specific PO
+ */
+export function getProgressByPO(poNumber) {
+  try {
+    const stmt = db.prepare(`
+      SELECT * FROM progress_tracking
+      WHERE po_number = ?
+      ORDER BY scanned_at ASC
+    `);
+
+    stmt.bind([poNumber]);
+
+    const results = [];
+    while (stmt.step()) {
+      results.push(stmt.getAsObject());
+    }
+
+    stmt.free();
+    return results;
+  } catch (error) {
+    console.error('Error getting progress by PO:', error);
+    return [];
+  }
+}
+
+/**
+ * Get all POs that have at least one progress scan
+ * Returns PO number, latest department, latest scan time, and scan count
+ */
+export function getAllProgressPOs() {
+  try {
+    const stmt = db.prepare(`
+      SELECT
+        po_number,
+        (SELECT department FROM progress_tracking pt2
+         WHERE pt2.po_number = pt.po_number
+         ORDER BY scanned_at DESC LIMIT 1) as latest_department,
+        (SELECT scanned_at FROM progress_tracking pt2
+         WHERE pt2.po_number = pt.po_number
+         ORDER BY scanned_at DESC LIMIT 1) as latest_scan_time,
+        COUNT(*) as scan_count
+      FROM progress_tracking pt
+      GROUP BY po_number
+      ORDER BY latest_scan_time DESC
+    `);
+
+    const results = [];
+    while (stmt.step()) {
+      results.push(stmt.getAsObject());
+    }
+
+    stmt.free();
+    return results;
+  } catch (error) {
+    console.error('Error getting all progress POs:', error);
+    return [];
+  }
+}
+

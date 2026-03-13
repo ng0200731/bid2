@@ -801,3 +801,197 @@ body.theme-minimal .delete-btn {
 body.theme-minimal .view-detail-btn:hover,
 body.theme-minimal .qc-report-btn:hover,
 body.theme-minimal .delete-btn:hover { background-color: #333; box-shadow: none; }
+
+/* ========== PROGRESS TRACKING STYLES ========== */
+
+/* QR Scanner Container */
+#qr-reader {
+    border: 2px solid #4db8a444;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #05050a;
+}
+
+#qr-reader video {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Department Select Dropdown */
+#progress-department {
+    cursor: pointer;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+#progress-department:focus {
+    outline: none;
+    border-color: #4db8a4;
+    box-shadow: 0 0 8px #4db8a444;
+}
+
+/* Progress Table */
+#progress-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #4db8a422;
+}
+
+#progress-table th,
+#progress-table td {
+    padding: 12px;
+    text-align: left;
+    border: 1px solid #4db8a422;
+}
+
+#progress-table th {
+    background-color: #0f1a2e;
+    color: #6ba3be;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
+#progress-table tbody tr:hover {
+    background-color: #4db8a411;
+}
+
+/* Progress History Modal */
+#progress-history-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#progress-history-table th,
+#progress-history-table td {
+    padding: 10px;
+    border: 1px solid #4db8a422;
+    text-align: left;
+}
+
+#progress-history-table th {
+    background-color: #0f1a2e;
+    color: #6ba3be;
+    font-weight: bold;
+}
+
+/* Pie Chart Container */
+#progress-pie-chart {
+    max-height: 400px;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #4db8a433;
+        padding: 15px;
+    }
+
+    .main-panel {
+        width: 100%;
+        padding: 15px;
+    }
+
+    #qr-reader {
+        max-width: 100%;
+    }
+
+    .submit-btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    #progress-table {
+        font-size: 12px;
+    }
+
+    #progress-table th,
+    #progress-table td {
+        padding: 8px 4px;
+    }
+
+    /* Stack table on mobile */
+    #progress-table thead {
+        display: none;
+    }
+
+    #progress-table tbody tr {
+        display: block;
+        margin-bottom: 15px;
+        border: 1px solid #4db8a433;
+        padding: 10px;
+        background-color: #0d0d18;
+    }
+
+    #progress-table tbody td {
+        display: block;
+        text-align: right;
+        padding: 8px;
+        border: none;
+        border-bottom: 1px solid #4db8a422;
+    }
+
+    #progress-table tbody td:before {
+        content: attr(data-label);
+        float: left;
+        font-weight: bold;
+        color: #6ba3be;
+    }
+
+    #progress-table tbody td:last-child {
+        border-bottom: none;
+    }
+}
+
+/* Minimal Theme Overrides for Progress */
+body.theme-minimal #qr-reader {
+    border-color: black;
+    background-color: #f9f9f9;
+}
+
+body.theme-minimal #progress-department {
+    background-color: white;
+    color: black;
+    border-color: black;
+}
+
+body.theme-minimal #progress-department:focus {
+    box-shadow: none;
+    border-color: #333;
+}
+
+body.theme-minimal #progress-table {
+    border-color: black;
+}
+
+body.theme-minimal #progress-table th,
+body.theme-minimal #progress-table td {
+    border-color: black;
+    color: black;
+}
+
+body.theme-minimal #progress-table th {
+    background-color: #f0f0f0;
+}
+
+body.theme-minimal #progress-table tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+body.theme-minimal #progress-history-table th,
+body.theme-minimal #progress-history-table td {
+    border-color: black;
+}
+
+body.theme-minimal #progress-history-table th {
+    background-color: #333;
+    color: white;
+}
+
