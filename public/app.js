@@ -2190,6 +2190,7 @@ document.getElementById('download-po-pdf-btn').addEventListener('click', async (
 let html5QrCode = null;
 let lastScannedPO = null;
 let progressPieChart = null;
+let legendVisible = true;
 
 // Initialize QR scanner when progress view is activated
 document.querySelectorAll('.nav-button[data-view]').forEach(button => {
@@ -2365,13 +2366,49 @@ async function loadProgressData() {
 
 // Update pie chart with department distribution
 function updateProgressPieChart(departmentCounts) {
+    console.log('updateProgressPieChart called with:', departmentCounts);
     const ctx = document.getElementById('progress-pie-chart');
 
-    if (!ctx) return;
+    if (!ctx) {
+        console.error('Canvas element not found!');
+        return;
+    }
 
-    const departments = Object.keys(departmentCounts);
-    const counts = Object.values(departmentCounts);
-    const colors = departments.map(dept => getDepartmentColor(dept));
+    console.log('Canvas element found:', ctx);
+
+    // Define departments in sequence 1-8
+    const departmentOrder = [
+        'CS Team',
+        'PMC',
+        'Material',
+        'Production',
+        'Cut and Fold',
+        'QC',
+        'Shipment',
+        'Account'
+    ];
+
+    // Reorder data according to sequence
+    const orderedDepartments = [];
+    const orderedCounts = [];
+    const orderedColors = [];
+
+    departmentOrder.forEach(dept => {
+        if (departmentCounts[dept]) {
+            orderedDepartments.push(dept);
+            orderedCounts.push(departmentCounts[dept]);
+            orderedColors.push(getDepartmentColor(dept));
+        }
+    });
+
+    // Calculate total for percentages
+    const total = orderedCounts.reduce((a, b) => a + b, 0);
+
+    // Create labels with percentages
+    const labelsWithPercentage = orderedDepartments.map((dept, index) => {
+        const percentage = ((orderedCounts[index] / total) * 100).toFixed(1);
+        return `${dept} (${percentage}%)`;
+    });
 
     // Destroy existing chart if it exists
     if (progressPieChart) {
@@ -2382,10 +2419,10 @@ function updateProgressPieChart(departmentCounts) {
     progressPieChart = new Chart(ctx, {
         type: 'pie',
         data: {
-            labels: departments,
+            labels: labelsWithPercentage,
             datasets: [{
-                data: counts,
-                backgroundColor: colors,
+                data: orderedCounts,
+                backgroundColor: orderedColors,
                 borderColor: '#0a0a12',
                 borderWidth: 2
             }]
@@ -2393,16 +2430,30 @@ function updateProgressPieChart(departmentCounts) {
         options: {
             responsive: true,
             maintainAspectRatio: true,
+            layout: {
+                padding: {
+                    right: 40
+                }
+            },
             plugins: {
                 legend: {
-                    position: 'bottom',
+                    display: legendVisible,
+                    position: 'right',
+                    align: 'start',
                     labels: {
                         color: '#6ba3be',
                         font: {
-                            size: 14,
+                            size: 12,
                             family: "'Courier New', monospace"
                         },
-                        padding: 20
+                        padding: 10,
+                        boxWidth: 20,
+                        boxHeight: 20
+                    },
+                    onClick: function(e, legendItem, legend) {
+                        const index = legendItem.index;
+                        const department = orderedDepartments[index];
+                        showDepartmentDetailSplit(department, index);
                     }
                 },
                 tooltip: {
@@ -2417,9 +2468,7 @@ function updateProgressPieChart(departmentCounts) {
                         label: function(context) {
                             const label = context.label || '';
                             const value = context.parsed || 0;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = ((value / total) * 100).toFixed(1);
-                            return `${label}: ${value} POs (${percentage}%)`;
+                            return `${label}: ${value} POs`;
                         }
                     }
                 }
@@ -2427,12 +2476,45 @@ function updateProgressPieChart(departmentCounts) {
             onClick: (event, elements) => {
                 if (elements.length > 0) {
                     const index = elements[0].index;
-                    const department = departments[index];
+                    const department = orderedDepartments[index];
                     showDepartmentDetailSplit(department, index);
                 }
             }
         }
     });
+
+    // Setup legend toggle button (only once)
+    if (!window.legendToggleSetup) {
+        setupLegendToggle();
+        window.legendToggleSetup = true;
+    }
+}
+
+// Setup legend toggle functionality
+function setupLegendToggle() {
+    const toggleBtn = document.getElementById('toggle-legend-btn');
+    const eyeIcon = document.getElementById('legend-eye-icon');
+    const toggleText = document.getElementById('legend-toggle-text');
+
+    if (!toggleBtn) return;
+
+    toggleBtn.onclick = function() {
+        legendVisible = !legendVisible;
+
+        if (legendVisible) {
+            eyeIcon.textContent = '👁️';
+            toggleText.textContent = 'Hide Legend';
+        } else {
+            eyeIcon.textContent = '👁️‍🗨️';
+            toggleText.textContent = 'Show Legend';
+        }
+
+        // Update chart legend visibility
+        if (progressPieChart) {
+            progressPieChart.options.plugins.legend.display = legendVisible;
+            progressPieChart.update();
+        }
+    };
 }
 
 // Show department detail modal
@@ -2519,7 +2601,7 @@ async function showDepartmentDetailSplit(department, index) {
 
         filteredPOs.forEach(po => {
             const row = document.createElement('tr');
-            const scanTime = po.last_scan_time ? new Date(po.last_scan_time).toLocaleString() : 'N/A';
+            const scanTime = po.latest_scan_time ? new Date(po.latest_scan_time).toLocaleString() : 'N/A';
             row.style.backgroundColor = 'white';
             row.innerHTML = `
                 <td style="padding: 10px; border: 1px solid #ddd; color: #333;">${po.po_number}</td>
@@ -2574,7 +2656,7 @@ function setupDetailSectionFilters(data) {
 
         filteredData = data.filter(po => {
             const matchPO = po.po_number.toLowerCase().includes(poFilter);
-            const matchTime = po.last_scan_time ? new Date(po.last_scan_time).toLocaleString().toLowerCase().includes(timeFilter) : false;
+            const matchTime = po.latest_scan_time ? new Date(po.latest_scan_time).toLocaleString().toLowerCase().includes(timeFilter) : false;
             return matchPO && matchTime;
         });
 
@@ -2592,7 +2674,7 @@ function renderDetailSectionTable(data) {
 
     data.forEach(po => {
         const row = document.createElement('tr');
-        const scanTime = po.last_scan_time ? new Date(po.last_scan_time).toLocaleString() : 'N/A';
+        const scanTime = po.latest_scan_time ? new Date(po.latest_scan_time).toLocaleString() : 'N/A';
         row.style.backgroundColor = 'white';
         row.innerHTML = `
             <td style="padding: 10px; border: 1px solid #ddd; color: #333;">${po.po_number}</td>
