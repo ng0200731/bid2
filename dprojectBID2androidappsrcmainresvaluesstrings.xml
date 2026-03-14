@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PO Scanner</string>
+    
+    <!-- Scanner Activity -->
+    <string name="scanner_title">Scan QR Code</string>
+    <string name="scanner_instruction">Point camera at PO QR code</string>
+    <string name="scanner_permission_denied">Camera permission is required to scan QR codes</string>
+    
+    <!-- Main Activity -->
+    <string name="main_title">Record PO Scan</string>
+    <string name="po_number_label">PO Number</string>
+    <string name="department_label">Department</string>
+    <string name="department_prompt">Select Department</string>
+    <string name="notes_label">Notes (Optional)</string>
+    <string name="notes_hint">Enter any additional notes...</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_scan_again">Scan Again</string>
+    
+    <!-- Messages -->
+    <string name="success_saved">Scan recorded successfully!</string>
+    <string name="error_no_department">Please select a department</string>
+    <string name="error_network">Network error. Please check your connection.</string>
+    <string name="error_server">Server error. Please try again.</string>
+    <string name="error_invalid_qr">Invalid QR code format</string>
+    
+    <!-- Departments -->
+    <string-array name="departments">
+        <item>CS Team</item>
+        <item>PMC</item>
+        <item>Material</item>
+        <item>Production</item>
+        <item>Cut and Fold</item>
+        <item>QC</item>
+        <item>Shipment</item>
+        <item>Account</item>
+    </string-array>
+</resources>

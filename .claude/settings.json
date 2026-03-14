@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(start-server.bat)"
+      "Bash(start-server.bat)",
+      "Bash(./gradlew assembleDebug)",
+      "Bash(./gradlew clean:*)"
     ]
   }
 }

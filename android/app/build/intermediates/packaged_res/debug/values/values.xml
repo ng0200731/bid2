@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="accent">#4CAF50</color>
+    <color name="background">#F5F5F5</color>
+    <color name="black">#FF000000</color>
+    <color name="primary">#2196F3</color>
+    <color name="primary_dark">#1976D2</color>
+    <color name="white">#FFFFFFFF</color>
+    <string name="app_name">PO Scanner</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_scan_again">Scan Again</string>
+    <string name="department_label">Department</string>
+    <string name="department_prompt">Select Department</string>
+    <string name="error_invalid_qr">Invalid QR code format</string>
+    <string name="error_network">Network error. Please check your connection.</string>
+    <string name="error_no_department">Please select a department</string>
+    <string name="error_server">Server error. Please try again.</string>
+    <string name="main_title">Record PO Scan</string>
+    <string name="notes_hint">Enter any additional notes...</string>
+    <string name="notes_label">Notes (Optional)</string>
+    <string name="po_number_label">PO Number</string>
+    <string name="scanner_instruction">Point camera at PO QR code</string>
+    <string name="scanner_permission_denied">Camera permission is required</string>
+    <string name="scanner_title">Scan QR Code</string>
+    <string name="success_saved">Scan recorded successfully!</string>
+    <style name="Theme.POScanner" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorAccent">@color/accent</item>
+    </style>
+</resources>

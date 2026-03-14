@@ -1,0 +1,26 @@
+[
+    {
+        "merged": "com.ebrandid.poscanner.app-merged_res-40:/layout_activity_scanner.xml.flat",
+        "source": "com.ebrandid.poscanner.app-main-42:/layout/activity_scanner.xml"
+    },
+    {
+        "merged": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-merged_res-40:\\mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-main-42:\\mipmap-anydpi-v26\\ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.ebrandid.poscanner.app-merged_res-40:/layout_activity_main.xml.flat",
+        "source": "com.ebrandid.poscanner.app-main-42:/layout/activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-merged_res-40:\\xml_backup_rules.xml.flat",
+        "source": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-main-42:\\xml\\backup_rules.xml"
+    },
+    {
+        "merged": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-merged_res-40:\\mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-main-42:\\mipmap-anydpi-v26\\ic_launcher.xml"
+    },
+    {
+        "merged": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-merged_res-40:\\xml_data_extraction_rules.xml.flat",
+        "source": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-main-42:\\xml\\data_extraction_rules.xml"
+    }
+]
