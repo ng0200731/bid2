@@ -2190,6 +2190,8 @@ document.getElementById('download-po-pdf-btn').addEventListener('click', async (
 let html5QrCode = null;
 let lastScannedPO = null;
 let progressPieChart = null;
+let selectedPieIndex = null; // Track selected pie section
+let currentOrderedDepartments = []; // Store current department order for click handlers
 let legendVisible = true;
 
 // Initialize QR scanner when progress view is activated
@@ -2401,6 +2403,12 @@ function updateProgressPieChart(departmentCounts) {
         }
     });
 
+    // Store for global access in click handlers
+    currentOrderedDepartments = [...orderedDepartments];
+
+    // Reset selection when updating chart
+    selectedPieIndex = null;
+
     // Calculate total for percentages
     const total = orderedCounts.reduce((a, b) => a + b, 0);
 
@@ -2462,7 +2470,9 @@ function updateProgressPieChart(departmentCounts) {
                                         strokeStyle: 'transparent',
                                         lineWidth: 0,
                                         hidden: isHidden,
-                                        index: i
+                                        index: i,
+                                        // Apply transparency if another section is selected
+                                        alpha: selectedPieIndex !== null && selectedPieIndex !== i ? 0.5 : 1
                                     };
                                 });
                             }
@@ -2476,8 +2486,21 @@ function updateProgressPieChart(departmentCounts) {
 
                         // Check if the slice is visible
                         if (!meta.data[index].hidden) {
-                            const department = orderedDepartments[index];
-                            showDepartmentDetailSplit(department, index);
+                            const department = currentOrderedDepartments[index];
+
+                            // Toggle selection
+                            if (selectedPieIndex === index) {
+                                // Deselect if clicking the same section
+                                selectedPieIndex = null;
+                            } else {
+                                // Select new section and show detail
+                                selectedPieIndex = index;
+                                console.log('Legend clicked - Index:', index, 'Department:', department);
+                                showDepartmentDetailSplit(department, index);
+                            }
+
+                            // Update chart colors with transparency
+                            updatePieChartColors(chart, orderedColors);
                         }
                     }
                 },
@@ -2506,8 +2529,21 @@ function updateProgressPieChart(departmentCounts) {
 
                     // Check if the slice is visible
                     if (!meta.data[index].hidden) {
-                        const department = orderedDepartments[index];
-                        showDepartmentDetailSplit(department, index);
+                        const department = currentOrderedDepartments[index];
+
+                        // Toggle selection
+                        if (selectedPieIndex === index) {
+                            // Deselect if clicking the same section
+                            selectedPieIndex = null;
+                        } else {
+                            // Select new section and show detail
+                            selectedPieIndex = index;
+                            console.log('Pie slice clicked - Index:', index, 'Department:', department);
+                            showDepartmentDetailSplit(department, index);
+                        }
+
+                        // Update chart colors with transparency
+                        updatePieChartColors(progressPieChart, orderedColors);
                     }
                 }
             }
@@ -2519,6 +2555,29 @@ function updateProgressPieChart(departmentCounts) {
         setupLegendToggle();
         window.legendToggleSetup = true;
     }
+}
+
+// Update pie chart colors with transparency based on selection
+function updatePieChartColors(chart, originalColors) {
+    if (!chart) return;
+
+    const dataset = chart.data.datasets[0];
+
+    // Apply transparency to non-selected sections
+    dataset.backgroundColor = originalColors.map((color, index) => {
+        if (selectedPieIndex === null) {
+            // No selection - show all at full opacity
+            return color;
+        } else if (selectedPieIndex === index) {
+            // Selected section - full opacity
+            return color;
+        } else {
+            // Non-selected sections - 50% transparency
+            return color + '80'; // Add 50% alpha (80 in hex)
+        }
+    });
+
+    chart.update();
 }
 
 // Setup legend toggle functionality
@@ -2615,14 +2674,31 @@ async function showDepartmentDetailSplit(department, index) {
         // Filter POs by department
         const filteredPOs = data.progress.filter(po => po.latest_department === department);
 
+        console.log('Filtered POs for', department, ':', filteredPOs);
+
         // Fetch item counts and quantities for each PO
         const poDataPromises = filteredPOs.map(async (po) => {
-            const itemsResponse = await fetch(`/api/po/${po.po_number}/items`);
-            const itemsData = await itemsResponse.json();
-            const items = itemsData.items || [];
-            const itemCount = items.length;
-            const totalQty = items.reduce((sum, item) => sum + (item.qty || 0), 0);
-            return { ...po, itemCount, totalQty };
+            // Skip invalid PO numbers
+            if (!po.po_number || po.po_number === 'PO' || po.po_number.length < 3) {
+                console.warn('Skipping invalid PO number:', po.po_number);
+                return { ...po, itemCount: 0, totalQty: 0 };
+            }
+
+            try {
+                const itemsResponse = await fetch(`/api/po/${po.po_number}/items`);
+                if (!itemsResponse.ok) {
+                    console.warn(`Failed to fetch items for PO ${po.po_number}`);
+                    return { ...po, itemCount: 0, totalQty: 0 };
+                }
+                const itemsData = await itemsResponse.json();
+                const items = itemsData.items || [];
+                const itemCount = items.length;
+                const totalQty = items.reduce((sum, item) => sum + (item.qty || 0), 0);
+                return { ...po, itemCount, totalQty };
+            } catch (error) {
+                console.error(`Error fetching items for PO ${po.po_number}:`, error);
+                return { ...po, itemCount: 0, totalQty: 0 };
+            }
         });
 
         const enrichedPOs = await Promise.all(poDataPromises);
