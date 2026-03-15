@@ -12,7 +12,7 @@ object Constants {
     // Intent extras
     const val EXTRA_PO_NUMBER = "po_number"
     
-    // Departments
+    // Departments (Sequence: 1→2→3→4→5→6→7→8)
     val DEPARTMENTS = arrayOf(
         "CS Team",
         "PMC",

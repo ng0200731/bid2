@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.ebrandid.poscanner.api.ApiClient
 import com.ebrandid.poscanner.models.ScanRequest
+import com.ebrandid.poscanner.models.ScanResponse
 import com.ebrandid.poscanner.utils.Constants
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.launch
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
 
     private lateinit var tvPoNumber: TextView
+    private lateinit var tvPresentDepartment: TextView
     private lateinit var spinnerDepartment: Spinner
     private lateinit var etNotes: EditText
     private lateinit var btnSave: MaterialButton
@@ -42,11 +44,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         setupClickListeners()
+        fetchPresentDepartment()
     }
 
     private fun initViews() {
         tvPoNumber = findViewById(R.id.tvPoNumber)
+        tvPresentDepartment = findViewById(R.id.tvPresentDepartment)
         spinnerDepartment = findViewById(R.id.spinnerDepartment)
+        etNotes = findViewById(R.id.etNotes)
         etNotes = findViewById(R.id.etNotes)
         btnSave = findViewById(R.id.btnSave)
         btnScanAgain = findViewById(R.id.btnScanAgain)
@@ -69,6 +74,43 @@ class MainActivity : AppCompatActivity() {
         }
         btnScanAgain.setOnClickListener {
             finish()
+        }
+    }
+
+    private fun fetchPresentDepartment() {
+        if (!isNetworkAvailable()) {
+            tvPresentDepartment.text = "Present Department: Unable to check"
+            tvPresentDepartment.visibility = View.VISIBLE
+            return
+        }
+
+        lifecycleScope.launch {
+            try {
+                val response = ApiClient.apiService.getLastScan(poNumber)
+
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    runOnUiThread {
+                        if (body?.hasHistory == true && body.lastScan != null) {
+                            tvPresentDepartment.text = "Present Department: ${body.lastScan.department}"
+                            tvPresentDepartment.visibility = View.VISIBLE
+                        } else {
+                            tvPresentDepartment.text = "Present Department: None (Start with CS Team)"
+                            tvPresentDepartment.visibility = View.VISIBLE
+                        }
+                    }
+                } else {
+                    runOnUiThread {
+                        tvPresentDepartment.text = "Present Department: None (Start with CS Team)"
+                        tvPresentDepartment.visibility = View.VISIBLE
+                    }
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    tvPresentDepartment.text = "Present Department: Unable to check"
+                    tvPresentDepartment.visibility = View.VISIBLE
+                }
+            }
         }
     }
 
@@ -106,9 +148,47 @@ class MainActivity : AppCompatActivity() {
                         tvPoNumber.postDelayed({ finish() }, 1500)
                     }
                 } else {
+                    // Parse error response
+                    val errorBody = if (response.isSuccessful) {
+                        response.body()
+                    } else {
+                        // Parse error body from errorBody() for non-2xx responses
+                        try {
+                            val errorJson = response.errorBody()?.string()
+                            if (errorJson != null) {
+                                com.google.gson.Gson().fromJson(errorJson, ScanResponse::class.java)
+                            } else {
+                                null
+                            }
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+
+                    val errorMessage = when {
+                        errorBody?.error != null -> {
+                            // Check if it's a sequence error
+                            val isSequenceError = errorBody.error.contains("Cannot go back") ||
+                                    errorBody.error.contains("Cannot skip") ||
+                                    errorBody.error.contains("repeat department") ||
+                                    errorBody.error.contains("First scan must")
+
+                            if (isSequenceError) {
+                                if (errorBody.nextExpected != null) {
+                                    "⚠️ Wrong progress sequence\nNext expected: ${errorBody.nextExpected}"
+                                } else {
+                                    "⚠️ Wrong progress sequence"
+                                }
+                            } else {
+                                "⚠️ ${errorBody.error}"
+                            }
+                        }
+                        else -> getString(R.string.error_server)
+                    }
+
                     runOnUiThread {
                         setLoading(false)
-                        Toast.makeText(this@MainActivity, getString(R.string.error_server), Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@MainActivity, errorMessage, Toast.LENGTH_LONG).show()
                     }
                 }
             } catch (e: Exception) {

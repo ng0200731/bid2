@@ -542,6 +542,7 @@ loadProfile = async function() {
 const searchBtn = document.getElementById('search-btn');
 const loadMoreBtn = document.getElementById('load-more-btn');
 const showAllBtn = document.getElementById('show-all-btn');
+const refreshOrdersBtn = document.getElementById('refresh-orders-btn');
 const exportExcelBtn = document.getElementById('export-excel-btn');
 const deleteAllBtn = document.getElementById('delete-all-btn');
 const statusSearch = document.getElementById('status-search');
@@ -584,6 +585,13 @@ searchBtn.addEventListener('click', async () => {
         return;
     }
     await searchOrders(searchTerm);
+});
+
+// Refresh orders - reload the current view
+refreshOrdersBtn.addEventListener('click', async () => {
+    currentOffset = 0;
+    statusSearch.value = '';
+    await loadLatestOrders(10);
 });
 
 // Allow Enter key to search
@@ -647,7 +655,7 @@ deleteAllBtn.addEventListener('click', async () => {
         await showAlert('All Purchase Orders deleted successfully');
 
         // Clear the orders list display
-        ordersBody.innerHTML = '<tr><td colspan="19" style="text-align: center;">No orders found</td></tr>';
+        ordersBody.innerHTML = '<tr><td colspan="18" style="text-align: center;">No orders found</td></tr>';
         currentOrders = [];
         currentOffset = 0;
     } catch (error) {
@@ -716,7 +724,7 @@ function displayOrdersList(orders) {
     poDetailSection.style.display = 'none';
 
     if (orders.length === 0) {
-        ordersBody.innerHTML = '<tr><td colspan="22" style="text-align: center;">No orders found</td></tr>';
+        ordersBody.innerHTML = '<tr><td colspan="21" style="text-align: center;">No orders found</td></tr>';
         return;
     }
 
@@ -768,35 +776,12 @@ function displayOrdersList(orders) {
             <td>${order.currency || 'N/A'}</td>
             <td>${formattedDate}</td>
             <td><button class="qc-report-btn" data-po="${order.po_number}">QC report</button></td>
-            <td class="progress-status-cell" data-po="${order.po_number}">Loading...</td>
             <td><button class="view-po-btn" data-po="${order.po_number}" data-status="${currentStatus}">View PO#</button></td>
             <td><button class="view-details-btn" data-po="${order.po_number}">View Details</button></td>
             <td><button class="po-status-btn" data-po="${order.po_number}" data-status="${currentStatus}" style="padding: 8px 16px; background-color: #2196F3; color: white; border: none; cursor: pointer; font-size: 13px;">${statusDisplay}</button></td>
             <td><button class="delete-btn" data-po="${order.po_number}">Delete</button></td>
         `;
         ordersBody.appendChild(row);
-    });
-
-    // Fetch and populate progress status for each PO
-    orders.forEach(async (order) => {
-        try {
-            const response = await fetch(`/api/progress/${order.po_number}/latest`);
-            const progressData = await response.json();
-
-            const cell = document.querySelector(`.progress-status-cell[data-po="${order.po_number}"]`);
-            if (cell) {
-                if (progressData && progressData.department) {
-                    cell.textContent = progressData.department;
-                } else {
-                    cell.textContent = 'N/A';
-                }
-            }
-        } catch (error) {
-            const cell = document.querySelector(`.progress-status-cell[data-po="${order.po_number}"]`);
-            if (cell) {
-                cell.textContent = 'N/A';
-            }
-        }
     });
 
     // Add click handlers to QC report buttons
@@ -2349,6 +2334,11 @@ async function loadProgressData() {
 
             // Update pie chart
             updateProgressPieChart(departmentCounts);
+
+            // Automatically show all POs on load
+            setTimeout(() => {
+                showAllPOsDetail();
+            }, 500);
         } else {
             tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #6ba3be;">No progress scans recorded yet</td></tr>';
 
@@ -2522,8 +2512,9 @@ function updateProgressPieChart(departmentCounts) {
                 }
             },
             onClick: (event, elements) => {
-                // Only open detail view when clicking on pie slice, not legend
+                // Check if clicking on pie slice or background
                 if (elements.length > 0 && event.type === 'click') {
+                    // Clicking on a pie slice
                     const index = elements[0].index;
                     const meta = progressPieChart.getDatasetMeta(0);
 
@@ -2545,6 +2536,11 @@ function updateProgressPieChart(departmentCounts) {
                         // Update chart colors with transparency
                         updatePieChartColors(progressPieChart, orderedColors);
                     }
+                } else if (elements.length === 0 && event.type === 'click') {
+                    // Clicking on chart background - show all POs
+                    selectedPieIndex = null;
+                    showAllPOsDetail();
+                    updatePieChartColors(progressPieChart, orderedColors);
                 }
             }
         }
@@ -2605,6 +2601,18 @@ function setupLegendToggle() {
             progressPieChart.update();
         }
     };
+
+    // Setup "Show All POs" button
+    const showAllPOsBtn = document.getElementById('show-all-pos-btn');
+    if (showAllPOsBtn) {
+        showAllPOsBtn.onclick = function() {
+            selectedPieIndex = null;
+            showAllPOsDetail();
+            if (progressPieChart) {
+                updatePieChartColors(progressPieChart, progressPieChart.data.datasets[0].backgroundColor);
+            }
+        };
+    }
 }
 
 // Show department detail modal
@@ -2757,6 +2765,101 @@ async function showDepartmentDetailSplit(department, index) {
     }
 }
 
+// Show all POs detail in split view
+async function showAllPOsDetail() {
+    try {
+        const response = await fetch('/api/progress');
+        const data = await response.json();
+
+        // Get all POs
+        const allPOs = data.progress;
+
+        console.log('Showing all POs:', allPOs);
+
+        // Fetch item counts and quantities for each PO
+        const poDataPromises = allPOs.map(async (po) => {
+            // Skip invalid PO numbers
+            if (!po.po_number || po.po_number === 'PO' || po.po_number.length < 3) {
+                console.warn('Skipping invalid PO number:', po.po_number);
+                return { ...po, itemCount: 0, totalQty: 0 };
+            }
+
+            try {
+                const itemsResponse = await fetch(`/api/po/${po.po_number}/items`);
+                if (!itemsResponse.ok) {
+                    console.warn(`Failed to fetch items for PO ${po.po_number}`);
+                    return { ...po, itemCount: 0, totalQty: 0 };
+                }
+                const itemsData = await itemsResponse.json();
+                const items = itemsData.items || [];
+                const itemCount = items.length;
+                const totalQty = items.reduce((sum, item) => sum + (item.qty || 0), 0);
+                return { ...po, itemCount, totalQty };
+            } catch (error) {
+                console.error(`Error fetching items for PO ${po.po_number}:`, error);
+                return { ...po, itemCount: 0, totalQty: 0 };
+            }
+        });
+
+        const enrichedPOs = await Promise.all(poDataPromises);
+
+        // Update chart section to shrink
+        const chartSection = document.getElementById('chart-section');
+        const detailSection = document.getElementById('detail-section');
+
+        chartSection.style.flex = '0 0 40%';
+        detailSection.style.flex = '1';
+        detailSection.style.opacity = '1';
+
+        // Update detail section
+        const title = document.getElementById('detail-section-title');
+        const tbody = document.getElementById('detail-section-tbody');
+
+        // Calculate total quantity across all POs
+        const totalQuantity = enrichedPOs.reduce((sum, po) => sum + po.totalQty, 0);
+
+        title.textContent = `All PO# - ${allPOs.length} POs (${totalQuantity.toLocaleString()} total qty)`;
+        tbody.innerHTML = '';
+
+        enrichedPOs.forEach(po => {
+            const row = document.createElement('tr');
+            const scanTime = po.latest_scan_time ? new Date(po.latest_scan_time).toLocaleString() : 'N/A';
+            const department = po.latest_department || 'N/A';
+            const deptColor = department !== 'N/A' ? getDepartmentColor(department) : '#999';
+            row.style.backgroundColor = 'white';
+            row.innerHTML = `
+                <td style="padding: 10px; border: 1px solid #ddd; color: #333;">${po.po_number}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; color: #333; text-align: center;">${po.itemCount}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; color: #333; text-align: right;">${po.totalQty.toLocaleString()}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; color: #333;"><span style="background-color: ${deptColor}; padding: 4px 8px; border-radius: 4px; color: white; font-size: 12px;">${department}</span></td>
+                <td style="padding: 10px; border: 1px solid #ddd; color: #333;">${scanTime}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">
+                    <button onclick="viewProgressHistory('${po.po_number}')" style="padding: 5px 10px; background-color: #6ba3be; color: white; border: none; border-radius: 3px; cursor: pointer;">View History</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        // Setup fuzzy search
+        setupDetailSectionFilters(enrichedPOs);
+
+        // Setup close button
+        const closeBtn = document.getElementById('close-detail-section');
+        closeBtn.onclick = function() {
+            closeDetailSection();
+        };
+
+        // Setup export button
+        const exportBtn = document.getElementById('export-detail-excel');
+        exportBtn.onclick = function() {
+            exportDepartmentToExcel('All PO#', enrichedPOs);
+        };
+
+    } catch (error) {
+        console.error('Error loading all POs details:', error);
+    }
+}
+
 // Close detail section and restore full chart
 function closeDetailSection() {
     const chartSection = document.getElementById('chart-section');
@@ -2774,20 +2877,23 @@ function setupDetailSectionFilters(data) {
     const filterPO = document.getElementById('filter-detail-po');
     const filterItems = document.getElementById('filter-detail-items');
     const filterQty = document.getElementById('filter-detail-qty');
+    const filterStatus = document.getElementById('filter-detail-status');
     const filterTime = document.getElementById('filter-detail-time');
 
     function applyFilters() {
         const poFilter = filterPO.value.toLowerCase();
         const itemsFilter = filterItems.value.toLowerCase();
         const qtyFilter = filterQty.value.toLowerCase();
+        const statusFilter = filterStatus.value.toLowerCase();
         const timeFilter = filterTime.value.toLowerCase();
 
         filteredData = data.filter(po => {
             const matchPO = po.po_number.toLowerCase().includes(poFilter);
             const matchItems = (po.itemCount || 0).toString().includes(itemsFilter);
             const matchQty = (po.totalQty || 0).toString().includes(qtyFilter);
-            const matchTime = po.latest_scan_time ? new Date(po.latest_scan_time).toLocaleString().toLowerCase().includes(timeFilter) : false;
-            return matchPO && matchItems && matchQty && matchTime;
+            const matchStatus = (po.latest_department || 'N/A').toLowerCase().includes(statusFilter);
+            const matchTime = po.latest_scan_time ? new Date(po.latest_scan_time).toLocaleString().toLowerCase().includes(timeFilter) : 'n/a'.includes(timeFilter);
+            return matchPO && matchItems && matchQty && matchStatus && matchTime;
         });
 
         renderDetailSectionTable(filteredData);
@@ -2796,6 +2902,7 @@ function setupDetailSectionFilters(data) {
     filterPO.oninput = applyFilters;
     filterItems.oninput = applyFilters;
     filterQty.oninput = applyFilters;
+    filterStatus.oninput = applyFilters;
     filterTime.oninput = applyFilters;
 }
 
@@ -2807,11 +2914,14 @@ function renderDetailSectionTable(data) {
     data.forEach(po => {
         const row = document.createElement('tr');
         const scanTime = po.latest_scan_time ? new Date(po.latest_scan_time).toLocaleString() : 'N/A';
+        const department = po.latest_department || 'N/A';
+        const deptColor = department !== 'N/A' ? getDepartmentColor(department) : '#999';
         row.style.backgroundColor = 'white';
         row.innerHTML = `
             <td style="padding: 10px; border: 1px solid #ddd; color: #333;">${po.po_number}</td>
             <td style="padding: 10px; border: 1px solid #ddd; color: #333; text-align: center;">${po.itemCount || 0}</td>
             <td style="padding: 10px; border: 1px solid #ddd; color: #333; text-align: right;">${(po.totalQty || 0).toLocaleString()}</td>
+            <td style="padding: 10px; border: 1px solid #ddd; color: #333;"><span style="background-color: ${deptColor}; padding: 4px 8px; border-radius: 4px; color: white; font-size: 12px;">${department}</span></td>
             <td style="padding: 10px; border: 1px solid #ddd; color: #333;">${scanTime}</td>
             <td style="padding: 10px; border: 1px solid #ddd;">
                 <button onclick="viewProgressHistory('${po.po_number}')" style="padding: 5px 10px; background-color: #6ba3be; color: white; border: none; border-radius: 3px; cursor: pointer;">View History</button>
@@ -2923,6 +3033,18 @@ async function viewProgressHistory(poNumber) {
         // Update modal title
         document.querySelector('#progress-history-modal h2').textContent = `Progress History - PO ${poNumber}`;
 
+        // Generate QR code for the PO number
+        const qrContainer = document.getElementById('progress-history-qr');
+        qrContainer.innerHTML = ''; // Clear previous QR code
+        new QRCode(qrContainer, {
+            text: poNumber,
+            width: 180,
+            height: 180,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
         // All departments in sequence
         const allDepartments = [
             'CS Team',
@@ -2973,14 +3095,44 @@ async function viewProgressHistory(poNumber) {
         const closeBtn = document.getElementById('progress-history-close-btn');
         closeBtn.onclick = function() {
             modal.style.display = 'none';
+            // Stop auto-refresh when modal closes
+            if (window.progressHistoryRefreshInterval) {
+                clearInterval(window.progressHistoryRefreshInterval);
+                window.progressHistoryRefreshInterval = null;
+            }
+        };
+
+        // Setup refresh button handler
+        const refreshBtn = document.getElementById('refresh-progress-history-btn');
+        refreshBtn.onclick = function() {
+            viewProgressHistory(poNumber);
         };
 
         // Setup click outside to close
         modal.onclick = function(e) {
             if (e.target.id === 'progress-history-modal') {
                 modal.style.display = 'none';
+                // Stop auto-refresh when modal closes
+                if (window.progressHistoryRefreshInterval) {
+                    clearInterval(window.progressHistoryRefreshInterval);
+                    window.progressHistoryRefreshInterval = null;
+                }
             }
         };
+
+        // Auto-refresh every 5 seconds to check for new scans
+        if (window.progressHistoryRefreshInterval) {
+            clearInterval(window.progressHistoryRefreshInterval);
+        }
+        window.progressHistoryRefreshInterval = setInterval(() => {
+            // Only refresh if modal is still open
+            if (modal.style.display === 'flex') {
+                viewProgressHistory(poNumber);
+            } else {
+                clearInterval(window.progressHistoryRefreshInterval);
+                window.progressHistoryRefreshInterval = null;
+            }
+        }, 5000);
 
         modal.style.display = 'flex';
     } catch (error) {

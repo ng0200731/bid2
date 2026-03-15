@@ -6,7 +6,7 @@ import fs from 'fs';
 import os from 'os';
 import nodemailer from 'nodemailer';
 import EBrandIDDownloader from './index.js';
-import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs, deletePO, deleteAllPOs, saveMessage, getAllMessages, deleteMessage, deleteAllMessages, getAllItems, rebuildItemsTable, saveItemDetails, getItemDetails, updatePOStatus, recordDepartmentScan, getProgressByPO, getAllProgressPOs } from './database.js';
+import { initDatabase, getAllPOs, getPOByNumber, getPOItems, searchPOs, deletePO, deleteAllPOs, saveMessage, getAllMessages, deleteMessage, deleteAllMessages, getAllItems, rebuildItemsTable, saveItemDetails, getItemDetails, updatePOStatus, recordDepartmentScan, getProgressByPO, getAllProgressPOs, getLastScanForPO } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -599,6 +599,58 @@ app.post('/api/progress/scan', (req, res) => {
       return res.status(404).json({ error: 'PO not found' });
     }
 
+    // Define valid department sequence (1→2→3→4→5→6→7→8)
+    const validSequence = [
+      'CS Team',
+      'PMC',
+      'Material',
+      'Production',
+      'Cut and Fold',
+      'QC',
+      'Shipment',
+      'Account'
+    ];
+    const currentDeptIndex = validSequence.indexOf(department);
+
+    if (currentDeptIndex === -1) {
+      return res.status(400).json({ error: 'Invalid department' });
+    }
+
+    // Check last scan to validate sequence
+    const lastScan = getLastScanForPO(poNumber);
+
+    if (lastScan) {
+      const lastDeptIndex = validSequence.indexOf(lastScan.department);
+
+      // Check if trying to go back
+      if (currentDeptIndex <= lastDeptIndex) {
+        return res.status(400).json({
+          error: 'Cannot go back or repeat department',
+          lastDepartment: lastScan.department,
+          attemptedDepartment: department
+        });
+      }
+
+      // Check if jumping (skipping a department)
+      if (currentDeptIndex > lastDeptIndex + 1) {
+        return res.status(400).json({
+          error: 'Cannot skip departments. Must follow sequence 1→2→3→4→5→6→7→8',
+          lastDepartment: lastScan.department,
+          nextExpected: validSequence[lastDeptIndex + 1],
+          attemptedDepartment: department
+        });
+      }
+    } else {
+      // No previous scan - must start with CS Team
+      if (department !== 'CS Team') {
+        return res.status(400).json({
+          error: 'First scan must be CS Team (Department 1)',
+          nextExpected: 'CS Team',
+          attemptedDepartment: department
+        });
+      }
+    }
+
     // Record the scan
     const result = recordDepartmentScan(poNumber, department, notes || null);
 
@@ -644,6 +696,28 @@ app.get('/api/progress', (req, res) => {
   }
 });
 
+// Get last scan status for a specific PO (must be before /:poNumber route)
+app.get('/api/progress/:poNumber/last', (req, res) => {
+  try {
+    const { poNumber } = req.params;
+
+    // Verify PO exists
+    const po = getPOByNumber(poNumber);
+    if (!po) {
+      return res.status(404).json({ error: 'PO not found' });
+    }
+
+    const lastScan = getLastScanForPO(poNumber);
+    res.json({
+      lastScan: lastScan,
+      hasHistory: lastScan !== null
+    });
+  } catch (error) {
+    console.error('Error fetching last scan:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get progress history for a specific PO
 app.get('/api/progress/:poNumber', (req, res) => {
   try {
@@ -652,6 +726,24 @@ app.get('/api/progress/:poNumber', (req, res) => {
     res.json({ progress: progress });
   } catch (error) {
     console.error('Error fetching PO progress:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Check app version
+app.get('/api/version/check', (req, res) => {
+  try {
+    const currentVersion = req.query.version || '1.0';
+    const latestVersion = '1.0'; // This can be updated or stored in config
+
+    res.json({
+      currentVersion: currentVersion,
+      latestVersion: latestVersion,
+      updateRequired: currentVersion !== latestVersion,
+      updateAvailable: parseFloat(latestVersion) > parseFloat(currentVersion)
+    });
+  } catch (error) {
+    console.error('Error checking version:', error);
     res.status(500).json({ error: error.message });
   }
 });

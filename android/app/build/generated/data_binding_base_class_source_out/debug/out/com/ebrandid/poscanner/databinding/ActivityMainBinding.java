@@ -41,10 +41,13 @@ public final class ActivityMainBinding implements ViewBinding {
   @NonNull
   public final TextView tvPoNumber;
 
+  @NonNull
+  public final TextView tvPresentDepartment;
+
   private ActivityMainBinding(@NonNull ScrollView rootView, @NonNull MaterialButton btnSave,
       @NonNull MaterialButton btnScanAgain, @NonNull EditText etNotes,
       @NonNull ProgressBar progressBar, @NonNull Spinner spinnerDepartment,
-      @NonNull TextView tvPoNumber) {
+      @NonNull TextView tvPoNumber, @NonNull TextView tvPresentDepartment) {
     this.rootView = rootView;
     this.btnSave = btnSave;
     this.btnScanAgain = btnScanAgain;
@@ -52,6 +55,7 @@ public final class ActivityMainBinding implements ViewBinding {
     this.progressBar = progressBar;
     this.spinnerDepartment = spinnerDepartment;
     this.tvPoNumber = tvPoNumber;
+    this.tvPresentDepartment = tvPresentDepartment;
   }
 
   @Override
@@ -117,8 +121,14 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.tvPresentDepartment;
+      TextView tvPresentDepartment = ViewBindings.findChildViewById(rootView, id);
+      if (tvPresentDepartment == null) {
+        break missingId;
+      }
+
       return new ActivityMainBinding((ScrollView) rootView, btnSave, btnScanAgain, etNotes,
-          progressBar, spinnerDepartment, tvPoNumber);
+          progressBar, spinnerDepartment, tvPoNumber, tvPresentDepartment);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

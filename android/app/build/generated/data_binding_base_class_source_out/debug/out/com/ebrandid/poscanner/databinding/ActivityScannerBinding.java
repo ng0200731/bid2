@@ -25,6 +25,9 @@ public final class ActivityScannerBinding implements ViewBinding {
   public final PreviewView previewView;
 
   @NonNull
+  public final View scanningFrame;
+
+  @NonNull
   public final LinearLayout topBar;
 
   @NonNull
@@ -34,10 +37,11 @@ public final class ActivityScannerBinding implements ViewBinding {
   public final TextView tvStatus;
 
   private ActivityScannerBinding(@NonNull ConstraintLayout rootView,
-      @NonNull PreviewView previewView, @NonNull LinearLayout topBar,
+      @NonNull PreviewView previewView, @NonNull View scanningFrame, @NonNull LinearLayout topBar,
       @NonNull TextView tvInstruction, @NonNull TextView tvStatus) {
     this.rootView = rootView;
     this.previewView = previewView;
+    this.scanningFrame = scanningFrame;
     this.topBar = topBar;
     this.tvInstruction = tvInstruction;
     this.tvStatus = tvStatus;
@@ -76,6 +80,12 @@ public final class ActivityScannerBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.scanningFrame;
+      View scanningFrame = ViewBindings.findChildViewById(rootView, id);
+      if (scanningFrame == null) {
+        break missingId;
+      }
+
       id = R.id.topBar;
       LinearLayout topBar = ViewBindings.findChildViewById(rootView, id);
       if (topBar == null) {
@@ -94,8 +104,8 @@ public final class ActivityScannerBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivityScannerBinding((ConstraintLayout) rootView, previewView, topBar,
-          tvInstruction, tvStatus);
+      return new ActivityScannerBinding((ConstraintLayout) rootView, previewView, scanningFrame,
+          topBar, tvInstruction, tvStatus);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

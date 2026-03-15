@@ -334,6 +334,31 @@ tbody tr:hover {
     background-color: #4db8a411;
 }
 
+/* Sticky first column for orders table */
+#orders-table {
+    position: relative;
+}
+
+#orders-table th:nth-child(2),
+#orders-table td:nth-child(2) {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    background-color: #0f1a2e;
+}
+
+#orders-table td:nth-child(2) {
+    background-color: #05050a;
+}
+
+#orders-table tbody tr:hover td:nth-child(2) {
+    background-color: #4db8a411;
+}
+
+#orders-table th:nth-child(2) {
+    z-index: 15;
+}
+
 .status-success { color: #4db8a4; font-weight: bold; text-shadow: 0 0 6px #4db8a444; }
 .status-failed { color: #c75070; font-weight: bold; text-shadow: 0 0 6px #c7507044; }
 .status-partial { color: #c4944a; font-weight: bold; text-shadow: 0 0 6px #c4944a44; }
@@ -738,6 +763,21 @@ body.theme-minimal .messages-table td { border-color: black; }
 body.theme-minimal .messages-table tbody tr:nth-child(even) { background-color: #f9f9f9; }
 body.theme-minimal .messages-table tbody tr:hover { background-color: #e8e8e8; box-shadow: none; }
 body.theme-minimal tbody tr:hover { background-color: #f9f9f9; }
+
+/* Sticky column for minimal theme */
+body.theme-minimal #orders-table th:nth-child(2),
+body.theme-minimal #orders-table td:nth-child(2) {
+    background-color: #f0f0f0;
+}
+
+body.theme-minimal #orders-table td:nth-child(2) {
+    background-color: white;
+}
+
+body.theme-minimal #orders-table tbody tr:hover td:nth-child(2) {
+    background-color: #f9f9f9;
+}
+
 body.theme-minimal .status-success { color: green; text-shadow: none; }
 body.theme-minimal .status-failed { color: red; text-shadow: none; }
 body.theme-minimal .status-partial { color: orange; text-shadow: none; }

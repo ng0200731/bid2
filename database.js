@@ -1093,6 +1093,33 @@ export function getProgressByPO(poNumber) {
 }
 
 /**
+ * Get the last scan for a specific PO
+ */
+export function getLastScanForPO(poNumber) {
+  try {
+    const stmt = db.prepare(`
+      SELECT * FROM progress_tracking
+      WHERE po_number = ?
+      ORDER BY scanned_at DESC
+      LIMIT 1
+    `);
+
+    stmt.bind([poNumber]);
+
+    let result = null;
+    if (stmt.step()) {
+      result = stmt.getAsObject();
+    }
+
+    stmt.free();
+    return result;
+  } catch (error) {
+    console.error('Error getting last scan for PO:', error);
+    return null;
+  }
+}
+
+/**
  * Get all POs that have at least one progress scan
  * Returns PO number, latest department, latest scan time, and scan count
  */
