@@ -3,6 +3,7 @@ package com.ebrandid.poscanner
 import android.content.Intent
 import android.os.Bundle
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 
@@ -10,6 +11,7 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var btnScan: MaterialButton
     private lateinit var btnSearch: MaterialButton
+    private lateinit var btnSettings: MaterialButton
     private lateinit var tvVersion: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -18,6 +20,7 @@ class HomeActivity : AppCompatActivity() {
 
         btnScan = findViewById(R.id.btnScan)
         btnSearch = findViewById(R.id.btnSearch)
+        btnSettings = findViewById(R.id.btnSettings)
         tvVersion = findViewById(R.id.tvVersion)
 
         // Set version from BuildConfig
@@ -29,6 +32,10 @@ class HomeActivity : AppCompatActivity() {
 
         btnSearch.setOnClickListener {
             startActivity(Intent(this, SearchActivity::class.java))
+        }
+
+        btnSettings.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
         }
     }
 }

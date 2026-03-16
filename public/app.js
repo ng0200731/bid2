@@ -2622,6 +2622,26 @@ function setupLegendToggle() {
             }
         };
     }
+
+    // Setup refresh button
+    const refreshProgressBtn = document.getElementById('refresh-progress-btn');
+    if (refreshProgressBtn) {
+        refreshProgressBtn.onclick = async function() {
+            // Show loading state
+            refreshProgressBtn.disabled = true;
+            refreshProgressBtn.style.opacity = '0.6';
+            refreshProgressBtn.querySelector('span:first-child').textContent = '⏳';
+
+            try {
+                await loadProgressData();
+            } finally {
+                // Reset button state
+                refreshProgressBtn.disabled = false;
+                refreshProgressBtn.style.opacity = '1';
+                refreshProgressBtn.querySelector('span:first-child').textContent = '🔄';
+            }
+        };
+    }
 }
 
 // Show department detail modal

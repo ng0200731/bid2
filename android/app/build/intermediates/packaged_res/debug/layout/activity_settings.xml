@@ -20,40 +20,21 @@
         android:layout_marginTop="40dp" />
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilServerIp"
+        android:id="@+id/tilServerUrl"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="Server IP Address"
+        android:hint="Server URL"
         app:layout_constraintTop_toBottomOf="@id/tvTitle"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="40dp">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etServerIp"
+            android:id="@+id/etServerUrl"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="text"
-            android:textSize="18sp" />
-
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tilServerPort"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:hint="Server Port"
-        app:layout_constraintTop_toBottomOf="@id/tilServerIp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etServerPort"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="number"
-            android:textSize="18sp" />
+            android:inputType="textUri"
+            android:textSize="16sp" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -61,10 +42,10 @@
         android:id="@+id/tvHelp"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Enter the IP address of the server on your local network (e.g., 192.168.0.165)"
+        android:text="Enter the full server URL including protocol and port.\n\nExamples:\n• http://192.168.0.144:8768/\n• http://myserver.com:8768/\n• https://example.com/"
         android:textColor="@color/text_secondary"
         android:textSize="14sp"
-        app:layout_constraintTop_toBottomOf="@id/tilServerPort"
+        app:layout_constraintTop_toBottomOf="@id/tilServerUrl"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp" />
@@ -83,6 +64,20 @@
         android:layout_marginTop="32dp" />
 
     <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnReset"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:text="Reset to Default"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:cornerRadius="12dp"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        app:layout_constraintTop_toBottomOf="@id/btnSave"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp" />
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnBack"
         android:layout_width="0dp"
         android:layout_height="64dp"
@@ -91,7 +86,7 @@
         android:textStyle="bold"
         app:cornerRadius="12dp"
         style="@style/Widget.Material3.Button.OutlinedButton"
-        app:layout_constraintTop_toBottomOf="@id/btnSave"
+        app:layout_constraintTop_toBottomOf="@id/btnReset"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp" />

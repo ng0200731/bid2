@@ -1,6 +1,6 @@
 package com.ebrandid.poscanner.api
 
-import com.ebrandid.poscanner.utils.Constants
+import android.content.Context
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -9,30 +9,50 @@ import java.util.concurrent.TimeUnit
 
 object ApiClient {
     private var retrofit: Retrofit? = null
-    
-    private fun getRetrofit(): Retrofit {
-        if (retrofit == null) {
+    private var currentBaseUrl: String? = null
+
+    private const val CONNECT_TIMEOUT = 30L
+    private const val READ_TIMEOUT = 30L
+    private const val WRITE_TIMEOUT = 30L
+    private const val DEFAULT_BASE_URL = "http://192.168.0.144:8768/"
+
+    fun getBaseUrl(context: Context): String {
+        val prefs = context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+        return prefs.getString("server_url", DEFAULT_BASE_URL) ?: DEFAULT_BASE_URL
+    }
+
+    private fun getRetrofit(context: Context): Retrofit {
+        val baseUrl = getBaseUrl(context)
+
+        // Recreate retrofit if base URL changed
+        if (retrofit == null || currentBaseUrl != baseUrl) {
             val loggingInterceptor = HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BODY
             }
-            
+
             val okHttpClient = OkHttpClient.Builder()
                 .addInterceptor(loggingInterceptor)
-                .connectTimeout(Constants.CONNECT_TIMEOUT, TimeUnit.SECONDS)
-                .readTimeout(Constants.READ_TIMEOUT, TimeUnit.SECONDS)
-                .writeTimeout(Constants.WRITE_TIMEOUT, TimeUnit.SECONDS)
+                .connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS)
+                .readTimeout(READ_TIMEOUT, TimeUnit.SECONDS)
+                .writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS)
                 .build()
-            
+
             retrofit = Retrofit.Builder()
-                .baseUrl(Constants.BASE_URL)
+                .baseUrl(baseUrl)
                 .client(okHttpClient)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
+
+            currentBaseUrl = baseUrl
         }
         return retrofit!!
     }
-    
-    val apiService: ApiService by lazy {
-        getRetrofit().create(ApiService::class.java)
+
+    fun getApiService(context: Context): ApiService {
+        return getRetrofit(context).create(ApiService::class.java)
     }
+
+    // For backward compatibility
+    val apiService: ApiService
+        get() = throw IllegalStateException("Use getApiService(context) instead")
 }

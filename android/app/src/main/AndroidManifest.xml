@@ -48,6 +48,18 @@
             android:name=".MainActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
+
+        <!-- Progress History Activity -->
+        <activity
+            android:name=".ProgressHistoryActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <!-- Settings Activity -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>

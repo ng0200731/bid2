@@ -27,6 +27,9 @@ public final class ActivityHomeBinding implements ViewBinding {
   public final MaterialButton btnSearch;
 
   @NonNull
+  public final MaterialButton btnSettings;
+
+  @NonNull
   public final TextView tvSubtitle;
 
   @NonNull
@@ -36,11 +39,12 @@ public final class ActivityHomeBinding implements ViewBinding {
   public final TextView tvVersion;
 
   private ActivityHomeBinding(@NonNull ConstraintLayout rootView, @NonNull MaterialButton btnScan,
-      @NonNull MaterialButton btnSearch, @NonNull TextView tvSubtitle, @NonNull TextView tvTitle,
-      @NonNull TextView tvVersion) {
+      @NonNull MaterialButton btnSearch, @NonNull MaterialButton btnSettings,
+      @NonNull TextView tvSubtitle, @NonNull TextView tvTitle, @NonNull TextView tvVersion) {
     this.rootView = rootView;
     this.btnScan = btnScan;
     this.btnSearch = btnSearch;
+    this.btnSettings = btnSettings;
     this.tvSubtitle = tvSubtitle;
     this.tvTitle = tvTitle;
     this.tvVersion = tvVersion;
@@ -85,6 +89,12 @@ public final class ActivityHomeBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.btnSettings;
+      MaterialButton btnSettings = ViewBindings.findChildViewById(rootView, id);
+      if (btnSettings == null) {
+        break missingId;
+      }
+
       id = R.id.tvSubtitle;
       TextView tvSubtitle = ViewBindings.findChildViewById(rootView, id);
       if (tvSubtitle == null) {
@@ -103,8 +113,8 @@ public final class ActivityHomeBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivityHomeBinding((ConstraintLayout) rootView, btnScan, btnSearch, tvSubtitle,
-          tvTitle, tvVersion);
+      return new ActivityHomeBinding((ConstraintLayout) rootView, btnScan, btnSearch, btnSettings,
+          tvSubtitle, tvTitle, tvVersion);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

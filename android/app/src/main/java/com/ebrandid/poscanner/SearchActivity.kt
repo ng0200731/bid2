@@ -35,7 +35,7 @@ class SearchActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val intent = Intent(this, MainActivity::class.java).apply {
+            val intent = Intent(this, ProgressHistoryActivity::class.java).apply {
                 putExtra(Constants.EXTRA_PO_NUMBER, poNumber)
             }
             startActivity(intent)

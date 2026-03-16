@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.ebrandid.poscanner.app-mergeDebugResources-38:/values-sr/values-sr.xml",
+            "outputFile": "com.ebrandid.poscanner.app-mergeDebugResources-39:/values-sr/values-sr.xml",
             "map": [
                 {
                     "source": "C:\\Users\\ng\\.gradle\\caches\\transforms-3\\b2a3c2d97846ce8740f7a34303be379e\\transformed\\jetified-play-services-basement-18.1.0\\res\\values-sr\\values.xml",

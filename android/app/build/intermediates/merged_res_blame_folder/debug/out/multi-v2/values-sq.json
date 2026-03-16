@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.ebrandid.poscanner.app-mergeDebugResources-38:/values-sq/values-sq.xml",
+            "outputFile": "com.ebrandid.poscanner.app-mergeDebugResources-39:/values-sq/values-sq.xml",
             "map": [
                 {
                     "source": "C:\\Users\\ng\\.gradle\\caches\\transforms-3\\184958b59b0b0fbc0694ac3308e227ed\\transformed\\material-1.11.0\\res\\values-sq\\values-sq.xml",

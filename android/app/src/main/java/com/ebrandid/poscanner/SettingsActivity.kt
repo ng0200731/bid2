@@ -9,24 +9,32 @@ import com.google.android.material.textfield.TextInputEditText
 
 class SettingsActivity : AppCompatActivity() {
 
-    private lateinit var etServerIp: TextInputEditText
-    private lateinit var etServerPort: TextInputEditText
+    private lateinit var etServerUrl: TextInputEditText
     private lateinit var btnSave: MaterialButton
+    private lateinit var btnReset: MaterialButton
     private lateinit var btnBack: MaterialButton
+
+    companion object {
+        private const val DEFAULT_SERVER_URL = "http://192.168.0.144:8768/"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
 
-        etServerIp = findViewById(R.id.etServerIp)
-        etServerPort = findViewById(R.id.etServerPort)
+        etServerUrl = findViewById(R.id.etServerUrl)
         btnSave = findViewById(R.id.btnSave)
+        btnReset = findViewById(R.id.btnReset)
         btnBack = findViewById(R.id.btnBack)
 
         loadSettings()
 
         btnSave.setOnClickListener {
             saveSettings()
+        }
+
+        btnReset.setOnClickListener {
+            resetToDefault()
         }
 
         btnBack.setOnClickListener {
@@ -36,34 +44,40 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun loadSettings() {
         val prefs = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
-        val serverIp = prefs.getString("server_ip", "192.168.0.144") ?: "192.168.0.144"
-        val serverPort = prefs.getString("server_port", "8768") ?: "8768"
-
-        etServerIp.setText(serverIp)
-        etServerPort.setText(serverPort)
+        val serverUrl = prefs.getString("server_url", DEFAULT_SERVER_URL) ?: DEFAULT_SERVER_URL
+        etServerUrl.setText(serverUrl)
     }
 
     private fun saveSettings() {
-        val serverIp = etServerIp.text.toString().trim()
-        val serverPort = etServerPort.text.toString().trim()
+        var serverUrl = etServerUrl.text.toString().trim()
 
-        if (serverIp.isEmpty()) {
-            Toast.makeText(this, "Please enter server IP", Toast.LENGTH_SHORT).show()
+        if (serverUrl.isEmpty()) {
+            Toast.makeText(this, "Please enter server URL", Toast.LENGTH_SHORT).show()
             return
         }
 
-        if (serverPort.isEmpty()) {
-            Toast.makeText(this, "Please enter server port", Toast.LENGTH_SHORT).show()
+        // Ensure URL ends with /
+        if (!serverUrl.endsWith("/")) {
+            serverUrl += "/"
+        }
+
+        // Validate URL format
+        if (!serverUrl.startsWith("http://") && !serverUrl.startsWith("https://")) {
+            Toast.makeText(this, "URL must start with http:// or https://", Toast.LENGTH_SHORT).show()
             return
         }
 
         val prefs = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
         prefs.edit()
-            .putString("server_ip", serverIp)
-            .putString("server_port", serverPort)
+            .putString("server_url", serverUrl)
             .apply()
 
-        Toast.makeText(this, "Settings saved", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Settings saved successfully", Toast.LENGTH_SHORT).show()
         finish()
+    }
+
+    private fun resetToDefault() {
+        etServerUrl.setText(DEFAULT_SERVER_URL)
+        Toast.makeText(this, "Reset to default URL", Toast.LENGTH_SHORT).show()
     }
 }

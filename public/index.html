@@ -224,10 +224,16 @@
                             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 15px;">
                                 <button id="show-all-pos-btn" style="padding: 5px 10px; background-color: transparent; border: 1px solid #6ba3be; color: #6ba3be; border-radius: 4px; cursor: pointer;">Show All POs</button>
                                 <h3 style="text-align: center; flex: 1; color: #6ba3be; margin: 0;">Department Distribution</h3>
-                                <button id="toggle-legend-btn" style="padding: 5px 10px; background-color: transparent; border: 1px solid #6ba3be; color: #6ba3be; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
-                                    <span id="legend-eye-icon">👁️</span>
-                                    <span id="legend-toggle-text">Hide Legend</span>
-                                </button>
+                                <div style="display: flex; gap: 10px;">
+                                    <button id="refresh-progress-btn" style="padding: 5px 10px; background-color: transparent; border: 1px solid #6ba3be; color: #6ba3be; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                                        <span>🔄</span>
+                                        <span>Refresh</span>
+                                    </button>
+                                    <button id="toggle-legend-btn" style="padding: 5px 10px; background-color: transparent; border: 1px solid #6ba3be; color: #6ba3be; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                                        <span id="legend-eye-icon">👁️</span>
+                                        <span id="legend-toggle-text">Hide Legend</span>
+                                    </button>
+                                </div>
                             </div>
                             <div style="width: 100%; max-width: 500px; max-height: 500px;">
                                 <canvas id="progress-pie-chart" style="cursor: pointer;"></canvas>

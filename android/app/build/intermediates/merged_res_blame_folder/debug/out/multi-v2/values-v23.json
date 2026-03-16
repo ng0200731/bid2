@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.ebrandid.poscanner.app-mergeDebugResources-38:/values-v23/values-v23.xml",
+            "outputFile": "com.ebrandid.poscanner.app-mergeDebugResources-39:/values-v23/values-v23.xml",
             "map": [
                 {
                     "source": "C:\\Users\\ng\\.gradle\\caches\\transforms-3\\f47d16a6556e4855c9392813a19b75da\\transformed\\cardview-1.0.0\\res\\values-v23\\values-v23.xml",

@@ -3,6 +3,7 @@ package com.ebrandid.poscanner.api
 import com.ebrandid.poscanner.models.ScanRequest
 import com.ebrandid.poscanner.models.ScanResponse
 import com.ebrandid.poscanner.models.LastScanResponse
+import com.ebrandid.poscanner.models.ProgressHistoryResponse
 import com.ebrandid.poscanner.models.VersionCheckResponse
 import retrofit2.Response
 import retrofit2.http.Body
@@ -17,6 +18,9 @@ interface ApiService {
 
     @GET("api/progress/{poNumber}/last")
     suspend fun getLastScan(@Path("poNumber") poNumber: String): Response<LastScanResponse>
+
+    @GET("api/progress/{poNumber}")
+    suspend fun getProgressHistory(@Path("poNumber") poNumber: String): Response<ProgressHistoryResponse>
 
     @GET("api/version/check")
     suspend fun checkVersion(@Query("version") version: String): Response<VersionCheckResponse>

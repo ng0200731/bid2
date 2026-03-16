@@ -26,19 +26,16 @@ public final class ActivitySettingsBinding implements ViewBinding {
   public final MaterialButton btnBack;
 
   @NonNull
+  public final MaterialButton btnReset;
+
+  @NonNull
   public final MaterialButton btnSave;
 
   @NonNull
-  public final TextInputEditText etServerIp;
+  public final TextInputEditText etServerUrl;
 
   @NonNull
-  public final TextInputEditText etServerPort;
-
-  @NonNull
-  public final TextInputLayout tilServerIp;
-
-  @NonNull
-  public final TextInputLayout tilServerPort;
+  public final TextInputLayout tilServerUrl;
 
   @NonNull
   public final TextView tvHelp;
@@ -47,17 +44,15 @@ public final class ActivitySettingsBinding implements ViewBinding {
   public final TextView tvTitle;
 
   private ActivitySettingsBinding(@NonNull ConstraintLayout rootView,
-      @NonNull MaterialButton btnBack, @NonNull MaterialButton btnSave,
-      @NonNull TextInputEditText etServerIp, @NonNull TextInputEditText etServerPort,
-      @NonNull TextInputLayout tilServerIp, @NonNull TextInputLayout tilServerPort,
-      @NonNull TextView tvHelp, @NonNull TextView tvTitle) {
+      @NonNull MaterialButton btnBack, @NonNull MaterialButton btnReset,
+      @NonNull MaterialButton btnSave, @NonNull TextInputEditText etServerUrl,
+      @NonNull TextInputLayout tilServerUrl, @NonNull TextView tvHelp, @NonNull TextView tvTitle) {
     this.rootView = rootView;
     this.btnBack = btnBack;
+    this.btnReset = btnReset;
     this.btnSave = btnSave;
-    this.etServerIp = etServerIp;
-    this.etServerPort = etServerPort;
-    this.tilServerIp = tilServerIp;
-    this.tilServerPort = tilServerPort;
+    this.etServerUrl = etServerUrl;
+    this.tilServerUrl = tilServerUrl;
     this.tvHelp = tvHelp;
     this.tvTitle = tvTitle;
   }
@@ -95,33 +90,27 @@ public final class ActivitySettingsBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.btnReset;
+      MaterialButton btnReset = ViewBindings.findChildViewById(rootView, id);
+      if (btnReset == null) {
+        break missingId;
+      }
+
       id = R.id.btnSave;
       MaterialButton btnSave = ViewBindings.findChildViewById(rootView, id);
       if (btnSave == null) {
         break missingId;
       }
 
-      id = R.id.etServerIp;
-      TextInputEditText etServerIp = ViewBindings.findChildViewById(rootView, id);
-      if (etServerIp == null) {
+      id = R.id.etServerUrl;
+      TextInputEditText etServerUrl = ViewBindings.findChildViewById(rootView, id);
+      if (etServerUrl == null) {
         break missingId;
       }
 
-      id = R.id.etServerPort;
-      TextInputEditText etServerPort = ViewBindings.findChildViewById(rootView, id);
-      if (etServerPort == null) {
-        break missingId;
-      }
-
-      id = R.id.tilServerIp;
-      TextInputLayout tilServerIp = ViewBindings.findChildViewById(rootView, id);
-      if (tilServerIp == null) {
-        break missingId;
-      }
-
-      id = R.id.tilServerPort;
-      TextInputLayout tilServerPort = ViewBindings.findChildViewById(rootView, id);
-      if (tilServerPort == null) {
+      id = R.id.tilServerUrl;
+      TextInputLayout tilServerUrl = ViewBindings.findChildViewById(rootView, id);
+      if (tilServerUrl == null) {
         break missingId;
       }
 
@@ -137,8 +126,8 @@ public final class ActivitySettingsBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivitySettingsBinding((ConstraintLayout) rootView, btnBack, btnSave, etServerIp,
-          etServerPort, tilServerIp, tilServerPort, tvHelp, tvTitle);
+      return new ActivitySettingsBinding((ConstraintLayout) rootView, btnBack, btnReset, btnSave,
+          etServerUrl, tilServerUrl, tvHelp, tvTitle);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

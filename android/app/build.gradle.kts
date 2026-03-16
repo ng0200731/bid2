@@ -11,8 +11,8 @@ android {
         applicationId = "com.ebrandid.poscanner"
         minSdk = 24
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -37,6 +37,19 @@ android {
         viewBinding = true
         buildConfig = true
     }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            pickFirst("META-INF/androidx.lifecycle_lifecycle-viewmodel-savedstate.version")
+        }
+        jniLibs {
+            pickFirsts += setOf("**/*.so")
+        }
+        dex {
+            useLegacyPackaging = false
+        }
+    }
 }
 
 dependencies {
@@ -56,6 +69,13 @@ dependencies {
     // ML Kit Barcode Scanning
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
 
+    // ZXing for QR Code generation
+    implementation("com.google.zxing:core:3.5.2")
+
+    // RecyclerView
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("androidx.cardview:cardview:1.0.0")
+
     // Retrofit for API calls
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
@@ -63,7 +83,12 @@ dependencies {
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0") {
+        exclude(group = "androidx.lifecycle", module = "lifecycle-viewmodel-savedstate")
+    }
+
+    // Add lifecycle-viewmodel-savedstate explicitly to avoid duplicates
+    implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:2.7.0")
 
     // Testing
     testImplementation("junit:junit:4.13.2")

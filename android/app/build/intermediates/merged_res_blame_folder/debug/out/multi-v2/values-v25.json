@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.ebrandid.poscanner.app-mergeDebugResources-38:/values-v25/values-v25.xml",
+            "outputFile": "com.ebrandid.poscanner.app-mergeDebugResources-39:/values-v25/values-v25.xml",
             "map": [
                 {
                     "source": "C:\\Users\\ng\\.gradle\\caches\\transforms-3\\af226701e07b6e5753175ffad1df9a85\\transformed\\appcompat-1.6.1\\res\\values-v25\\values-v25.xml",

@@ -86,7 +86,7 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                val response = ApiClient.apiService.getLastScan(poNumber)
+                val response = ApiClient.getApiService(this@MainActivity).getLastScan(poNumber)
 
                 if (response.isSuccessful) {
                     val body = response.body()
@@ -138,7 +138,7 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                val response = ApiClient.apiService.recordScan(request)
+                val response = ApiClient.getApiService(this@MainActivity).recordScan(request)
 
                 if (response.isSuccessful && response.body()?.success == true) {
                     runOnUiThread {
