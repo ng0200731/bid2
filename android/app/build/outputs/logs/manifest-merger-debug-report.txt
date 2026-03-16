@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:2:1-41:12
-INJECTED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:2:1-41:12
-INJECTED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:2:1-41:12
-INJECTED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:2:1-41:12
+ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:2:1-53:12
+INJECTED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:2:1-53:12
+INJECTED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:2:1-53:12
+INJECTED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:2:1-53:12
 MERGED from [androidx.databinding:viewbinding:8.2.0] C:\Users\ng\.gradle\caches\transforms-3\b84f43d62ca81a8b38dea5fd323d8e45\transformed\jetified-viewbinding-8.2.0\AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\ng\.gradle\caches\transforms-3\184958b59b0b0fbc0694ac3308e227ed\transformed\material-1.11.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\ng\.gradle\caches\transforms-3\415b44dba470347148fe7836a27170ec\transformed\constraintlayout-2.1.4\AndroidManifest.xml:2:1-11:12
@@ -104,8 +104,8 @@ MERGED from [com.google.android.datatransport:transport-runtime:2.2.6] C:\Users\
 	android:name
 		ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:9:22-76
 application
-ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:11:5-39:19
-INJECTED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:11:5-39:19
+ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:11:5-51:19
+INJECTED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:11:5-51:19
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\ng\.gradle\caches\transforms-3\184958b59b0b0fbc0694ac3308e227ed\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.11.0] C:\Users\ng\.gradle\caches\transforms-3\184958b59b0b0fbc0694ac3308e227ed\transformed\material-1.11.0\AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\ng\.gradle\caches\transforms-3\415b44dba470347148fe7836a27170ec\transformed\constraintlayout-2.1.4\AndroidManifest.xml:9:5-20
@@ -168,14 +168,14 @@ MERGED from [com.google.android.odml:image:1.0.0-beta1] C:\Users\ng\.gradle\cach
 		ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:13:9-65
 	android:usesCleartextTraffic
 		ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:20:9-44
-activity#com.ebrandid.poscanner.ScannerActivity
+activity#com.ebrandid.poscanner.HomeActivity
 ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:24:9-32:20
 	android:screenOrientation
 		ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:27:13-49
 	android:exported
 		ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:26:13-36
 	android:name
-		ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:25:13-44
+		ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:25:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
 ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:28:13-31:29
 action#android.intent.action.MAIN
@@ -186,14 +186,30 @@ category#android.intent.category.LAUNCHER
 ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:30:17-77
 	android:name
 		ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:30:27-74
-activity#com.ebrandid.poscanner.MainActivity
+activity#com.ebrandid.poscanner.ScannerActivity
 ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:35:9-38:52
 	android:screenOrientation
 		ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:38:13-49
 	android:exported
 		ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:37:13-37
 	android:name
-		ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:36:13-41
+		ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:36:13-44
+activity#com.ebrandid.poscanner.SearchActivity
+ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:41:9-44:52
+	android:screenOrientation
+		ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:44:13-49
+	android:exported
+		ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:43:13-37
+	android:name
+		ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:42:13-43
+activity#com.ebrandid.poscanner.MainActivity
+ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:47:9-50:52
+	android:screenOrientation
+		ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:50:13-49
+	android:exported
+		ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:49:13-37
+	android:name
+		ADDED from D:\project\BID2\android\app\src\main\AndroidManifest.xml:48:13-41
 uses-sdk
 INJECTED from D:\project\BID2\android\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from D:\project\BID2\android\app\src\main\AndroidManifest.xml

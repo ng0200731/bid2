@@ -20,8 +20,25 @@ console.log('Database initialized');
 
 // Middleware
 app.use(express.json());
-app.use(express.static('public'));
+
+// Disable caching for all static files
+app.use(express.static('public', {
+  setHeaders: (res, path) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+  }
+}));
+
 app.use('/downloads', express.static('downloads')); // Serve downloaded files
+
+// Disable caching for API endpoints
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
 
 // Store active jobs
 const jobs = new Map();
@@ -588,6 +605,7 @@ app.post('/api/items/details', (req, res) => {
 app.post('/api/progress/scan', (req, res) => {
   try {
     const { poNumber, department, notes } = req.body;
+    console.log(`[ANDROID] Scan request: PO=${poNumber}, Dept=${department}`);
 
     if (!poNumber || !department) {
       return res.status(400).json({ error: 'PO number and department are required' });
@@ -671,6 +689,8 @@ app.post('/api/progress/scan', (req, res) => {
     // Update the PO status in po_headers table
     updatePOStatus(poNumber, newStatus);
 
+    console.log(`[ANDROID] ✓ Database updated successfully for PO ${poNumber}`);
+
     // Get updated progress for this PO
     const progress = getProgressByPO(poNumber);
 
@@ -680,7 +700,7 @@ app.post('/api/progress/scan', (req, res) => {
       progress: progress
     });
   } catch (error) {
-    console.error('Error recording department scan:', error);
+    console.error(`[ANDROID] ✗ ERROR:`, error);
     res.status(500).json({ error: error.message });
   }
 });

@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -25,6 +26,7 @@ class ScannerActivity : AppCompatActivity() {
 
     private lateinit var previewView: PreviewView
     private lateinit var tvStatus: TextView
+    private lateinit var btnBack: ImageButton
     private lateinit var cameraExecutor: ExecutorService
     private var camera: Camera? = null
     private var isScanning = true
@@ -40,6 +42,11 @@ class ScannerActivity : AppCompatActivity() {
 
         previewView = findViewById(R.id.previewView)
         tvStatus = findViewById(R.id.tvStatus)
+        btnBack = findViewById(R.id.btnBack)
+
+        btnBack.setOnClickListener {
+            finish()
+        }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 

@@ -2113,6 +2113,8 @@ color switch_thumb_material_dark
 color switch_thumb_material_light
 color switch_thumb_normal_material_dark
 color switch_thumb_normal_material_light
+color text_primary
+color text_secondary
 color tooltip_background_dark
 color tooltip_background_light
 color white
@@ -3221,8 +3223,11 @@ id bounce
 id bounceBoth
 id bounceEnd
 id bounceStart
+id btnBack
 id btnSave
+id btnScan
 id btnScanAgain
+id btnSearch
 id buttonPanel
 id cache_measures
 id callMeasure
@@ -3307,6 +3312,9 @@ id endToStart
 id enterAlways
 id enterAlwaysCollapsed
 id etNotes
+id etPoNumber
+id etServerIp
+id etServerPort
 id exitUntilCollapsed
 id expand_activities_button
 id expanded_menu
@@ -3595,6 +3603,9 @@ id textinput_helper_text
 id textinput_placeholder
 id textinput_prefix_text
 id textinput_suffix_text
+id tilPoNumber
+id tilServerIp
+id tilServerPort
 id time
 id title
 id titleDividerNoCustom
@@ -3612,10 +3623,14 @@ id transition_position
 id transition_scene_layoutid_cache
 id transition_transform
 id triangle
+id tvHelp
 id tvInstruction
 id tvPoNumber
 id tvPresentDepartment
 id tvStatus
+id tvSubtitle
+id tvTitle
+id tvVersion
 id unchecked
 id uniform
 id unlabeled
@@ -3755,8 +3770,11 @@ layout abc_search_dropdown_item_icons_2line
 layout abc_search_view
 layout abc_select_dialog_material
 layout abc_tooltip
+layout activity_home
 layout activity_main
 layout activity_scanner
+layout activity_search
+layout activity_settings
 layout custom_dialog
 layout design_bottom_navigation_item
 layout design_bottom_sheet_dialog

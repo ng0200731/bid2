@@ -324,9 +324,15 @@ function migrateDatabase() {
  */
 export function saveDatabase() {
   if (db) {
-    const data = db.export();
-    const buffer = Buffer.from(data);
-    fs.writeFileSync(DB_PATH, buffer);
+    try {
+      const data = db.export();
+      const buffer = Buffer.from(data);
+      fs.writeFileSync(DB_PATH, buffer);
+      console.log(`[DB] ✓ Saved to ${DB_PATH} (${buffer.length} bytes)`);
+    } catch (error) {
+      console.error(`[DB] ✗ CRITICAL: Failed to save database:`, error);
+      throw error; // Propagate to caller so API returns error
+    }
   }
 }
 

@@ -4,6 +4,7 @@ package com.ebrandid.poscanner.databinding;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -22,6 +23,9 @@ public final class ActivityScannerBinding implements ViewBinding {
   private final ConstraintLayout rootView;
 
   @NonNull
+  public final ImageButton btnBack;
+
+  @NonNull
   public final PreviewView previewView;
 
   @NonNull
@@ -36,10 +40,11 @@ public final class ActivityScannerBinding implements ViewBinding {
   @NonNull
   public final TextView tvStatus;
 
-  private ActivityScannerBinding(@NonNull ConstraintLayout rootView,
+  private ActivityScannerBinding(@NonNull ConstraintLayout rootView, @NonNull ImageButton btnBack,
       @NonNull PreviewView previewView, @NonNull View scanningFrame, @NonNull LinearLayout topBar,
       @NonNull TextView tvInstruction, @NonNull TextView tvStatus) {
     this.rootView = rootView;
+    this.btnBack = btnBack;
     this.previewView = previewView;
     this.scanningFrame = scanningFrame;
     this.topBar = topBar;
@@ -74,6 +79,12 @@ public final class ActivityScannerBinding implements ViewBinding {
     // This is done to optimize the compiled bytecode for size and performance.
     int id;
     missingId: {
+      id = R.id.btnBack;
+      ImageButton btnBack = ViewBindings.findChildViewById(rootView, id);
+      if (btnBack == null) {
+        break missingId;
+      }
+
       id = R.id.previewView;
       PreviewView previewView = ViewBindings.findChildViewById(rootView, id);
       if (previewView == null) {
@@ -104,8 +115,8 @@ public final class ActivityScannerBinding implements ViewBinding {
         break missingId;
       }
 
-      return new ActivityScannerBinding((ConstraintLayout) rootView, previewView, scanningFrame,
-          topBar, tvInstruction, tvStatus);
+      return new ActivityScannerBinding((ConstraintLayout) rootView, btnBack, previewView,
+          scanningFrame, topBar, tvInstruction, tvStatus);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

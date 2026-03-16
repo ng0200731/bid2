@@ -2289,7 +2289,16 @@ document.getElementById('submit-progress-btn').addEventListener('click', async (
 // Load progress data
 async function loadProgressData() {
     try {
-        const response = await fetch('/api/progress');
+        // Add cache-busting parameter with random value to prevent ALL caching
+        const cacheBuster = `${Date.now()}_${Math.random()}`;
+        const response = await fetch(`/api/progress?_=${cacheBuster}`, {
+            method: 'GET',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        });
         const data = await response.json();
 
         const tbody = document.getElementById('progress-body');
@@ -3023,8 +3032,20 @@ function getDepartmentColor(department) {
 // View progress history for a PO
 async function viewProgressHistory(poNumber) {
     try {
-        const response = await fetch(`/api/progress/${poNumber}`);
+        // Add cache-busting parameter with random value to prevent ALL caching
+        const cacheBuster = `${Date.now()}_${Math.random()}`;
+        const response = await fetch(`/api/progress/${poNumber}?_=${cacheBuster}`, {
+            method: 'GET',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        });
         const data = await response.json();
+
+        console.log('API Response for PO', poNumber, ':', data);
+        console.log('Number of progress records:', data.progress ? data.progress.length : 0);
 
         const modal = document.getElementById('progress-history-modal');
         const tbody = document.getElementById('progress-history-tbody');

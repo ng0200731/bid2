@@ -2,7 +2,7 @@ package com.ebrandid.poscanner.utils
 
 object Constants {
     // API Configuration
-    const val BASE_URL = "http://192.168.31.31:8767/"
+    const val BASE_URL = "http://192.168.0.144:8768/"
     
     // Timeouts
     const val CONNECT_TIMEOUT = 30L
