@@ -138,10 +138,21 @@ class ScannerActivity : AppCompatActivity() {
             tvStatus.text = "Detected: $qrCode"
             tvStatus.visibility = View.VISIBLE
 
-            val intent = Intent(this, MainActivity::class.java).apply {
-                putExtra(Constants.EXTRA_PO_NUMBER, qrCode)
+            // Check if we should return result or navigate
+            if (intent.getBooleanExtra("return_result", false)) {
+                // Return result to calling activity
+                val resultIntent = Intent().apply {
+                    putExtra(Constants.EXTRA_SCANNED_CODE, qrCode)
+                }
+                setResult(RESULT_OK, resultIntent)
+                finish()
+            } else {
+                // Navigate to MainActivity (original behavior)
+                val intent = Intent(this, MainActivity::class.java).apply {
+                    putExtra(Constants.EXTRA_PO_NUMBER, qrCode)
+                }
+                startActivity(intent)
             }
-            startActivity(intent)
         }
     }
 

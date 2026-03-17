@@ -8,16 +8,8 @@
         "source": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-main-43:\\layout\\activity_scanner.xml"
     },
     {
-        "merged": "com.ebrandid.poscanner.app-mergeDebugResources-40:/layout/activity_home.xml",
-        "source": "com.ebrandid.poscanner.app-main-43:/layout/activity_home.xml"
-    },
-    {
         "merged": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-mergeDebugResources-40:\\layout\\item_progress_history.xml",
         "source": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-main-43:\\layout\\item_progress_history.xml"
-    },
-    {
-        "merged": "com.ebrandid.poscanner.app-mergeDebugResources-40:/layout/activity_settings.xml",
-        "source": "com.ebrandid.poscanner.app-main-43:/layout/activity_settings.xml"
     },
     {
         "merged": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-mergeDebugResources-40:\\layout\\activity_main.xml",
@@ -26,6 +18,10 @@
     {
         "merged": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-mergeDebugResources-40:\\layout\\activity_home.xml",
         "source": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-main-43:\\layout\\activity_home.xml"
+    },
+    {
+        "merged": "com.ebrandid.poscanner.app-mergeDebugResources-40:/layout/activity_search.xml",
+        "source": "com.ebrandid.poscanner.app-main-43:/layout/activity_search.xml"
     },
     {
         "merged": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-mergeDebugResources-40:\\layout\\activity_search.xml",

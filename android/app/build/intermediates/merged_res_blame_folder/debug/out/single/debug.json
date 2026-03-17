@@ -36,28 +36,24 @@
         "source": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-main-43:\\layout\\activity_main.xml"
     },
     {
-        "merged": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-merged_res-41:\\drawable_scanning_frame.xml.flat",
-        "source": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-main-43:\\drawable\\scanning_frame.xml"
+        "merged": "com.ebrandid.poscanner.app-merged_res-41:/layout_activity_search.xml.flat",
+        "source": "com.ebrandid.poscanner.app-main-43:/layout/activity_search.xml"
     },
     {
-        "merged": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-merged_res-41:\\xml_backup_rules.xml.flat",
-        "source": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-main-43:\\xml\\backup_rules.xml"
+        "merged": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-merged_res-41:\\drawable_scanning_frame.xml.flat",
+        "source": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-main-43:\\drawable\\scanning_frame.xml"
     },
     {
         "merged": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-merged_res-41:\\layout_activity_search.xml.flat",
         "source": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-main-43:\\layout\\activity_search.xml"
     },
     {
+        "merged": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-merged_res-41:\\xml_backup_rules.xml.flat",
+        "source": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-main-43:\\xml\\backup_rules.xml"
+    },
+    {
         "merged": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-merged_res-41:\\layout_activity_settings.xml.flat",
         "source": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-main-43:\\layout\\activity_settings.xml"
-    },
-    {
-        "merged": "com.ebrandid.poscanner.app-merged_res-41:/layout_activity_home.xml.flat",
-        "source": "com.ebrandid.poscanner.app-main-43:/layout/activity_home.xml"
-    },
-    {
-        "merged": "com.ebrandid.poscanner.app-merged_res-41:/layout_activity_settings.xml.flat",
-        "source": "com.ebrandid.poscanner.app-main-43:/layout/activity_settings.xml"
     },
     {
         "merged": "C:\\Users\\ng\\.gradle\\daemon\\8.2\\com.ebrandid.poscanner.app-merged_res-41:\\xml_data_extraction_rules.xml.flat",
